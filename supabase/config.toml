@@ -1,0 +1,10 @@
+# Historical function configuration; retain the existing hosted project.
+project_id = "tierly"
+[functions.passport-profile]
+verify_jwt = true
+[functions.discord-verify]
+verify_jwt = false
+[functions.chess]
+verify_jwt = false
+[functions.racer]
+verify_jwt = false

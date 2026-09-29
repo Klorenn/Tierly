@@ -1,0 +1,243 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+
+const migration = await readFile(
+  new URL("../supabase/migrations/20260825120000_create_gaming_leaderboard.sql", import.meta.url),
+  "utf8",
+);
+
+test("every gaming table enables RLS", () => {
+  for (const table of [
+    "gaming_players", "gaming_events", "gaming_tournaments",
+    "gaming_matches", "gaming_match_participants", "gaming_scores", "gaming_rewards",
+  ]) {
+    assert.match(migration, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+});
+
+test("write policies block viewer role", () => {
+  const blocks = migration.match(/_member_all[\s\S]*?with check[\s\S]*?;/g) ?? [];
+  assert.ok(blocks.length > 0, "expected at least one _member_all policy");
+  for (const block of blocks) {
+    assert.match(block, /m\.role <> 'viewer'/);
+  }
+});
+
+test("public views are the only anon-readable surface, granted explicitly", () => {
+  assert.match(migration, /create view public\.leaderboard_public_view/);
+  assert.match(migration, /grant select on public\.leaderboard_public_view to anon, authenticated/);
+  const lbView = migration.match(/create view public\.leaderboard_public_view[\s\S]*?;/)?.[0] ?? "";
+  assert.doesNotMatch(lbView, /discord_id/);
+
+  assert.match(migration, /create view public\.event_bracket_public_view/);
+  assert.match(migration, /grant select on public\.event_bracket_public_view to anon, authenticated/);
+
+  assert.match(migration, /create view public\.gaming_rewards_public_view/);
+  assert.match(migration, /grant select on public\.gaming_rewards_public_view to anon, authenticated/);
+
+  assert.doesNotMatch(migration, /grant select on public\.gaming_players to anon/);
+  assert.doesNotMatch(migration, /grant select on public\.gaming_scores to anon/);
+});
+
+const memberViewMigration = await readFile(
+  new URL("../supabase/migrations/20260826010000_add_discord_member_to_leaderboard_view.sql", import.meta.url),
+  "utf8",
+);
+
+test("leaderboard_public_view exposes discord_member without leaking discord_id", () => {
+  assert.match(memberViewMigration, /discord_member/);
+  assert.doesNotMatch(memberViewMigration, /discord_id/);
+  assert.match(memberViewMigration, /grant select on public\.leaderboard_public_view to anon, authenticated/);
+});
+
+const passportMigration = await readFile(
+  new URL("../supabase/migrations/20260826020000_add_stellar_passport_url.sql", import.meta.url),
+  "utf8",
+);
+
+const passportProfileSyncMigration = await readFile(
+  new URL("../supabase/migrations/20260826050000_sync_passport_profile_snapshot.sql", import.meta.url),
+  "utf8",
+);
+
+test("stellar_passport_url is a self-reported text column, exposed publicly, no new write RLS", () => {
+  assert.match(passportMigration, /add column if not exists stellar_passport_url text/);
+  assert.match(passportMigration, /stellar_passport_url/);
+  assert.doesNotMatch(passportMigration, /_member_all|for all to authenticated/);
+  assert.match(passportMigration, /grant select on public\.leaderboard_public_view to anon, authenticated/);
+});
+
+test("gaming_players stores Passport link metadata plus editable local profile fields", () => {
+  for (const column of [
+    "username",
+    "bio",
+    "twitter_handle",
+    "telegram_handle",
+    "discord_handle",
+    "stellar_passport_username",
+    "stellar_passport_avatar_url",
+    "stellar_passport_bio",
+    "stellar_passport_role_title",
+    "stellar_passport_tier",
+    "stellar_passport_project_count",
+    "stellar_passport_commits_30d",
+    "stellar_passport_active_days_30d",
+  ]) {
+    assert.match(passportProfileSyncMigration, new RegExp(`add column if not exists ${column} `));
+  }
+  assert.match(passportProfileSyncMigration, /grant select on public\.leaderboard_public_view to anon, authenticated/);
+});
+
+test("score trigger is security definer with a locked search_path", () => {
+  const fn = migration.match(/create or replace function public\.recalculate_gaming_score[\s\S]*?\$\$;/)?.[0] ?? "";
+  assert.match(fn, /security definer/);
+  assert.match(fn, /set search_path = ''/);
+});
+
+test("points formula matches the tested pure function (10/6/3/1)", () => {
+  const fn = migration.match(/create or replace function public\.gaming_points_for_placement[\s\S]*?\$\$;/)?.[0] ?? "";
+  assert.match(fn, /placement = 1 then 10/);
+  assert.match(fn, /placement = 2 then 6/);
+  assert.match(fn, /placement = 3 then 3/);
+  assert.match(fn, /else 1/);
+});
+
+const edge = await readFile(
+  new URL("../supabase/functions/discord-verify/index.ts", import.meta.url),
+  "utf8",
+);
+const supabaseConfig = await readFile(
+  new URL("../supabase/config.toml", import.meta.url),
+  "utf8",
+);
+
+test("discord-verify delegates gateway auth and keeps function-level session validation", () => {
+  assert.match(supabaseConfig, /\[functions\.discord-verify\][\s\S]*?verify_jwt\s*=\s*false/);
+  assert.match(edge, /auth\.getUser\(\)/);
+  assert.match(edge, /Sesión requerida/);
+  assert.match(edge, /Sesión inválida/);
+});
+
+test("discord-verify requires a session and never trusts client-supplied membership", () => {
+  assert.match(edge, /Sesión requerida/);
+  assert.match(edge, /auth\.getUser\(\)/);
+  assert.match(edge, /Deno\.env\.get\("DISCORD_BOT_TOKEN"\)/);
+  assert.match(edge, /Deno\.env\.get\("DISCORD_GUILD_ID"\)/);
+  assert.match(edge, /Deno\.env\.get\("SUPABASE_SERVICE_ROLE_KEY"\)/);
+});
+
+test("discord-verify never hardcodes a bot token or guild id", () => {
+  assert.doesNotMatch(edge, /discord\.com\/api\/v10\/guilds\/\d+/);
+});
+
+test("discord-verify caches the verification result to survive rate limits", () => {
+  assert.match(edge, /VERIFY_TTL_MS/);
+  assert.match(edge, /discord_verified_at/);
+});
+
+test("discord-verify never writes client-controlled user_metadata into gaming_players", () => {
+  assert.doesNotMatch(edge, /body\.[\s\S]{0,80}user_metadata/);
+  assert.match(edge, /discordIdentity\?\.identity_data\?\.full_name/);
+  assert.match(edge, /discordIdentity\?\.identity_data\?\.avatar_url/);
+});
+
+test("discord-verify prefers Discord avatar, falls back to metadata, and preserves stored avatars", () => {
+  assert.match(edge, /discordIdentity\?\.identity_data\?\.avatar_url\s*(?:\|\||\?\?)\s*user\.user_metadata\?\.avatar_url\s*(?:\|\||\?\?)\s*user\.user_metadata\?\.picture/);
+  assert.match(edge, /\{\s*avatar_url:\s*avatarUrl\s*\}/);
+  assert.match(edge, /\.\.\.\(avatarUrl\s*\?\s*\{\s*avatar_url:\s*avatarUrl\s*\}\s*:\s*\{\}\)/s);
+});
+
+test("discord-verify never exposes internal exception details to the browser", () => {
+  assert.match(edge, /console\.error\(error\)/);
+  assert.match(edge, /return json\(\{ error: "Error de verificación" \}, 500\)/);
+  assert.doesNotMatch(edge, /json\(\{ error: error instanceof Error \? error\.message/);
+});
+
+test("discord-verify only writes stellar_passport_url via the service-role channel, validated as https", () => {
+  assert.match(edge, /stellar_passport_url/);
+  assert.match(edge, /parsed\.protocol === "https:"/);
+});
+
+test("discord-verify never reports success when player persistence fails", () => {
+  assert.match(edge, /if \(upsertError\) \{[\s\S]*return json\(\{ error: "No se pudo guardar la verificación" \}, 500\);/);
+  assert.match(edge, /if \(updateError\) \{[\s\S]*return json\(\{ error: "No se pudo guardar la verificación" \}, 500\);/);
+});
+
+test("discord-verify falls back to Passport's public builder endpoint for demo profiles", () => {
+  assert.match(edge, /api\/builder\/public\/\$\{encodeURIComponent\(linkedUsername\)\}/);
+  assert.match(edge, /builderResponse\?\.ok/);
+  assert.match(edge, /publicBuilderResponse\.status === 404/);
+  assert.match(edge, /publicBuilderResponse\.status === 404[\s\S]*?No encontramos ese perfil en Stellar Passport/);
+  assert.match(edge, /normalizePassportProfile\(builderData,\s*linkedUsername\)/);
+});
+
+test("discord-verify copies Passport profile fields into the Tierly profile, supports local edits, and can unlink for a clean relink", () => {
+  assert.match(edge, /action === "update_profile"/);
+  assert.match(edge, /action === "unlink_passport"/);
+  assert.match(edge, /display_name:\s*cleanText\(builder\?\.display_name \?\? builder\?\.name/);
+  assert.match(edge, /bio:\s*passportBio/);
+  assert.match(edge, /twitter_handle:\s*cleanHandle\(builder\?\.twitter_handle\)/);
+  assert.match(edge, /telegram_handle:\s*cleanHandle\(builder\?\.telegram_handle\)/);
+  assert.match(edge, /discord_handle:\s*cleanHandle\(builder\?\.discord_handle \?\? builder\?\.discord_username\)/);
+  assert.match(edge, /twitter_handle/);
+  assert.match(edge, /telegram_handle/);
+  assert.match(edge, /discord_handle/);
+  assert.match(edge, /builder\?\.avatar_url/);
+  assert.match(edge, /builder\?\.bio/);
+  assert.match(edge, /builder\?\.twitter_handle/);
+  assert.match(edge, /builder\?\.telegram_handle/);
+  assert.match(edge, /builder\?\.discord_handle/);
+});
+
+test("discord-verify's avatar lookup is gated to non-viewer staff, never the calling player", () => {
+  assert.match(edge, /lookup_avatar/);
+  assert.match(edge, /\.neq\("role", "viewer"\)/);
+  assert.match(edge, /Solo staff puede buscar avatares/);
+});
+
+test("discord-verify reflects only approved production and local origins", () => {
+  assert.match(edge, /https:\/\/telluscoop\.org/);
+  assert.match(edge, /https:\/\/www\.telluscoop\.org/);
+  assert.match(edge, /LOCAL_ORIGIN/);
+  assert.match(edge, /localhost\|127\\.0\\.0\\.1/);
+  assert.match(edge, /:\\d\+/);
+  assert.match(edge, /Access-Control-Allow-Origin.*origin/);
+  assert.doesNotMatch(edge, /ALLOWED_ORIGINS\.includes\(origin\).*ALLOWED_ORIGINS\[0\]/);
+});
+
+const app = await readFile(new URL("../ops/tierly/app.js", import.meta.url), "utf8");
+const tierlyApp = await readFile(new URL("../tierly/app.js", import.meta.url), "utf8");
+const page = await readFile(new URL("../ops/tierly/index.html", import.meta.url), "utf8");
+
+test("Tierly refreshes the synced profile after linking instead of rendering a second Passport panel", () => {
+  assert.match(tierlyApp, /const effectivePassportUrl = data\?\.stellar_passport_url \|\| selectedUrl;[\s\S]*renderProfileAvatar\(\);[\s\S]*renderProfileSummary\(\);[\s\S]*renderPassportLink\(effectivePassportUrl\);/);
+  assert.doesNotMatch(tierlyApp, /renderPassportStats\(effectivePassportUrl\)/);
+});
+
+test("admin ops app never embeds secrets", () => {
+  assert.doesNotMatch(app, /service[_-]?role/i);
+  assert.doesNotMatch(app, /DISCORD_BOT_TOKEN/);
+  assert.doesNotMatch(app, /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\./);
+});
+
+test("admin cache-busting versions match", () => {
+  const cssVersion = page.match(/styles\.css\?v=([^"']+)/)?.[1];
+  const jsVersion = page.match(/app\.js\?v=([^"']+)/)?.[1];
+  assert.ok(cssVersion);
+  assert.equal(jsVersion, cssVersion);
+});
+
+test("admin page is not indexable", () => {
+  assert.match(page, /noindex,nofollow/);
+});
+
+test("admin app implements the core tournament flow", () => {
+  for (const name of ["createEvent", "createTournament", "createMatch", "addParticipant", "confirmMatch", "createReward", "markRewardFulfilled"]) {
+    assert.match(app, new RegExp(`function ${name}\\(`));
+  }
+});
+
+test("admin writes are gated on non-viewer role before rendering the editor", () => {
+  assert.match(app, /state\.membership\.role === "viewer"/);
+});

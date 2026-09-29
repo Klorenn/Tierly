@@ -1,0 +1,322 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFile, stat } from "node:fs/promises";
+
+const migration = await readFile(
+  new URL("../supabase/migrations/20260829120000_add_chess_module.sql", import.meta.url),
+  "utf8",
+);
+const edge = await readFile(
+  new URL("../supabase/functions/chess/index.ts", import.meta.url),
+  "utf8",
+);
+const supabaseConfig = await readFile(
+  new URL("../supabase/config.toml", import.meta.url),
+  "utf8",
+);
+const page = await readFile(new URL("../tierly/index.html", import.meta.url), "utf8");
+const chessJs = await readFile(new URL("../tierly/chess.js", import.meta.url), "utf8");
+const app = await readFile(new URL("../tierly/app.js", import.meta.url), "utf8");
+
+// ---------------------------------------------------------------------------
+// Migración: gaming_chess_games
+// ---------------------------------------------------------------------------
+
+test("gaming_chess_games enables RLS and grants nobody via REST", () => {
+  assert.match(migration, /create table public\.gaming_chess_games/);
+  assert.match(migration, /alter table public\.gaming_chess_games enable row level security/);
+  assert.match(migration, /revoke all on table public\.gaming_chess_games from anon, authenticated/);
+  assert.doesNotMatch(migration, /gaming_chess_games[\s\S]{0,200}grant [^;]* to anon/);
+});
+
+test("gaming_chess_games has the full column surface", () => {
+  for (const column of [
+    "id", "tournament_id", "white_player_id", "black_player_id", "mode",
+    "bot_difficulty", "status", "winner", "fen", "pgn", "started_at", "finished_at",
+    "created_at", "updated_at",
+  ]) {
+    assert.match(migration, new RegExp(`${column} `));
+  }
+  assert.match(migration, /fen text not null default 'rnbqkbnr\/pppppppp\/8\/8\/8\/8\/PPPPPPPP\/RNBQKBNR w KQkq - 0 1'/);
+});
+
+test("gaming_chess_games enforces mode, difficulty, status and winner checks", () => {
+  assert.match(migration, /mode text not null check \(mode in \('bot', 'pvp'\)\)/);
+  assert.match(migration, /mode = 'bot' and bot_difficulty in \('easy', 'medium', 'hard'\)/);
+  assert.match(migration, /mode = 'pvp' and bot_difficulty is null/);
+  assert.match(migration, /status text not null default 'pending' check \(status in \('pending', 'active', 'finished'\)\)/);
+  assert.match(migration, /winner text check \(winner in \('white', 'black', 'draw'\)\)/);
+});
+
+test("gaming_chess_games touches updated_at and indexes the hot queries", () => {
+  assert.match(migration, /gaming_chess_games_touch before update on public\.gaming_chess_games/);
+  assert.match(migration, /execute function public\.touch_updated_at\(\)/);
+  assert.match(migration, /create index gaming_chess_games_white_idx/);
+  assert.match(migration, /create index gaming_chess_games_black_idx/);
+  assert.match(migration, /create index gaming_chess_games_status_idx/);
+});
+
+test("chess tournament lookup is security definer with a locked search_path, anchored to the season", () => {
+  const fn = migration.match(/create or replace function public\.ensure_gaming_season_tournament[\s\S]*?\$\$;/)?.[0] ?? "";
+  assert.match(fn, /p_game text/);
+  assert.match(fn, /security definer/);
+  assert.match(fn, /set search_path = ''/);
+  assert.match(fn, /public\.gaming_season_start\(\)/);
+  assert.match(fn, /format = 'elimination'/);
+  assert.match(fn, /No hay organización configurada para el torneo de ajedrez/);
+});
+
+// ---------------------------------------------------------------------------
+// Edge function: chess
+// ---------------------------------------------------------------------------
+
+test("chess runs without JWT verification and validates the session itself", () => {
+  assert.match(supabaseConfig, /\[functions\.chess\][\s\S]*?verify_jwt\s*=\s*false/);
+  assert.match(edge, /auth\.getUser\(\)/);
+  assert.match(edge, /Sesión requerida/);
+  assert.match(edge, /Sesión inválida/);
+  assert.match(edge, /Sesión sin identidad de Discord/);
+});
+
+test("chess uses the service-role channel for gameplay writes and hardcodes no secrets", () => {
+  assert.match(edge, /Deno\.env\.get\("SUPABASE_SERVICE_ROLE_KEY"\)/);
+  assert.match(edge, /Deno\.env\.get\("SUPABASE_ANON_KEY"\)/);
+  assert.doesNotMatch(edge, /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\./);
+});
+
+test("the browser never decides results — chess.js recomputes games server-side", () => {
+  assert.match(edge, /import \{ Chess \} from "npm:chess\.js@1\.4\.0"/);
+  assert.match(edge, /function loadChess/);
+  assert.match(edge, /function applyMove/);
+  assert.match(edge, /function gameResult/);
+});
+
+test("scoring only flows through the pending -> confirmed gaming_matches pipeline", () => {
+  assert.match(edge, /\.insert\(\{ tournament_id: tournamentId, status: "pending" \}\)/);
+  assert.match(edge, /\.update\(\{ status: "confirmed",/);
+  assert.match(edge, /function finalizeGame/);
+});
+
+test("bot difficulty maps to the exact spec placements", () => {
+  assert.match(edge, /const BOT_PLACEMENTS = \{ win_hard: 1, win_medium: 2, win_easy: 3, draw: 3, loss: 4 \};/);
+  assert.match(edge, /placement: BOT_PLACEMENTS\[key\] \?\? BOT_PLACEMENTS\.loss/);
+});
+
+test("PvP awards 1/4 for winner/loser and 3/3 for a draw", () => {
+  assert.match(edge, /const winId = result\.winner === "white" \? game\.white_player_id : game\.black_player_id;/);
+  assert.match(edge, /player_id: winId!, placement: 1,/);
+  assert.match(edge, /player_id: loseId!, placement: 4,/);
+  assert.match(edge, /player_id: playerId,\s*placement: 3,/);
+});
+
+test("gameplay state changes broadcast over a per-game chess topic", () => {
+  assert.match(edge, /const topic = `chess:\$\{gameId\}`;/);
+  assert.match(edge, /realtime\.channel\(topic, \{ config: \{ broadcast: \{ self: false \} \} \}\)/);
+  assert.match(edge, /channel\.send\(\{ type: "broadcast", event, payload \}\)/);
+});
+
+test("bot wins award explicit points per difficulty and Elo moves", () => {
+  assert.match(edge, /BOT_WIN_POINTS: Record<Difficulty, number> = \{ easy: 10, medium: 20, hard: 25 \}/);
+  assert.match(edge, /PVP_WIN_POINTS = 25/);
+  assert.match(edge, /PVP_DRAW_POINTS = 5/);
+  assert.match(edge, /BOT_DRAW_POINTS = 3/);
+  assert.match(edge, /LOSS_POINTS = 1/);
+  assert.match(edge, /BOT_RATINGS: Record<Difficulty, number> = \{ easy: 800, medium: 1000, hard: 1200 \}/);
+  assert.match(edge, /ELO_START = 1200/);
+  assert.match(edge, /ELO_K = 32/);
+  assert.match(edge, /expectedScore\(rating: number, opponent: number\)/);
+  assert.match(edge, /points_awarded: points,/);
+  assert.match(edge, /rating_before: before,/);
+  assert.match(edge, /rating_after: after,/);
+});
+
+test("PvP winner points include a streak bonus capped at +10", () => {
+  assert.match(edge, /STREAK_BONUS_STEP = 2/);
+  assert.match(edge, /STREAK_BONUS_MAX = 10/);
+  assert.match(edge, /function pvpStreak\(/);
+  assert.match(edge, /Math\.min\(streak, STREAK_BONUS_MAX \/ STREAK_BONUS_STEP\) \* STREAK_BONUS_STEP/);
+  assert.match(edge, /const winPoints = PVP_WIN_POINTS \+ bonus;/);
+});
+
+test("the edge stores chess ratings and returns scoring for state and my_games", () => {
+  assert.match(edge, /from\("gaming_chess_ratings"\)/);
+  assert.match(edge, /\.upsert\(\{/);
+  assert.match(edge, /action === "state"/);
+  assert.match(edge, /action === "my_games"/);
+  assert.match(edge, /scoring\[p\.player_id\] = \{/);
+});
+
+test("duplicate challenges are checked both ways and the players' turn order is enforced", () => {
+  assert.match(edge, /white_player_id\.eq\.\$\{playerId\},black_player_id\.eq\.\$\{rival\.id\}/);
+  assert.match(edge, /white_player_id\.eq\.\$\{rival\.id\},black_player_id\.eq\.\$\{playerId\}/);
+  assert.match(edge, /Ya hay una partida contra ese rival/);
+  assert.match(edge, /Solo puede aceptar el jugador desafiado/);
+  assert.match(edge, /No es tu turno/);
+  assert.match(edge, /Movimiento inválido/);
+});
+
+test("chess responds in Spanish and never leaks exception details", () => {
+  assert.match(edge, /console\.error\(error\)/);
+  assert.match(edge, /return json\(\{ error: "Error al procesar la partida" \}, 500\)/);
+  assert.doesNotMatch(edge, /json\(\{ error: error instanceof Error \? error\.message/);
+  assert.match(edge, /Esa partida no existe/);
+  assert.match(edge, /Acción desconocida/);
+});
+
+// ---------------------------------------------------------------------------
+// Browser: index.html + chess.js + app.js
+// ---------------------------------------------------------------------------
+
+test("index.html wires the chess view, chessground assets and versioned modules", () => {
+  assert.match(page, /data-view="chess"/);
+  assert.match(page, /id="lb-chess-title"/);
+  assert.match(page, /id="lb-chess"/);
+  assert.match(page, /unpkg\.com\/chessground@9\.2\.1\/assets\/chessground\.base\.css/);
+  assert.match(page, /unpkg\.com\/chessground@9\.2\.1\/assets\/chessground\.brown\.css/);
+  assert.match(page, /unpkg\.com\/chessground@9\.2\.1\/assets\/chessground\.cburnett\.css/);
+  assert.match(chessJs, /import \{ Chessground \} from "https:\/\/cdn\.jsdelivr\.net\/npm\/chessground@9\.2\.1\/dist\/chessground\.min\.js"/);
+});
+
+test("chess.js and app.js ship with matching cache-busting versions", () => {
+  const chessVersion = page.match(/chess\.js\?v=([^"']+)/)?.[1];
+  const appVersion = page.match(/app\.js\?v=([^"']+)/)?.[1];
+  assert.ok(chessVersion);
+  assert.equal(appVersion, chessVersion);
+});
+
+test("the app exposes a TierlyBridge so chess.js can reuse supabase, strings and view switching", () => {
+  assert.match(app, /window\.TierlyBridge\s*=\s*\{/);
+  assert.match(app, /supabase,/);
+  assert.match(app, /t:\s*\(key\)\s*=>\s*t\(key\),/);
+  assert.match(app, /session:\s*\(\)\s*=>\s*currentSession,/);
+  assert.match(app, /player:\s*\(\)\s*=>\s*currentPlayer,/);
+  assert.match(app, /switchView:\s*\(view\)\s*=>\s*switchView\(view\),/);
+});
+
+test("the nav gains a chess entry with the swords icon", () => {
+  assert.match(app, /data-view="chess"><i data-lucide="swords"/);
+});
+
+test("chess strings exist in both locales, including lbBack for the back button", () => {
+  assert.match(app, /navChess: "Chess"/);
+  assert.match(app, /navChess: "Ajedrez"/);
+  assert.match(app, /chessYouWin: "You win!"/);
+  assert.match(app, /chessYouWin: "¡Ganaste!"/);
+  assert.match(app, /lbBack: "Back"/);
+  assert.match(app, /lbBack: "Volver"/);
+});
+
+test("the tutorial dialog teaches the game in both locales", () => {
+  assert.match(page, /dialog id="lb-chess-tutorial"/);
+  assert.match(page, /id="lb-chess-tutorial-body"/);
+  assert.match(chessJs, /function openTutorial\(\)/);
+  assert.match(chessJs, /id="lb-chess-howto"/);
+  assert.match(chessJs, /dialog\.showModal\(\)/);
+  assert.match(app, /chessHowTo: "How to play"/);
+  assert.match(app, /chessHowTo: "Cómo jugar"/);
+  assert.match(app, /chessTutorialObjectiveBody: "Win by checkmate/);
+  assert.match(app, /chessTutorialObjectiveBody: "Ganas por jaque mate/);
+});
+
+test("the tutorial teaches the points table and the chess rating", () => {
+  assert.match(chessJs, /class="lb-chess-scores"/);
+  assert.match(chessJs, /chessPtsWin/);
+  assert.match(app, /chessPtsWin: "Win"/);
+  assert.match(app, /chessPtsWin: "Victoria"/);
+  assert.match(app, /chessTutorialRatingBody: "Your chess rating moves/);
+  assert.match(app, /chessTutorialRatingBody: "Tu rating de ajedrez se mueve/);
+  assert.match(app, /chessRating: "Rating"/);
+});
+
+test("the in-game coach gives contextual advice from a difficulty-aware key", () => {
+  assert.match(chessJs, /id="lb-chess-coach"/);
+  assert.match(chessJs, /function coachTipKey\(chess\)/);
+  assert.match(chessJs, /function renderCoachTip\(\)/);
+  assert.match(chessJs, /if \(chess\.isCheck\(\)\) return "chessCoachCheck"/);
+  assert.match(app, /chessCoachTitle: "Coach"/);
+  assert.match(app, /chessCoachCheck: "You're in check/);
+  assert.match(app, /chessCoachCheck: "¡Estás en jaque!/);
+});
+
+test("the mascot cats teach the tutorial and the coach", async () => {
+  assert.match(page, /id="lb-chess-tutorial-cat"/);
+  assert.match(page, /class="lb-chess-tutorial-cat"/);
+  assert.match(chessJs, /COACH_CAT = \{/);
+  assert.match(chessJs, /\/tierly\/streak\/negro\.png/);
+  assert.match(chessJs, /\/tierly\/streak\/naranjo\.png/);
+  assert.match(chessJs, /\/tierly\/streak\/tuxedo\.png/);
+  assert.match(chessJs, /\/tierly\/streak\/dorado\.png/);
+  const catFiles = [
+    "../tierly/streak/negro.png",
+    "../tierly/streak/naranjo.png",
+    "../tierly/streak/tuxedo.png",
+    "../tierly/streak/dorado.png",
+  ];
+  for (const f of catFiles) {
+    const i = await stat(new URL(f, import.meta.url));
+    assert.ok(i.size > 100_000, `${f} must exist and be a real image`);
+  }
+});
+
+test("the coach panel sits beside the board and the cat animates while it coaches", () => {
+  assert.match(page, /\.lb-chess-layout \{ display: flex; flex-direction: column;/);
+  assert.match(page, /\.lb-chess-layout \{ flex-direction: row; align-items: flex-start; justify-content: center; gap: 28px; \}/);
+  assert.match(page, /\.lb-chess-panel \{ flex: 0 0 260px;/);
+  assert.match(page, /\.lb-chess-coach-cat\s*\{[^}]*width: 48px; height: 48px;/);
+  assert.match(page, /@keyframes lbCoachIdle/);
+  assert.match(page, /@keyframes lbCoachBounce/);
+  assert.match(page, /@keyframes lbCoachPop/);
+  assert.match(page, /\.lb-chess-coach\.is-my-turn \.lb-chess-coach-cat \{ animation: lbCoachBounce/);
+  assert.match(chessJs, /classList\.toggle\("is-my-turn", isMyTurn\(\) && !current\.finished\)/);
+  assert.match(chessJs, /classList\.add\("pop"\)/);
+});
+
+test("the finished overlay shows earned points and the rating delta", () => {
+  assert.match(chessJs, /function finishedLine\(\)/);
+  assert.match(chessJs, /current\.scoring\?\.\[myId\]/);
+  assert.match(chessJs, /class="lb-chess-earned"/);
+  assert.match(chessJs, /rating_before\}→/);
+});
+
+test("the lobby and the in-game panel surface the player rating", () => {
+  assert.match(chessJs, /id="lb-chess-lobby-rating"/);
+  assert.match(chessJs, /id="lb-chess-rating"/);
+  assert.match(chessJs, /result\.data\.rating\.rating/);
+});
+
+test("the chess lobby keeps its status, play choices and activity in one responsive app shell", () => {
+  assert.match(chessJs, /class="lb-chess-lobby-shell"/);
+  assert.match(chessJs, /class="lb-chess-lobby-main"/);
+  assert.match(chessJs, /class="lb-chess-lobby-activity"/);
+  assert.match(page, /\.lb-chess-lobby-shell \{[\s\S]*max-width: 1080px/);
+  assert.match(page, /\.lb-chess-lobby-body \{[\s\S]*grid-template-columns: minmax\(0, 1fr\) minmax\(280px, 0\.72fr\)/);
+  assert.match(page, /#lb-chess-title \{ width: 100%; max-width: 1080px; margin: 0 auto 18px; \}/);
+  assert.match(page, /@media \(max-width: 860px\) \{[\s\S]*\.lb-chess-lobby-body \{ grid-template-columns: 1fr; \}/);
+  assert.doesNotMatch(chessJs, /<aside class="lb-chess-lobby-activity" aria-live="polite">/);
+  assert.match(chessJs, /id="lb-chess-mygames" class="lb-chess-mygames" aria-live="polite"/);
+});
+
+test("chess.js recomputes legal moves with chess.js and drives Stockfish on a worker", () => {
+  assert.match(chessJs, /import \{ Chess \} from "https:\/\/cdn\.jsdelivr\.net\/npm\/chess\.js@1\.4\.0\/dist\/esm\/chess\.js"/);
+  assert.match(chessJs, /import \{ Chessground \} from "https:\/\/cdn\.jsdelivr\.net\/npm\/chessground@9\.2\.1\/dist\/chessground\.min\.js"/);
+  assert.match(chessJs, /board = Chessground\(wrap/);
+  assert.match(chessJs, /const dests = new Map\(\)/);
+  assert.match(chessJs, /new Worker\(VENDOR_ENGINE_JS\)/);
+  assert.match(chessJs, /VENDOR_ENGINE_WASM = "\/tierly\/vendor\/stockfish-18-lite-single\.wasm"/);
+  assert.doesNotMatch(chessJs, /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\./);
+});
+
+test("the public browser code never embeds secrets", () => {
+  for (const source of [app, chessJs]) {
+    assert.doesNotMatch(source, /service[_-]?role/i);
+    assert.doesNotMatch(source, /LUMA_API_KEY/);
+    assert.doesNotMatch(source, /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\./);
+  }
+});
+
+test("the bundled Stockfish assets are present and the engine JS is a real loader", async () => {
+  const engineJs = await stat(new URL("../tierly/vendor/stockfish-18-lite-single.js", import.meta.url));
+  const engineWasm = await stat(new URL("../tierly/vendor/stockfish-18-lite-single.wasm", import.meta.url));
+  assert.ok(engineJs.size > 10_000, "engine loader is too small to be real");
+  assert.ok(engineWasm.size > 1_000_000, "stockfish wasm must exist and be larger than 1MB");
+});

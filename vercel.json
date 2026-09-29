@@ -1,0 +1,46 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/tierly/index.html"
+    },
+    {
+      "source": "/tierly",
+      "destination": "/tierly/index.html"
+    },
+    {
+      "source": "/tierly/",
+      "destination": "/tierly/index.html"
+    },
+    {
+      "source": "/admin/event",
+      "destination": "/tierly/index.html"
+    },
+    {
+      "source": "/admin/event/",
+      "destination": "/tierly/index.html"
+    },
+    {
+      "source": "/ops/tierly/",
+      "destination": "/ops/tierly/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(supabase|discord-bot|tests|scripts|docs)/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/ops/tierly",
+      "destination": "/ops/tierly/",
+      "permanent": true
+    }
+  ]
+}
