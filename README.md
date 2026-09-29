@@ -2,6 +2,8 @@
 
 Standalone extraction of Tierly from Tellus Cooperative. The existing Supabase production project (`rhzanxzoqmbxptvxgnfj`) and its data are retained; this extraction does not create, migrate, or reset a database.
 
+Product direction and phased delivery: [Tierly roadmap](TIERLY_ROADMAP.md).
+
 ## Run and test
 
 Use a current Node.js release (Node 22+). No root npm install or build step is required.
