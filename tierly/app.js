@@ -10,7 +10,7 @@ import { calculatePoints } from "./points.mjs";
 
   const STRINGS = {
     en: {
-      title: "Tierly Gaming Leaderboard",
+      title: "TIRLY Gaming Leaderboard",
       subtitle: "Compete in events. Climb the ranks. Earn epic rewards.",
       rank: "Rank", player: "Player", points: "Points",
       rankingTitle: "Top Players",
@@ -78,9 +78,9 @@ import { calculatePoints } from "./points.mjs";
       settingsTitle: "Settings",
       settingsLangLabel: "Language",
       settingsThemeLabel: "Theme", themeLight: "Light", themeDark: "Dark",
-       settingsAbout: "Tierly is the Discord verification bot for this leaderboard. It only checks server membership, it never reads or posts messages.",
+       settingsAbout: "TIRLY is the Discord verification bot for this leaderboard. It only checks server membership, it never reads or posts messages.",
        privacyTitle: "Presence privacy",
-       privacyBody: "Presence means the game activity Discord shares with the server. Tierly uses it to calculate aggregated gaming statistics, not to read or publish messages.",
+       privacyBody: "Presence means the game activity Discord shares with the server. TIRLY uses it to calculate aggregated gaming statistics, not to read or publish messages.",
        privacyObserve: "Allow observation of my presence",
        privacyDelete: "Request deletion of my presence data",
        privacyDeleteConfirm: "Request deletion of your presence data? This will stop observation and remove stored sessions.",
@@ -104,7 +104,7 @@ import { calculatePoints } from "./points.mjs";
       passportLinked: "Stellar Passport profile ↗",
       passportResultsLabel: "Also on Stellar Passport",
       passportNoMatches: "No matches found",
-      discordJoinBody: "You must join the Tellus Discord server to participate. Tierly checks your membership before unlocking anything.",
+      discordJoinBody: "You must join the Tellus Discord server to participate. TIRLY checks your membership before unlocking anything.",
       discordJoinBtn: "Join Tellus Discord",
       discordVerifyBtn: "I already joined · Verify",
       discordChecking: "Checking your membership…",
@@ -173,7 +173,7 @@ import { calculatePoints } from "./points.mjs";
       lbBack: "Back",
     },
     es: {
-      title: "Leaderboard Gaming Tierly",
+      title: "Leaderboard Gaming TIRLY",
       subtitle: "Compite en eventos. Sube en el ranking. Gana premios.",
       rank: "Puesto", player: "Jugador", points: "Puntos",
       rankingTitle: "Mejores jugadores",
@@ -241,9 +241,9 @@ import { calculatePoints } from "./points.mjs";
       settingsTitle: "Configuración",
       settingsLangLabel: "Idioma",
       settingsThemeLabel: "Tema", themeLight: "Claro", themeDark: "Oscuro",
-       settingsAbout: "Tierly es el bot de verificación de Discord de este leaderboard. Solo confirma tu membresía del server, nunca lee ni postea mensajes.",
+       settingsAbout: "TIRLY es el bot de verificación de Discord de este leaderboard. Solo confirma tu membresía del server, nunca lee ni postea mensajes.",
        privacyTitle: "Privacidad del presence",
-       privacyBody: "Presence es la actividad de juego que Discord comparte con el servidor. Tierly la usa para calcular estadísticas agregadas, no para leer ni publicar mensajes.",
+       privacyBody: "Presence es la actividad de juego que Discord comparte con el servidor. TIRLY la usa para calcular estadísticas agregadas, no para leer ni publicar mensajes.",
        privacyObserve: "Permitir la observación de mi presence",
        privacyDelete: "Solicitar borrado de mis datos de presence",
        privacyDeleteConfirm: "¿Solicitar el borrado de tus datos de presence? Esto detendrá la observación y eliminará las sesiones guardadas.",
@@ -267,7 +267,7 @@ import { calculatePoints } from "./points.mjs";
       passportLinked: "Perfil de Stellar Passport ↗",
       passportResultsLabel: "También en Stellar Passport",
       passportNoMatches: "No encontramos coincidencias",
-      discordJoinBody: "Debes unirte al servidor de Discord de Tellus para participar. Tierly comprueba tu membresía antes de desbloquear cualquier cosa.",
+      discordJoinBody: "Debes unirte al servidor de Discord de Tellus para participar. TIRLY comprueba tu membresía antes de desbloquear cualquier cosa.",
       discordJoinBtn: "Unirse al Discord de Tellus",
       discordVerifyBtn: "Ya me uní · Verificar",
       discordChecking: "Comprobando tu membresía…",
@@ -477,7 +477,7 @@ import { calculatePoints } from "./points.mjs";
   function emptyStateBlock(title, body, ctaLabel, ctaView, mascot = "tierly-apoyado.png") {
     return `
       <div class="lb-empty-state">
-        <img src="/tierly/${mascot}" alt="Tierly" class="lb-empty-mascot" />
+        <img src="/tierly/${mascot}" alt="TIRLY" class="lb-empty-mascot" />
         <strong>${title}</strong>
         <p>${body}</p>
         <button class="lb-promo-btn lb-empty-cta" data-view="${ctaView}">${ctaLabel}</button>
@@ -1006,7 +1006,7 @@ import { calculatePoints } from "./points.mjs";
     const latestReward = rewardsRows[0];
     el.innerHTML = `
       <div class="lb-promo-card">
-        <img src="/tierly/tierly-trofeo.png" alt="Tierly" class="lb-promo-mascot" />
+        <img src="/tierly/tierly-trofeo.png" alt="TIRLY" class="lb-promo-mascot" />
         <h3>${t("promoTitle1")}<br>${t("promoTitle2")}</h3>
         <p>${t("promoBody")}</p>
         <button class="lb-promo-btn" data-view="bracket">${t("promoExplore")} →</button>
