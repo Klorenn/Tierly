@@ -1,15 +1,22 @@
 import { Client, GatewayIntentBits, ChannelType, ActivityType } from "discord.js";
 import { createClient } from "@supabase/supabase-js";
 import { rankForPoints } from "../tierly/ranks.mjs";
+import { playingGames, presenceDelta } from "./presence-delta.mjs";
+import { createSessionStore } from "./session-store.mjs";
 
 const {
-  DISCORD_BOT_TOKEN,
+  DISCORD_BOT_TOKEN: DISCORD_BOT_TOKEN_ENV,
+  DISCORD_TOKEN,
   DISCORD_GUILD_ID,
   WELCOME_CHANNEL_ID,
   ANNOUNCE_CHANNEL_ID,
-  SUPABASE_URL,
+  SUPABASE_URL: SUPABASE_URL_ENV,
+  NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
 } = process.env;
+
+const DISCORD_BOT_TOKEN = DISCORD_BOT_TOKEN_ENV || DISCORD_TOKEN;
+const SUPABASE_URL = SUPABASE_URL_ENV || NEXT_PUBLIC_SUPABASE_URL;
 
 if (!DISCORD_BOT_TOKEN || !DISCORD_GUILD_ID) {
   throw new Error("Faltan DISCORD_BOT_TOKEN o DISCORD_GUILD_ID en las variables de entorno");
@@ -21,8 +28,11 @@ const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
 
 const WELCOME_CHANNEL_NAME = "bienvenida-tierly";
 const ANNOUNCE_CHANNEL_NAME = "anuncios-tierly";
-const LEADERBOARD_URL = "https://telluscoop.org/tierly";
+const LEADERBOARD_URL = "https://tierly.xyz";
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+const CONSENT_VERSION = "1";
+const BOT_CONNECTED_AT = new Date().toISOString();
 
 const client = new Client({
   intents: [
@@ -30,8 +40,156 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildPresences,
   ],
 });
+
+const sessions = supabase ? createSessionStore(supabase) : null;
+const activeSessions = new Map();
+
+async function recordBotHealth(action, errorCode = null) {
+  if (!supabase) return;
+  const result = action === "error"
+    ? await supabase.rpc("tierly_bot_health_error", { p_error_code: errorCode || "unknown" })
+    : await supabase.rpc("tierly_bot_health_heartbeat", { p_connected_at: action === "connected" ? BOT_CONNECTED_AT : null });
+  if (result.error) console.error("No se pudo registrar el estado operativo de Tierly.");
+}
+
+function sessionKey(userId, gameName) {
+  return `${userId}:${gameName}`;
+}
+
+async function handleTierlyCommand(message) {
+  const parts = message.content.trim().toLowerCase().split(/\s+/);
+  if (parts[0] !== "!tierly" || parts[1] !== "presencia" && parts[1] !== "borrar") return false;
+  if (!sessions) {
+    await message.channel.send("El servicio de consentimiento no está disponible en este momento.");
+    return true;
+  }
+
+  try {
+    if (parts[1] === "presencia" && parts[2] === "si") {
+      await sessions.acceptMemberConsent(DISCORD_GUILD_ID, message.author.id, CONSENT_VERSION);
+      await message.channel.send("Consentimiento de presencia activado. Tierly podrá registrar las sesiones de juego.");
+    } else if (parts[1] === "presencia" && parts[2] === "no") {
+      await sessions.declineMemberConsent(DISCORD_GUILD_ID, message.author.id);
+      for (const [key, sessionId] of activeSessions) {
+        if (key.startsWith(`${message.author.id}:`)) activeSessions.delete(key);
+      }
+      await message.channel.send("Consentimiento de presencia retirado. Las sesiones abiertas se cerraron y no se registrarán nuevas sesiones.");
+    } else if (parts[1] === "borrar" && parts.length === 2) {
+      await sessions.requestMemberDeletion(DISCORD_GUILD_ID, message.author.id);
+      for (const [key, sessionId] of activeSessions) {
+        if (key.startsWith(`${message.author.id}:`)) activeSessions.delete(key);
+      }
+      await message.channel.send("Se solicitó el borrado de tus datos de Tierly y se cerraron tus sesiones.");
+    } else {
+      await message.channel.send("Usa: `!tierly presencia si`, `!tierly presencia no` o `!tierly borrar`.");
+    }
+  } catch (error) {
+    await recordBotHealth("error", "consent_update");
+    console.error("No se pudo actualizar el consentimiento de Tierly.");
+    await message.channel.send("No se pudo actualizar el consentimiento. Inténtalo nuevamente más tarde.");
+  }
+  return true;
+}
+
+function memberIdentity(member) {
+  const user = member?.user;
+  const avatarHash = user?.avatar;
+  return {
+    displayName: user?.globalName || user?.username || member?.displayName || "Jugador",
+    avatarUrl: avatarHash
+      ? `https://cdn.discordapp.com/avatars/${member.id}/${avatarHash}.${avatarHash.startsWith("a_") ? "gif" : "png"}`
+      : null,
+  };
+}
+
+async function handlePresenceUpdate(oldPresence, newPresence) {
+  if (!sessions) return;
+  const guildId = newPresence?.guild?.id || oldPresence?.guild?.id;
+  if (guildId !== DISCORD_GUILD_ID) return;
+  if (newPresence?.member?.user?.bot) return;
+  const settings = await sessions.getCommunitySettings(guildId);
+  if (settings?.presence_enabled === false) return;
+
+  const userId = newPresence?.userId || oldPresence?.userId;
+  if (!userId) return;
+  const { started, stopped } = presenceDelta(oldPresence, newPresence);
+
+  for (const gameName of started) {
+    try {
+      const gameId = await sessions.resolveGame(gameName);
+      const identity = memberIdentity(newPresence.member);
+      const session = await sessions.openSession({
+        guildId: DISCORD_GUILD_ID,
+        communityName: newPresence.guild?.name,
+        discordUserId: userId,
+        gameId,
+        ...identity,
+      });
+      if (session?.id) activeSessions.set(sessionKey(userId, gameName), session.id);
+    } catch (error) {
+      await recordBotHealth("error", "presence_open");
+      console.error("No se pudo abrir la sesion de presence.");
+    }
+  }
+  for (const gameName of stopped) {
+    try {
+      const key = sessionKey(userId, gameName);
+      const sessionId = activeSessions.get(key);
+      if (!sessionId) continue;
+      await sessions.closeSession(sessionId, undefined, "normal");
+      activeSessions.delete(key);
+    } catch (error) {
+      await recordBotHealth("error", "presence_close");
+      console.error("No se pudo cerrar la sesion de presence.");
+    }
+  }
+}
+
+async function reconcilePresence(guild) {
+  const settings = await sessions.getCommunitySettings(DISCORD_GUILD_ID);
+  if (settings?.presence_enabled === false) return;
+  for (const member of guild.members.cache.values()) {
+    if (member.user?.bot) continue;
+    for (const gameName of playingGames(member.presence)) {
+      const gameId = await sessions.resolveGame(gameName);
+      const identity = memberIdentity(member);
+      const session = await sessions.openSession({
+        guildId: DISCORD_GUILD_ID,
+        discordUserId: member.id,
+        gameId,
+        ...identity,
+      });
+      if (session?.id) activeSessions.set(sessionKey(member.id, gameName), session.id);
+    }
+  }
+}
+
+async function runPresenceHeartbeat() {
+  const heartbeatAt = new Date().toISOString();
+  for (const sessionId of activeSessions.values()) {
+    try {
+      await sessions.heartbeatSession(sessionId, heartbeatAt);
+    } catch (error) {
+      await recordBotHealth("error", "presence_heartbeat");
+      console.error("No se pudo actualizar un heartbeat.");
+    }
+  }
+  try {
+    const settings = await sessions.getCommunitySettings(DISCORD_GUILD_ID);
+    const staleHours = Number(settings?.stale_session_hours) || 12;
+    await sessions.closeStaleSessions({
+      guildId: DISCORD_GUILD_ID,
+      before: new Date(Date.now() - staleHours * 60 * 60 * 1000).toISOString(),
+      endedAt: heartbeatAt,
+    });
+  } catch (error) {
+    await recordBotHealth("error", "stale_sessions");
+    console.error("No se pudo cerrar sesiones obsoletas.");
+  }
+}
 
 async function getWelcomeChannel(guild) {
   if (WELCOME_CHANNEL_ID) {
@@ -140,8 +298,38 @@ async function announceRankUps(channel) {
 async function runNotificationPoll(guild) {
   if (!supabase) return;
   const channel = await getAnnounceChannel(guild);
+  await deliverEventReminders(channel);
   await announceNewEvents(channel);
   await announceRankUps(channel);
+}
+
+async function deliverEventReminders(channel) {
+  const now = new Date().toISOString();
+  const { data: reminders, error } = await supabase
+    .from("tierly_event_notifications")
+    .select("id, event_id, reminder_minutes, scheduled_for, gaming_events(name, starts_at, timezone)")
+    .eq("guild_id", DISCORD_GUILD_ID)
+    .eq("status", "pending")
+    .lte("scheduled_for", now)
+    .order("scheduled_for", { ascending: true })
+    .limit(25);
+  if (error || !reminders) return;
+
+  for (const reminder of reminders) {
+    const event = reminder.gaming_events;
+    if (!event) continue;
+    const { data: claimed, error: claimError } = await supabase
+      .from("tierly_event_notifications")
+      .update({ status: "sent", sent_at: now })
+      .eq("id", reminder.id)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
+    if (claimError || !claimed) continue;
+    await channel.send(
+      `⏰ Recordatorio: **${event.name}** comienza en ${reminder.reminder_minutes} minutos (${event.timezone || "UTC"}).\n${LEADERBOARD_URL}`,
+    );
+  }
 }
 
 async function syncMembership(member) {
@@ -165,6 +353,7 @@ async function syncMembership(member) {
 
 client.once("ready", async () => {
   console.log(`Tierly conectado como ${client.user.tag}`);
+  await recordBotHealth("connected");
   client.user.setPresence({
     activities: [{ name: "el ranking gaming de Tellus", type: ActivityType.Watching }],
     status: "online",
@@ -182,6 +371,27 @@ client.once("ready", async () => {
       runNotificationPoll(guild).catch((err) => console.error("Fallo el poll de notificaciones:", err.message));
     }, POLL_INTERVAL_MS);
   }
+
+  if (sessions) {
+    await sessions.ensureCommunity({ guildId: DISCORD_GUILD_ID, name: guild.name })
+      .catch((err) => console.error("Fallo el bootstrap de la comunidad:", err.message));
+    await sessions.reconcileOpenSessions({ guildId: DISCORD_GUILD_ID, reason: "crash" })
+      .catch((err) => console.error("Fallo la reconciliacion inicial:", err.message));
+    await reconcilePresence(guild)
+      .catch((err) => console.error("Fallo la reconciliacion de presence:", err.message));
+    setInterval(() => {
+      recordBotHealth("heartbeat").catch(() => {});
+      runPresenceHeartbeat().catch((err) => console.error("Fallo el heartbeat de presence:", err.message));
+    }, HEARTBEAT_INTERVAL_MS);
+  }
+});
+
+client.on("presenceUpdate", (oldPresence, newPresence) => {
+  handlePresenceUpdate(oldPresence, newPresence)
+    .catch((err) => {
+      recordBotHealth("error", "presence_update").catch(() => {});
+      console.error("Fallo al registrar sesion de presence:", err.message);
+    });
 });
 
 client.on("guildMemberAdd", async (member) => {
@@ -198,6 +408,7 @@ client.on("guildMemberAdd", async (member) => {
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (message.guild?.id !== DISCORD_GUILD_ID) return;
+  if (await handleTierlyCommand(message)) return;
   if (message.content.trim().toLowerCase() !== "!bienvenida") return;
 
   await message.channel
