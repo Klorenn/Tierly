@@ -1,7 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org"];
+const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org", "https://tirly.xyz", "https://www.tirly.xyz"];
 const LOCAL_ORIGIN = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+$/;
 
 const isAllowedOrigin = (origin: string | null) =>
