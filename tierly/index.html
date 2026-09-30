@@ -869,6 +869,19 @@
     .lb-bracket-player { display: block; padding: 5px 7px; border-radius: 6px; background: var(--chip-bg); font-size: 13px; }
     .lb-bracket-player.is-winner { background: rgba(21,156,131,.18); color: var(--teal-deep); font-weight: 700; }
 
+    #lb-events-notice { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--card-border); border-radius: 12px; background: var(--card); font-size: 14px; }
+    #lb-events-notice[data-kind="success"] { border-color: rgba(21,156,131,.45); background: rgba(21,156,131,.1); color: var(--teal-deep); }
+    #lb-events-notice[data-kind="error"] { border-color: rgba(199,90,42,.5); background: rgba(199,90,42,.1); color: var(--clay); }
+
+    .lb-event-catalog-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 20px; }
+    .lb-event-catalog-card { display: grid; gap: 10px; align-content: start; padding: 18px; border: 1px solid var(--card-border); border-radius: 16px; background: var(--card); box-shadow: var(--card-shadow); }
+    .lb-event-catalog-card > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; }
+    .lb-event-catalog-card h3 { margin: 0; font-size: 17px; }
+    .lb-event-catalog-card p { margin: 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.55; }
+    .lb-event-catalog-card p:empty { display: none; }
+    .lb-event-catalog-card .lb-event-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--chip-bg); color: var(--ink-dim); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .lb-event-catalog-card .lb-promo-btn, .lb-event-catalog-card .lb-discord-btn { justify-self: start; }
+
     @media (max-width: 960px) {
       .lb-content-grid { flex-direction: column; }
       .lb-col-side { width: 100%; }
@@ -958,6 +971,7 @@
 
         <section class="lb-view" data-view="bracket" hidden>
           <h2 id="lb-bracket-title" class="lb-view-head"></h2>
+          <p id="lb-events-notice" role="status" data-kind="" hidden></p>
           <div id="lb-bracket"></div>
         </section>
 
@@ -1065,8 +1079,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-         <script type="module" src="/tierly/chess.js?v=20260930-04"></script>
-         <script type="module" src="/tierly/app.js?v=20260930-04"></script>
-         <script type="module" src="/tierly/admin.js?v=20260930-04"></script>
+         <script type="module" src="/tierly/chess.js?v=20260930-05"></script>
+         <script type="module" src="/tierly/app.js?v=20260930-05"></script>
+         <script type="module" src="/tierly/admin.js?v=20260930-05"></script>
 </body>
 </html>

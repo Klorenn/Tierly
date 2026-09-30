@@ -28,11 +28,17 @@ test("public page loads the ranking unconditionally, not behind a login gate", (
 
 test("public page reads only the public views, never the base gaming tables", () => {
   assert.match(app, /leaderboard_public_view/);
-  assert.match(app, /event_bracket_public_view/);
-  assert.match(app, /gaming_rewards_public_view/);
+  assert.match(app, /tierly_community_events_public_view/);
   assert.doesNotMatch(app, /from\("gaming_players"\)/);
   assert.doesNotMatch(app, /from\("gaming_scores"\)/);
   assert.doesNotMatch(app, /from\("gaming_rewards"\)/);
+});
+
+test("public page no consulta vistas retiradas con la capa de brackets", () => {
+  assert.doesNotMatch(app, /event_bracket_public_view/);
+  assert.doesNotMatch(app, /gaming_rewards_public_view/);
+  assert.doesNotMatch(app, /gaming_events_catalog_public_view/);
+  assert.doesNotMatch(app, /tierly_register_for_tournament/);
 });
 
 test("public page is bilingual (en/es)", () => {
