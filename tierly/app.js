@@ -44,7 +44,7 @@ import { calculatePoints } from "./points.mjs";
       profileHistoryEmpty: "No matches played yet.",
       playerBackBtn: "← Back to leaderboard",
       playerNotFound: "This profile isn't available.",
-      top5: "Top 5", all: "All Players", viewFull: "View Full Leaderboard", searchPlaceholder: "Search player…",
+      top5: "Top 5", all: "All Players", viewFull: "View Full Leaderboard", searchPlaceholder: "Search player…", searchLabel: "Search player by name",
       tier: "Tier", searchResultsLabel: "Search results",
       searchNoResults: "No players match that name.", searchLoading: "Searching…",
       searchNoProfile: "This player hasn't set up a public profile yet.",
@@ -207,7 +207,7 @@ import { calculatePoints } from "./points.mjs";
       profileHistoryEmpty: "Todavía no has jugado ninguna partida.",
       playerBackBtn: "← Volver al ranking",
       playerNotFound: "Este perfil no está disponible.",
-      top5: "Top 5", all: "Todos", viewFull: "Ver leaderboard completo", searchPlaceholder: "Buscar jugador…",
+      top5: "Top 5", all: "Todos", viewFull: "Ver leaderboard completo", searchPlaceholder: "Buscar jugador…", searchLabel: "Buscar jugador por nombre",
       tier: "Rango", searchResultsLabel: "Resultados de búsqueda",
       searchNoResults: "Ningún jugador coincide con ese nombre.", searchLoading: "Buscando…",
       searchNoProfile: "Este jugador todavía no tiene perfil público.",
@@ -397,13 +397,13 @@ import { calculatePoints } from "./points.mjs";
     const fallback = `<span class="lb-session-avatar lb-session-avatar-fallback" aria-hidden="true">${initials(name)}</span>`;
     const avatarUrl = resolveAvatarUrl(user);
     if (!avatarUrl) return fallback;
-    return `<img class="lb-session-avatar" src="${esc(avatarUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" /><span class="lb-session-avatar lb-session-avatar-fallback" aria-hidden="true" style="display:none">${initials(name)}</span>`;
+    return `<img class="lb-session-avatar" src="${esc(avatarUrl)}" alt="" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" /><span class="lb-session-avatar lb-session-avatar-fallback" aria-hidden="true" style="display:none">${initials(name)}</span>`;
   }
 
   function renderImageWithFallback(url, name, className = "lb-rank-avatar") {
     const fallback = `<span class="${className} lb-rank-avatar-fallback">${initials(name)}</span>`;
     if (!url) return fallback;
-    return `<img src="${esc(url)}" alt="" class="${className}" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" /><span class="${className} lb-rank-avatar-fallback" aria-hidden="true" style="display:none">${initials(name)}</span>`;
+    return `<img src="${esc(url)}" alt="" class="${className}" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" /><span class="${className} lb-rank-avatar-fallback" aria-hidden="true" style="display:none">${initials(name)}</span>`;
   }
 
   function syncCurrentPlayer(player, fallbackUrl = null) {
@@ -477,7 +477,7 @@ import { calculatePoints } from "./points.mjs";
   function emptyStateBlock(title, body, ctaLabel, ctaView, mascot = "tierly-apoyado.png") {
     return `
       <div class="lb-empty-state">
-        <img src="/tierly/${mascot}" alt="TIRLY" class="lb-empty-mascot" />
+        <img src="/tierly/${mascot}" alt="TIRLY" class="lb-empty-mascot" loading="lazy" decoding="async" />
         <strong>${title}</strong>
         <p>${body}</p>
         <button class="lb-promo-btn lb-empty-cta" data-view="${ctaView}">${ctaLabel}</button>
@@ -508,7 +508,7 @@ import { calculatePoints } from "./points.mjs";
               <span class="lb-rank-player">
                 ${renderImageWithFallback(row.avatar_url, row.display_name)}
 <span class="lb-rank-name">${esc(row.display_name || "")}${row.discord_member ? CHECK_ICON : ""}</span>
-                ${playerTier.icon ? `<img src="${playerTier.icon}" alt="" class="lb-rank-tier-icon" />` : ""}
+                ${playerTier.icon ? `<img src="${playerTier.icon}" alt="" class="lb-rank-tier-icon" loading="lazy" decoding="async" />` : ""}
               </span>
               <span class="lb-rank-points">${row.total_points}</span>
             </div>`;
@@ -533,7 +533,7 @@ import { calculatePoints } from "./points.mjs";
           const clickable = Boolean(row.username);
           return `
           <div class="lb-rank-row${clickable ? " lb-rank-row-clickable" : ""}"${clickable ? ` data-username="${esc(row.username)}" role="button" tabindex="0"` : ` title="${esc(t("searchNoProfile"))}"`}>
-            <span class="lb-rank-badge">${playerTier.icon ? `<img src="${playerTier.icon}" alt="${esc(t(TIER_LABEL_KEY[playerTier.tierId] || ""))}" class="lb-rank-tier-icon" />` : ""}</span>
+            <span class="lb-rank-badge">${playerTier.icon ? `<img src="${playerTier.icon}" alt="${esc(t(TIER_LABEL_KEY[playerTier.tierId] || ""))}" class="lb-rank-tier-icon" loading="lazy" decoding="async" />` : ""}</span>
             <span class="lb-rank-player">
               ${renderImageWithFallback(row.avatar_url, row.display_name)}
               <span class="lb-rank-name">${esc(row.display_name || "")}${row.discord_member ? CHECK_ICON : ""}</span>
@@ -796,7 +796,7 @@ import { calculatePoints } from "./points.mjs";
       ? t("tierProgress").replace("{points}", next.min - points).replace("{tier}", `${t(TIER_LABEL_KEY[next.tierId])} ${next.division}`)
       : t("tierMax");
     const iconHtml = rank.icon
-      ? `<img src="${rank.icon}" alt="${esc(label)}" class="lb-profile-tier-icon" />`
+      ? `<img src="${rank.icon}" alt="${esc(label)}" class="lb-profile-tier-icon" loading="lazy" decoding="async" />`
       : `<span class="lb-profile-tier-icon lb-profile-tier-icon-fallback"><i data-lucide="gem"></i></span>`;
     el.innerHTML = `
       ${iconHtml}
@@ -817,7 +817,7 @@ import { calculatePoints } from "./points.mjs";
     list.innerHTML = GAMING_TIERS.map((tier) => {
       const label = t(TIER_LABEL_KEY[tier.id]);
       const iconHtml = tier.icon
-        ? `<img src="${tier.icon}" alt="${esc(label)}" class="lb-ranks-modal-tier-icon" />`
+        ? `<img src="${tier.icon}" alt="${esc(label)}" class="lb-ranks-modal-tier-icon" loading="lazy" decoding="async" />`
         : `<span class="lb-ranks-modal-tier-icon-fallback"><i data-lucide="gem"></i></span>`;
       const divisionsHtml = tier.divisions
         .map((min, i) => `<div class="lb-ranks-modal-division"><strong>${i + 1}</strong><span>${t("ranksModalPtsFrom").replace("{points}", min)}</span></div>`)
@@ -964,7 +964,7 @@ import { calculatePoints } from "./points.mjs";
           <span class="lb-streak-sub">${months > 0 ? t("streakActive") : t("streakInactive")}</span>
           ${next ? `<span class="lb-streak-next">${t("streakNextReward")}: ${t("streakMonthsToGo").replace("{months}", next.minMonths - months)}</span>` : ""}
         </div>
-        <img src="${cat.src}" alt="" class="lb-streak-cat" />
+        <img src="${cat.src}" alt="" class="lb-streak-cat" loading="lazy" decoding="async" />
       </div>`;
   }
 
@@ -1006,7 +1006,7 @@ import { calculatePoints } from "./points.mjs";
     const latestReward = rewardsRows[0];
     el.innerHTML = `
       <div class="lb-promo-card">
-        <img src="/tierly/tierly-trofeo.png" alt="TIRLY" class="lb-promo-mascot" />
+        <img src="/tierly/tierly-trofeo.png" alt="TIRLY" class="lb-promo-mascot" width="480" height="392" loading="lazy" decoding="async" />
         <h3>${t("promoTitle1")}<br>${t("promoTitle2")}</h3>
         <p>${t("promoBody")}</p>
         <button class="lb-promo-btn" data-view="bracket">${t("promoExplore")} →</button>
@@ -1574,6 +1574,7 @@ import { calculatePoints } from "./points.mjs";
     const input = document.querySelector("#lb-player-search");
     if (!input) return;
     input.placeholder = t("searchPlaceholder");
+    input.setAttribute("aria-label", t("searchLabel"));
     if (rankSearchBound) return;
     rankSearchBound = true;
     input.addEventListener("input", () => {

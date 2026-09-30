@@ -388,7 +388,7 @@ import { Chessground } from "https://cdn.jsdelivr.net/npm/chessground@9.2.1/dist
         <div class="lb-chess-panel">
           <p class="lb-chess-status" id="lb-chess-status"></p>
           <div class="lb-chess-coach" id="lb-chess-coach">
-            <img src="/tierly/streak/negro.png" alt="" class="lb-chess-coach-cat lb-chess-coach-cat-img" id="lb-chess-coach-cat" />
+            <img src="/tierly/streak/negro.png" alt="" class="lb-chess-coach-cat lb-chess-coach-cat-img" id="lb-chess-coach-cat" width="640" height="640" loading="lazy" decoding="async" />
             <div class="lb-chess-coach-body">
               <strong>${t("chessCoachTitle")}</strong>
               <p id="lb-chess-coach-text"></p>

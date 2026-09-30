@@ -65,7 +65,7 @@
     }
     .lb-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; padding: 0 4px; }
     .lb-brand img { width: 34px; height: 34px; object-fit: cover; border-radius: 50%; }
-    .lb-brand span { font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--ink); }
+    .lb-brand h1 { margin: 0; font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--ink); }
     .lb-nav { display: flex; flex-direction: column; gap: 8px; }
     .lb-menu-toggle { display: none; }
     .lb-nav-item {
@@ -409,7 +409,7 @@
     .lb-stat-accent .lb-stat-icon svg { color: var(--clay); }
     .lb-stat-label { display: block; font-size: 12px; color: var(--ink-dim); margin-bottom: 2px; }
     .lb-stat-card strong { display: block; font-family: var(--serif); font-size: 22px; color: var(--ink); line-height: 1.2; }
-    .lb-stat-cta { display: block; font-size: 11.5px; font-weight: 700; color: var(--clay); text-decoration: none; margin-top: 2px; }
+    .lb-stat-cta { display: inline-flex; align-items: center; min-height: 24px; margin: 2px 0 0 -6px; padding: 2px 6px; font-size: 11.5px; font-weight: 700; color: var(--clay); text-decoration: none; border-radius: 6px; }
 
     .lb-content-grid { display: flex; gap: 24px; align-items: flex-start; }
     .lb-col-main { flex: 1; min-width: 0; }
@@ -919,14 +919,14 @@
     <div class="lb-shell">
       <aside class="lb-sidebar">
         <div class="lb-brand">
-          <img src="/tierly/tierly-logo.png" alt="TIRLY" />
-          <span>TIRLY</span>
+          <img src="/tierly/tierly-logo.png" alt="TIRLY" width="256" height="256" decoding="async" />
+          <h1>TIRLY</h1>
         </div>
         <button id="lb-menu-toggle" class="lb-menu-toggle" type="button" aria-label="Abrir menú" aria-expanded="false"><span></span></button>
         <nav class="lb-nav" id="lb-nav"></nav>
         <div class="lb-sidebar-promo">
           <p id="lb-sidebar-promo-text"></p>
-          <img src="/tierly/tierly-apoyado.png" alt="TIRLY" />
+          <img src="/tierly/tierly-apoyado.png" alt="TIRLY" width="384" height="256" loading="lazy" decoding="async" />
         </div>
       </aside>
        <div class="lb-main">
@@ -947,7 +947,7 @@
                       <i data-lucide="info"></i><span id="lb-ranks-info-btn-label"></span>
                     </button>
                     <div id="lb-rank-tabs" class="lb-rank-tabs"></div>
-                    <input type="search" id="lb-player-search" class="lb-search-input" />
+                    <input type="search" id="lb-player-search" class="lb-search-input" aria-label="Search player" autocomplete="off" />
                   </div>
                 </div>
                 <div id="lb-ranking" aria-label="ranking" style="flex:1; display:flex; flex-direction:column;"></div>
@@ -1012,7 +1012,7 @@
         </section>
 
         <section class="lb-view" data-view="chess" hidden>
-          <h2 id="lb-chess-title" class="lb-view-head"></h2>
+          <h2 id="lb-chess-title" class="lb-view-head">Chess</h2>
           <div id="lb-chess"></div>
         </section>
 
@@ -1022,7 +1022,7 @@
 
         <footer class="lb-footer">
           <div class="lb-footer-brand">
-            <img src="/tierly/tierly-logo.png" alt="TIRLY" class="lb-footer-tierly-mark" />
+            <img src="/tierly/tierly-logo.png" alt="TIRLY" width="256" height="256" loading="lazy" decoding="async" class="lb-footer-tierly-mark" />
             <span>×</span>
             <img src="/hub/logos/tellus-logo-full.svg" alt="Tellus Cooperative" />
           </div>
@@ -1068,13 +1068,13 @@
     <dialog id="lb-chess-tutorial" class="lb-chess-tutorial">
       <div class="lb-chess-tutorial-head">
         <div class="lb-chess-tutorial-title-wrap">
-          <img src="/tierly/streak/negro.png" alt="" class="lb-chess-tutorial-cat" id="lb-chess-tutorial-cat" />
-          <h2 id="lb-chess-tutorial-title"></h2>
+          <img src="/tierly/streak/negro.png" alt="" width="640" height="640" loading="lazy" decoding="async" class="lb-chess-tutorial-cat" id="lb-chess-tutorial-cat" />
+          <h2 id="lb-chess-tutorial-title">How to play</h2>
         </div>
         <button id="lb-chess-tutorial-close" type="button" class="lb-chess-modal-close" aria-label="close">&times;</button>
       </div>
       <div id="lb-chess-tutorial-body" class="lb-chess-tutorial-body"></div>
-      <button id="lb-chess-tutorial-gotit" type="button" class="lb-chess-btn lb-chess-btn-primary"></button>
+      <button id="lb-chess-tutorial-gotit" type="button" class="lb-chess-btn lb-chess-btn-primary">Got it</button>
     </dialog>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
