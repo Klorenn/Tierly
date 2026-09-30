@@ -41,7 +41,7 @@ test("el panel selecciona una comunidad autorizada y no serializa sus IDs en HTM
   assert.match(admin, /\.eq\(["']guild_id["'], selectedGuildId\)/g);
   assert.doesNotMatch(admin, /<option value="\$\{esc\(community\.guild_id\)\}/);
   assert.match(admin, /showOnboarding/);
-  assert.match(admin, /No hay comunidades disponibles/);
+  assert.match(admin, /No hay comunidades administradas/);
 });
 
 test("la migración mantiene RLS y evita filtrar identidades hacia la página pública", () => {

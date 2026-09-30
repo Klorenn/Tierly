@@ -65,17 +65,54 @@
   }
 
   function showOnboarding() {
-    root.innerHTML = `<div class="tierly-admin-gate" role="status"><p class="tierly-admin-kicker">Primer paso</p><h2>Conectar una comunidad</h2><p>No hay comunidades disponibles para esta cuenta. Cuando se configure una comunidad administrada, aparecerá aquí.</p></div>`;
+    root.innerHTML = `<div class="tierly-admin-gate" role="status"><p class="tierly-admin-kicker">Primer paso</p><h2>Conectar una comunidad</h2><p>No hay comunidades administradas para esta cuenta.</p><ul style="margin:16px 0 0 20px; color:var(--ink-dim); font-size:13px; line-height:1.8"><li>Ve a <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a> y configura el bot con los intents de servidor.</li><li>Añade el rol de administrador en la tabla <code>community_admins</code> de Supabase.</li><li>Recarga esta página para ver el panel.</li></ul></div>`;
   }
 
   function showLogin() {
-    root.innerHTML = `<div class="tierly-admin-gate"><h2>Administración de insights</h2><p>Inicia sesión con Discord para comprobar el acceso de administrador.</p><button type="button" class="lb-discord-btn" id="tierly-admin-login">Iniciar sesión con Discord</button></div>`;
+    root.innerHTML = `<div class="tierly-admin-gate"><h2>Administración de insights</h2><p>Inicia sesión con Discord para comprobar el acceso de administrador.</p><button type="button" class="lb-discord-btn" id="tierly-admin-login">Iniciar sesión con Discord</button><p style="margin-top:12px; font-size:12px; color:var(--ink-dim);">Se te redirigirá de vuelta al panel tras autorizar.</p></div>`;
     root.querySelector("#tierly-admin-login").addEventListener("click", () => supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: `${window.location.origin}/tierly?admin=1` } }));
   }
 
-  function renderTable(headers, rows) {
-    if (!rows.length) return `<p class="lb-empty">No hay datos disponibles.</p>`;
-    return `<div class="tierly-admin-table-wrap"><table class="tierly-admin-table"><thead><tr>${headers.map((header) => `<th>${esc(header)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+  function bindTableTools() {
+    root.querySelectorAll(".tierly-admin-table").forEach((table) => {
+      const searchInput = table.parentElement?.previousElementSibling?.querySelector?.(`input[type="search"]`);
+      const exportBtn = table.parentElement?.previousElementSibling?.querySelector?.(`button[data-table-id="${table.id}"]`);
+      if (searchInput) {
+        searchInput.addEventListener("input", () => {
+          const query = searchInput.value.toLowerCase();
+          table.querySelectorAll("tbody tr").forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? "" : "none";
+          });
+        });
+      }
+      if (exportBtn) {
+        exportBtn.addEventListener("click", () => exportTableCsv(table));
+      }
+    });
+    root.querySelectorAll("[data-empty-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.emptyAction;
+        if (action === "create_event") { state.view = "events"; render(); }
+      });
+    });
+  }
+
+  function exportTableCsv(table) {
+    const headers = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+    const rows = [...table.querySelectorAll("tbody tr")].filter((tr) => tr.style.display !== "none").map((tr) =>
+      [...tr.querySelectorAll("td")].map((td) => td.textContent.trim())
+    );
+    const csv = [headers, ...rows].map((row) => row.map(csvEscape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tirly-admin-${table.id}-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
   }
 
   function gameName(id) {
@@ -159,11 +196,12 @@
 
   function render() {
     if (!state.authorized) return state.message ? (root.innerHTML = `<div class="tierly-admin-gate"><h2>Acceso no autorizado</h2><p>${esc(state.message)}</p></div>`) : showLogin();
-    root.innerHTML = `<div class="tierly-admin-head"><div><p class="tierly-admin-kicker">TIRLY insights</p><h1>Administración</h1><p class="tierly-admin-note">Datos agregados por comunidad, protegidos por RLS.</p></div><div class="tierly-admin-head-actions">${communitySelector()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh">Actualizar</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
+    root.innerHTML = `<div class="tierly-admin-head"><div><p class="tierly-admin-kicker">TIRLY insights</p><h1>Administración</h1><p class="tierly-admin-note">Datos agregados por comunidad, protegidos por RLS.</p></div><div class="tierly-admin-head-actions">${communitySelector()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh" ${state.loading ? "disabled" : ""} aria-busy="${state.loading}">${state.loading ? "Cargando…" : "Actualizar"}</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
     root.querySelectorAll("[data-admin-view]").forEach((button) => button.addEventListener("click", () => { state.view = button.dataset.adminView; render(); }));
     root.querySelector("#tierly-admin-refresh").addEventListener("click", load);
     root.querySelector("#tierly-admin-community")?.addEventListener("change", (event) => { state.selectedCommunity = state.communities[Number(event.target.value)] || null; load(); });
     renderContent();
+    bindTableTools();
   }
 
   async function updateSuggestion(button) {
@@ -250,6 +288,15 @@
     if (!session) return render();
     await load();
     supabase.auth.onAuthStateChange((event, nextSession) => { state.authorized = Boolean(nextSession); state.message = ""; load(); });
+    document.addEventListener("keydown", (event) => {
+      if ((event.key === "r" || event.key === "R") && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        const active = document.activeElement;
+        if (!(active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable))) {
+          event.preventDefault();
+          load();
+        }
+      }
+    });
   }
 
   window.TierlyAdmin = { open: () => load() };

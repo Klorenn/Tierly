@@ -693,12 +693,25 @@
      .tierly-admin-tabs button, .tierly-admin-action { border:1px solid var(--card-border); border-radius:999px; background:var(--card); color:var(--ink); padding:8px 14px; cursor:pointer; font:600 12px var(--sans); }
      .tierly-admin-tabs button.is-active, .tierly-admin-action { background:var(--teal-bright); border-color:transparent; color:#fff; }
      .tierly-admin-tabs button:focus-visible, .tierly-admin-action:focus-visible, #tierly-admin-refresh:focus-visible { outline:3px solid var(--clay); outline-offset:3px; }
-     .tierly-admin-table-wrap { overflow-x:auto; background:var(--card); border:1px solid var(--card-border); border-radius:16px; }
-     .tierly-admin-table { width:100%; border-collapse:collapse; min-width:560px; }
-     .tierly-admin-table th, .tierly-admin-table td { padding:13px 15px; text-align:left; border-bottom:1px solid var(--card-border); font-size:13px; }
-     .tierly-admin-table th { color:var(--ink-dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
-     .tierly-admin-table td { color:var(--ink); }
-     .tierly-admin-table tr:last-child td { border-bottom:0; }
+.tierly-admin-table-wrap { overflow-x:auto; background:var(--card); border:1px solid var(--card-border); border-radius:16px; }
+    .tierly-admin-table { width:100%; border-collapse:collapse; min-width:560px; }
+    .tierly-admin-table thead th { position:sticky; top:0; z-index:1; background:var(--card); }
+    .tierly-admin-table th, .tierly-admin-table td { padding:13px 15px; text-align:left; border-bottom:1px solid var(--card-border); font-size:13px; }
+    .tierly-admin-table th { color:var(--ink-dim); font-size:11px; text-transform:uppercase; letter-spacing:.05em; }
+    .tierly-admin-table td { color:var(--ink); }
+    .tierly-admin-table tr:last-child td { border-bottom:0; }
+    .tierly-admin-toolbar { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+    .tierly-admin-search { flex:1; min-width:200px; max-width:360px; }
+    .tierly-admin-search input { width:100%; padding:8px 12px; border:1px solid var(--card-border); border-radius:8px; background:var(--sand); color:var(--ink); font:inherit; }
+    .tierly-admin-search input:focus-visible { outline:3px solid var(--clay); outline-offset:2px; }
+    .tierly-admin-export { margin-left:auto; }
+    @media (max-width: 720px) {
+      .tierly-admin-tabs { overflow-x:auto; flex-wrap:nowrap; padding-bottom:8px; scrollbar-width:thin; }
+      .tierly-admin-tabs button { white-space:nowrap; flex-shrink:0; }
+      .tierly-admin-toolbar { flex-direction:column; align-items:stretch; }
+      .tierly-admin-search { max-width:none; }
+      .tierly-admin-export { margin-left:0; }
+    }
      .tierly-admin-game-name { display:inline-flex; align-items:center; gap:9px; }
      .tierly-admin-game-icon { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px; background:var(--sand-soft); color:var(--teal-bright); }
      .tierly-admin-game-icon svg { width:16px; height:16px; stroke-width:2.2; }

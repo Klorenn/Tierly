@@ -1429,6 +1429,7 @@ import { calculatePoints } from "./points.mjs";
     if (!banner) return;
     banner.hidden = !isAdmin;
     banner.innerHTML = isAdmin ? `<a href="/tierly/admin" aria-label="${esc(t("adminPanel"))}">${esc(t("adminPanel"))}</a>` : "";
+    renderNav();
   }
 
   async function initAuth() {
@@ -1469,8 +1470,9 @@ import { calculatePoints } from "./points.mjs";
       <button class="lb-nav-item${activeView === "rewards" ? " is-active" : ""}" data-view="rewards"><i data-lucide="gift"></i><span>${t("navRewards")}</span></button>
       <button class="lb-nav-item${activeView === "chess" ? " is-active" : ""}" data-view="chess"><i data-lucide="swords"></i><span>${t("navChess")}</span></button>
       <button class="lb-nav-item${activeView === "profile" ? " is-active" : ""}" data-view="profile"><i data-lucide="user"></i><span>${t("navProfile")}</span></button>
-       <button class="lb-nav-item${activeView === "settings" ? " is-active" : ""}" data-view="settings"><i data-lucide="settings"></i><span>${t("navSettings")}</span></button>
-       `;
+      <button class="lb-nav-item${activeView === "settings" ? " is-active" : ""}" data-view="settings"><i data-lucide="settings"></i><span>${t("navSettings")}</span></button>
+      ${isAdmin ? `<button class="lb-nav-item${activeView === "admin" ? " is-active" : ""}" data-view="admin"><i data-lucide="shield"></i><span>${t("navAdmin")}</span></button>` : ""}
+      `;
     el.querySelectorAll("button").forEach((btn) => btn.addEventListener("click", () => switchView(btn.dataset.view)));
     const menuToggle = document.querySelector("#lb-menu-toggle");
     if (menuToggle && menuToggle.dataset.bound !== "true") menuToggle.addEventListener("click", () => {
