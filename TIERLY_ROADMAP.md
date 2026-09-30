@@ -17,6 +17,8 @@ Tierly ayuda a organizadores de Discord a convocar eventos de gaming, reconocer 
 
 Este roadmap prioriza el producto comunitario. No expande ajedrez/racer ni elimina Passport u otras integraciones sin justificación y transición revisada.
 
+**Estado de implementación al 30 de septiembre de 2026:** Fase 0 y el ciclo técnico de Fase 1 están implementados en el standalone y cubiertos por pruebas. La verificación de producción, la aprobación/confirmación externa de Discord y el piloto con comunidades reales siguen pendientes; smart contracts y credenciales portables quedan fuera de este alcance.
+
 ## Orden de ejecución
 
 **Permisos de datos → ciclo de evento → repetición → inteligencia útil → descubrimiento → credenciales opcionales.**
@@ -31,15 +33,15 @@ Discord prohíbe perfilar identidades/relaciones con datos de API y comercializa
 
 Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 exige revisión al alcanzar 10.000 usuarios totales y renovación anual del acceso privilegiado. Verificar el estado concreto de la app en el portal. [Gateway](https://docs.discord.com/developers/events/gateway-events#presence-update), [requisitos de acceso](https://discord.com/blog/updated-requirements-to-how-apps-access-data-in-servers).
 
-- [ ] Mapear cada dato: origen, finalidad, campos, visibilidad, retención, borrado y responsable.
+- [x] Mapear cada dato: origen, finalidad, campos, visibilidad, retención, borrado y responsable. *(schema V0, privacidad y documentación operativa)*
 - [ ] Pedir confirmación/revisión documentada a Discord para presencia, estadísticas comunitarias, perfil persistente cruzado y oferta comercial. Registrar respuesta y restricciones; solicitud enviada no equivale a aprobación.
 - [ ] Validar alternativa con juegos autodeclarados, check-in explícito y confirmación del organizador, sin observación oculta ni perfilado prohibido. Revisar también su tratamiento de identidad/datos.
 - [ ] Mantener presencia y portabilidad apagadas sin autorización suficiente; avanzar solo con el alcance mínimo validado.
 - [ ] Entrevistar organizadores y jugadores sobre convocatoria, abandono y reconocimiento; registrar cómo resuelven hoy un problema concreto.
-- [ ] Auditar el modelo actual de leaderboard/comunidad antes de diseñar migración multi-community. Inventariar datos y dependencias compartidas; no asumir que ya existe aislamiento por guild.
-- [ ] Auditar `discord_id` asociado a ID interno estable, nunca emparejar por display name; verificar roles y autorización por guild en servidor.
+- [x] Auditar el modelo actual de leaderboard/comunidad antes de diseñar migración multi-community. Inventariar datos y dependencias compartidas; no asumir que ya existe aislamiento por guild.
+- [x] Auditar `discord_id` asociado a ID interno estable, nunca emparejar por display name; verificar roles y autorización por guild en servidor.
 - [ ] Preparar host con redirects Auth, CORS exacto, URLs canónicas y enlaces del bot coherentes, preservando orígenes Tellus durante coexistencia.
-- [ ] Definir operación Gateway del bot como proceso persistente: reinicio, reconexión, secretos, monitoreo y responsable. La web estática no lo reemplaza.
+- [x] Definir operación Gateway del bot como proceso persistente: reinicio, reconexión, secretos, monitoreo y responsable. La web estática no lo reemplaza. *(systemd, healthcheck y rollback documentados)*
 
 **Salida:** matriz de usos permitidos/bloqueados, alternativa revisada, comunidades interesadas y flujos verificados en nuevo host: login, ranking/perfil, vinculación, administración autorizada e integraciones críticas existentes. Rollback: devolver dominio al despliegue Tellus conservando datos/orígenes; no resetear Supabase.
 
@@ -49,18 +51,18 @@ Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 e
 
 **Flujo:** crear evento → inscripción voluntaria/perfil mínimo → check-in (presencia solo si está permitida) → cierre y confirmación → XP/stamp acotado → convocar otro evento.
 
-- [ ] Crear eventos por comunidad: juego, horario/zona, capacidad, instrucciones, organizador y reglas visibles antes de inscribirse.
-- [ ] Manejar borrador, publicado, cancelado y cerrado; almacenar instante UTC y mostrar zona elegida, incluyendo cambios estacionales.
-- [ ] Permitir inscripción, salida y check-in explícitos; perfil privado por defecto, publicación con opt-in separado.
-- [ ] Separar consentimientos de evento/comunidad, observación opcional, notificaciones y publicación. Un permiso local no habilita uso entre servidores.
-- [ ] Confirmación/corrección del organizador con motivo y auditoría; mostrar emisor y evidencia de cada reconocimiento.
-- [ ] XP de participación y stamp de evento con reglas simples, límites por evento/período, idempotencia y reversión de errores.
+- [x] Crear eventos por comunidad: juego, horario/zona, capacidad, instrucciones, organizador y reglas visibles antes de inscribirse. *(capacidad avanzada queda para el piloto)*
+- [x] Manejar borrador, publicado, cancelado y cerrado; almacenar instante UTC y mostrar zona elegida, incluyendo cambios estacionales.
+- [x] Permitir inscripción, salida y check-in explícitos; perfil privado por defecto, publicación con opt-in separado.
+- [x] Separar consentimientos de evento/comunidad, observación opcional, notificaciones y publicación. Un permiso local no habilita uso entre servidores.
+- [x] Confirmación/corrección del organizador con motivo y auditoría; mostrar emisor y evidencia de cada reconocimiento. *(confirmación e idempotencia implementadas; apelación avanzada queda para el piloto)*
+- [x] XP de participación y stamp de evento con reglas simples, límites por evento/período, idempotencia y reversión de errores. *(reversión avanzada queda para el piloto)*
 - [ ] Separar XP de evento/global permitido de reputación local: asistencia no certifica confianza, habilidad ni estatus en otra comunidad.
 - [ ] Historial offchain solo dentro del alcance autorizado. Agregación personal entre servidores bloqueada hasta aprobación.
-- [ ] Recordatorios en canales autorizados; mensajes personales únicamente consentidos y necesarios.
-- [ ] Resolver cierre repetido, cancelación, retirada de consentimiento, expulsión de guild y desconexión del bot.
-- [ ] Exclusión y borrado verificables; quitar la app detiene recolección y aplica retención definida.
-- [ ] Si la auditoría exige cambiar el modelo, migrar a guild scope con pruebas de aislamiento, revisión de datos compartidos y rollback antes de habilitar más comunidades.
+- [x] Recordatorios en canales autorizados; mensajes personales únicamente consentidos y necesarios.
+- [x] Resolver cierre repetido, cancelación, retirada de consentimiento, expulsión de guild y desconexión del bot.
+- [x] Exclusión y borrado verificables; quitar la app detiene recolección y aplica retención definida. *(verificación live pendiente)*
+- [x] Si la auditoría exige cambiar el modelo, migrar a guild scope con pruebas de aislamiento, revisión de datos compartidos y rollback antes de habilitar más comunidades.
 
 **Criterios de salida:**
 
