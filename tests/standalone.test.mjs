@@ -4,8 +4,11 @@ import { readFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 test('standalone deploy routes preserve root, OAuth and admin entry points', async () => {
  const config = JSON.parse(await readFile('vercel.json', 'utf8'));
- for (const route of ['/', '/tierly', '/admin/event', '/admin/event/']) {
+ for (const route of ['/', '/admin/event', '/admin/event/']) {
   assert.ok(config.rewrites.some(r => r.source === route && r.destination === '/tierly/index.html'));
+ }
+ for (const source of ['/tierly', '/tierly/']) {
+  assert.ok(config.redirects.some(r => r.source === source && r.destination === '/' && r.permanent));
  }
  assert.ok(config.redirects.some(r => r.source === '/ops/tierly' && r.destination === '/ops/tierly/' && r.permanent));
  assert.ok(config.rewrites.every(r => !r.source.includes('merch') && !r.source.includes('resources')));

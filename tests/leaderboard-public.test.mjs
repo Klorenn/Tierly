@@ -7,9 +7,21 @@ const page = await readFile(new URL("../tierly/index.html", import.meta.url), "u
 const app = await readFile(new URL("../tierly/app.js", import.meta.url), "utf8");
 const vercelConfig = await readFile(new URL("../vercel.json", import.meta.url), "utf8");
 
-test("vercel.json rewrites /tierly to tierly/index.html", () => {
-  const rules = JSON.parse(vercelConfig).rewrites;
-  assert.ok(rules.some((r) => r.source === "/tierly" && r.destination === "/tierly/index.html"));
+test("vercel.json sirve la raiz y manda /tierly a la raiz con 301", () => {
+  const config = JSON.parse(vercelConfig);
+  assert.ok(config.rewrites.some((r) => r.source === "/" && r.destination === "/tierly/index.html"));
+  for (const source of ["/tierly", "/tierly/"]) {
+    assert.ok(
+      config.redirects.some((r) => r.source === source && r.destination === "/" && r.permanent),
+      `falta el 301 de ${source} a /`,
+    );
+  }
+  assert.ok(!config.rewrites.some((r) => r.source === "/tierly"));
+});
+
+test("la pagina declara la raiz como URL canonica", () => {
+  assert.match(page, /<link rel="canonical" href="https:\/\/www\.tirly\.xyz\/" \/>/);
+  assert.match(page, /<meta property="og:url" content="https:\/\/www\.tirly\.xyz\/" \/>/);
 });
 
 test("public page renders the ranking, bracket, rewards, and auth sections", () => {
