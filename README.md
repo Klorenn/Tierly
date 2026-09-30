@@ -40,3 +40,9 @@ Frontend Supabase URL/publishable keys are intentionally public and retained. Se
 ## Verification and rollback
 
 The extracted Node suite covers static security/config assertions and pure simulations; the standalone suite checks local HTTP routes/assets and backend-source exclusion. It does not prove live OAuth, permissions, realtime gameplay or hosted CORS. Before cutover, verify public ranking, Discord login, profile linking, chess and authorized event administration on the new host. Keep the Tellus deployment and existing URLs live until those checks pass. Rollback consists of restoring domain/DNS to the existing deployment and preserving existing Auth/CORS origins; no database rollback is needed because data was never moved.
+
+## Reporte técnico del piloto
+
+La migración `20260930230000_tierly_pilot_report.sql` crea `public.tierly_pilot_report()`, una RPC global agregada para health del bot, sesiones por `closed_reason`, juegos activos, rollups, sugerencias, eventos, registros, check-ins, confirmaciones y XP/stamps. No devuelve IDs personales, nombres ni filas individuales.
+
+Ejecutar `scripts/tierly-pilot-report.sql` únicamente con una conexión autenticada como `service_role`. La RPC revoca el acceso a `public`, `anon` y `authenticated`; no debe exponerse mediante frontend ni publishable key.

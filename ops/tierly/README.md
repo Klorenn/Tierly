@@ -49,3 +49,9 @@ usa Supabase Auth real — necesitás una cuenta con rol no-`viewer` en la org.
   vuelve a pegarle a la API de Discord con el bot token del lado servidor
   (con cache de 10 minutos en `gaming_players.discord_verified_at` para
   absorber picos de tráfico el día del evento).
+- Después del login, `discord-verify` también puede recibir la acción
+  `claim_community_admin`. La función valida la sesión, obtiene el ID de Discord
+  de la identidad OAuth, consulta el guild configurado con `DISCORD_BOT_TOKEN`,
+  compara el `owner_id` de Discord y recién entonces crea la comunidad y el
+  registro `community_admins` con `auth.users.id`. `guild_id` y `owner` enviados
+  por el navegador se ignoran; el endpoint nunca acepta esos valores del cliente.

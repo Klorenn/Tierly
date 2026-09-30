@@ -230,6 +230,52 @@ Deno.serve(async (request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    const discordIdentity = user.identities?.find((i: { provider: string }) => i.provider === "discord");
+    const discordId = discordIdentity?.identity_data?.provider_id ?? discordIdentity?.identity_data?.sub;
+    if (!discordId) return json({ error: "Sesión sin identidad de Discord" }, 400);
+
+    // El guild y el owner se obtienen del servidor. Nunca se aceptan del frontend.
+    if (body.action === "claim_community_admin") {
+      const botToken = Deno.env.get("DISCORD_BOT_TOKEN");
+      const guildId = Deno.env.get("DISCORD_GUILD_ID");
+      if (!botToken || !guildId) return json({ error: "Discord todavía no está configurado" }, 503);
+
+      const guildResponse = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+        headers: { Authorization: `Bot ${botToken}` },
+      });
+      if (!guildResponse.ok) {
+        console.error("discord-verify: Discord guild lookup failed", { guildId, status: guildResponse.status });
+        return json({ error: guildResponse.status === 401 || guildResponse.status === 403
+          ? "El bot de Discord no puede consultar el guild configurado"
+          : "No se pudo validar el guild configurado" }, 502);
+      }
+
+      const guild = await guildResponse.json();
+      if (guild.owner_id !== discordId) return json({ error: "La cuenta de Discord no es dueña del guild configurado" }, 403);
+
+      const { error: communityError } = await admin.from("communities").upsert({
+        guild_id: guildId,
+        name: typeof guild.name === "string" && guild.name.trim() ? guild.name.trim().slice(0, 160) : `Guild ${guildId}`,
+        icon_url: typeof guild.icon === "string" ? `https://cdn.discordapp.com/icons/${guildId}/${guild.icon}.png` : null,
+      }, { onConflict: "guild_id" });
+      if (communityError) {
+        console.error("community upsert failed", communityError);
+        return json({ error: "No se pudo crear la comunidad" }, 500);
+      }
+
+      const { error: adminError } = await admin.from("community_admins").upsert({
+        guild_id: guildId,
+        user_id: user.id,
+        discord_user_id: discordId,
+        role: "admin",
+      }, { onConflict: "guild_id,user_id" });
+      if (adminError) {
+        console.error("community admin upsert failed", adminError);
+        return json({ error: "No se pudo asignar el administrador de la comunidad" }, 500);
+      }
+      return json({ claimed: true, guild_id: guildId, role: "admin" });
+    }
+
     // Admin-only: look up a walk-in player's Discord avatar by id, so staff
     // can back-fill a photo for someone who hasn't logged in yet themselves.
     if (body.action === "lookup_avatar" && typeof body.discord_id === "string") {
@@ -261,9 +307,6 @@ Deno.serve(async (request) => {
       return json({ avatar_url: avatarUrl });
     }
 
-    const discordIdentity = user.identities?.find((i: { provider: string }) => i.provider === "discord");
-    const discordId = discordIdentity?.identity_data?.provider_id ?? discordIdentity?.identity_data?.sub;
-    if (!discordId) return json({ error: "Sesión sin identidad de Discord" }, 400);
     const avatarUrl = discordIdentity?.identity_data?.avatar_url
       ?? user.user_metadata?.avatar_url
       ?? user.user_metadata?.picture

@@ -29,5 +29,5 @@ const pkg = JSON.parse(await readFile(new URL("../discord-bot/package.json", imp
 
 test("discord-bot package declares discord.js and starts via npm start", () => {
   assert.ok(pkg.dependencies["discord.js"]);
-  assert.equal(pkg.scripts.start, "node index.js");
+  assert.equal(pkg.scripts.start, "node --env-file=.env index.js");
 });

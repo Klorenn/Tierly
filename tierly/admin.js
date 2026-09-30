@@ -7,7 +7,7 @@
   if (!bridge || !root) return;
   root.closest(".lb-view")?.setAttribute("data-view", "admin");
   const supabase = bridge.supabase;
-  const state = { view: "events", communities: [], games: [], rollups: [], suggestions: [], players: [], events: [], attendance: [], ledger: [], player: null, session: null, authorized: false, isAdmin: false, loading: false, message: "" };
+  const state = { view: "events", communities: [], selectedCommunity: null, games: [], rollups: [], suggestions: [], players: [], events: [], attendance: [], ledger: [], player: null, session: null, authorized: false, isAdmin: false, loading: false, message: "" };
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   const number = (value) => new Intl.NumberFormat("es-CL").format(Number(value || 0));
   const timezones = ["America/Santiago", "America/Argentina/Buenos_Aires", "America/Bogota", "America/Mexico_City", "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Madrid", "Asia/Tokyo", "UTC"];
@@ -56,6 +56,18 @@
     return supabase.from(table).select("*");
   }
 
+  function communityId() {
+    return state.selectedCommunity?.guild_id || null;
+  }
+
+  function communitySelector() {
+    return state.communities.length > 1 ? `<label class="tierly-admin-community-picker">Comunidad<select id="tierly-admin-community" aria-label="Seleccionar comunidad">${state.communities.map((community, index) => `<option value="${index}" ${community.guild_id === communityId() ? "selected" : ""}>${esc(community.name)}</option>`).join("")}</select></label>` : "";
+  }
+
+  function showOnboarding() {
+    root.innerHTML = `<div class="tierly-admin-gate" role="status"><p class="tierly-admin-kicker">Primer paso</p><h2>Conectar una comunidad</h2><p>No hay comunidades disponibles para esta cuenta. Cuando se configure una comunidad administrada, aparecerá aquí.</p></div>`;
+  }
+
   function showLogin() {
     root.innerHTML = `<div class="tierly-admin-gate"><h2>Administración de insights</h2><p>Inicia sesión con Discord para comprobar el acceso de administrador.</p><button type="button" class="lb-discord-btn" id="tierly-admin-login">Iniciar sesión con Discord</button></div>`;
     root.querySelector("#tierly-admin-login").addEventListener("click", () => supabase.auth.signInWithOAuth({ provider: "discord", options: { redirectTo: `${window.location.origin}/tierly?admin=1` } }));
@@ -92,7 +104,7 @@
       title = "Eventos comunitarios";
       const communityTimezones = state.communities.map((community) => community.timezone).filter(validTimezone);
       const timezoneOptions = [...new Set([...communityTimezones, ...timezones])];
-      body = `${state.isAdmin ? `<div class="tierly-admin-event-form"><h3>Crear evento</h3><form id="tierly-event-form"><label>Comunidad<select name="guild_id" required>${state.communities.map((community) => `<option value="${esc(community.guild_id)}" data-timezone="${esc(community.timezone)}">${esc(community.name)}</option>`).join("")}</select></label><label>Zona horaria<select name="timezone" required>${timezoneOptions.map((timezone) => `<option value="${esc(timezone)}">${esc(timezone)}</option>`).join("")}</select></label><label>Nombre<input name="name" required maxlength="160"></label><label>Fecha y hora local<input name="starts_at" type="datetime-local" required></label><label>Fin local<input name="ends_at" type="datetime-local"></label><label>Ubicación<input name="location" maxlength="200"></label><label>Enlace de evento<input name="luma_url" type="url"></label><label>Descripción<textarea name="description" maxlength="1000"></textarea></label><button class="tierly-admin-action" type="submit">Crear evento</button></form></div>` : ""}${state.events.length ? state.events.map((event) => eventCard(event)).join("") : `<p class="lb-empty">No hay eventos comunitarios todavía.</p>`}`;
+      body = `${state.isAdmin ? `<div class="tierly-admin-event-form"><h3>Crear evento</h3><form id="tierly-event-form"><input type="hidden" name="community_index" value="${state.communities.indexOf(state.selectedCommunity)}"><label>Zona horaria<select name="timezone" required>${timezoneOptions.map((timezone) => `<option value="${esc(timezone)}">${esc(timezone)}</option>`).join("")}</select></label><label>Nombre<input name="name" required maxlength="160"></label><label>Fecha y hora local<input name="starts_at" type="datetime-local" required></label><label>Fin local<input name="ends_at" type="datetime-local"></label><label>Ubicación<input name="location" maxlength="200"></label><label>Enlace de evento<input name="luma_url" type="url"></label><label>Descripción<textarea name="description" maxlength="1000"></textarea></label><button class="tierly-admin-action" type="submit">Crear evento</button></form></div>` : ""}${state.events.length ? state.events.map((event) => eventCard(event)).join("") : `<p class="lb-empty">No hay eventos comunitarios todavía.</p>`}`;
     } else if (view === "games") {
       const activePlayers = state.players.filter((player) => player.is_active);
       const historicalPlayers = state.players.filter((player) => !player.is_active);
@@ -132,12 +144,6 @@
     if (window.lucide?.createIcons) window.lucide.createIcons();
     root.querySelectorAll(".tierly-admin-action").forEach((button) => button.addEventListener("click", () => button.dataset.eventAction ? eventAction(button) : updateSuggestion(button)));
     root.querySelector("#tierly-event-form")?.addEventListener("submit", createEvent);
-    const eventForm = root.querySelector("#tierly-event-form");
-    eventForm?.querySelector('[name="guild_id"]')?.addEventListener("change", (change) => {
-      const timezone = change.currentTarget.selectedOptions[0]?.dataset.timezone;
-      if (validTimezone(timezone)) eventForm.querySelector('[name="timezone"]').value = timezone;
-    });
-    if (eventForm) eventForm.querySelector('[name="guild_id"]')?.dispatchEvent(new Event("change"));
     root.querySelectorAll("[data-event-action]").forEach((button) => button.addEventListener("click", () => eventAction(button)));
   }
 
@@ -153,9 +159,10 @@
 
   function render() {
     if (!state.authorized) return state.message ? (root.innerHTML = `<div class="tierly-admin-gate"><h2>Acceso no autorizado</h2><p>${esc(state.message)}</p></div>`) : showLogin();
-    root.innerHTML = `<div class="tierly-admin-head"><div><p class="tierly-admin-kicker">Tierly insights</p><h1>Administración</h1><p class="tierly-admin-note">Datos agregados por comunidad, protegidos por RLS.</p></div><button type="button" class="lb-mini-btn" id="tierly-admin-refresh">Actualizar</button></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
+    root.innerHTML = `<div class="tierly-admin-head"><div><p class="tierly-admin-kicker">Tierly insights</p><h1>Administración</h1><p class="tierly-admin-note">Datos agregados por comunidad, protegidos por RLS.</p></div><div class="tierly-admin-head-actions">${communitySelector()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh">Actualizar</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
     root.querySelectorAll("[data-admin-view]").forEach((button) => button.addEventListener("click", () => { state.view = button.dataset.adminView; render(); }));
     root.querySelector("#tierly-admin-refresh").addEventListener("click", load);
+    root.querySelector("#tierly-admin-community")?.addEventListener("change", (event) => { state.selectedCommunity = state.communities[Number(event.target.value)] || null; load(); });
     renderContent();
   }
 
@@ -181,7 +188,7 @@
     const startsAt = localDateTimeToUtc(values.starts_at, values.timezone);
     const endsAt = values.ends_at ? localDateTimeToUtc(values.ends_at, values.timezone) : null;
     if (!startsAt || (values.ends_at && (!endsAt || new Date(endsAt) < new Date(startsAt)))) { state.message = "El horario del evento no es válido."; renderContent(); return; }
-    const result = await supabase.rpc("tierly_create_event", { p_guild_id: values.guild_id, p_name: values.name, p_event_date: values.starts_at.slice(0, 10), p_starts_at: startsAt, p_ends_at: endsAt, p_timezone: values.timezone, p_location: values.location || null, p_luma_url: values.luma_url || null, p_description: values.description || null });
+    const result = await supabase.rpc("tierly_create_event", { p_guild_id: communityId(), p_name: values.name, p_event_date: values.starts_at.slice(0, 10), p_starts_at: startsAt, p_ends_at: endsAt, p_timezone: values.timezone, p_location: values.location || null, p_luma_url: values.luma_url || null, p_description: values.description || null });
     state.message = result.error?.message || "";
     await load();
   }
@@ -205,7 +212,12 @@
     const adminResult = await supabase.from("community_admins").select("guild_id, role");
     const guildIds = (adminResult.data || []).map((row) => row.guild_id).filter(Boolean);
     state.isAdmin = !adminResult.error && guildIds.length > 0;
-    const events = await supabase.from("gaming_events").select("id, guild_id, name, event_date, starts_at, ends_at, timezone, location, luma_url, description, status").order("starts_at", { ascending: true });
+    const communities = await supabase.from("communities").select("guild_id, name, timezone, presence_enabled").in("guild_id", guildIds);
+    state.communities = communities.data || [];
+    state.selectedCommunity = state.communities.find((community) => community.guild_id === state.selectedCommunity?.guild_id) || state.communities[0] || null;
+    if (!state.selectedCommunity) { state.isAdmin = false; state.loading = false; showOnboarding(); return; }
+    const selectedGuildId = communityId();
+    const events = await supabase.from("gaming_events").select("id, guild_id, name, event_date, starts_at, ends_at, timezone, location, luma_url, description, status").eq("guild_id", selectedGuildId).order("starts_at", { ascending: true });
     const eventIds = (events.data || []).map((row) => row.id);
     const [player, attendance] = await Promise.all([
       supabase.from("gaming_players").select("id, display_name, avatar_url").eq("auth_user_id", state.session.user.id).maybeSingle(),
@@ -218,14 +230,13 @@
     state.ledger = ledger.data || [];
     state.attendance = (attendance.data || []).map((row) => ({ ...row, is_current_user: Boolean(state.player && String(row.player_id) === String(state.player.id)) }));
     if (state.isAdmin) {
-      const [communities, games, rollups, suggestions, players] = await Promise.all([
-        supabase.from("communities").select("guild_id, name, timezone, presence_enabled").in("guild_id", guildIds),
+      const [games, rollups, suggestions, players] = await Promise.all([
         supabase.from("games").select("id, display_name, canonical_name"),
-        supabase.from("daily_game_rollups").select("guild_id, game_id, day, unique_players, total_minutes, session_count").in("guild_id", guildIds),
-        supabase.from("suggested_events").select("id, guild_id, game_id, generated_at, window_days, player_count, status").in("guild_id", guildIds),
-         supabase.from("tierly_admin_game_players").select("guild_id, game_id, display_name, avatar_url, is_active, started_at").in("guild_id", guildIds),
+        supabase.from("daily_game_rollups").select("guild_id, game_id, day, unique_players, total_minutes, session_count").eq("guild_id", selectedGuildId),
+        supabase.from("suggested_events").select("id, guild_id, game_id, generated_at, window_days, player_count, status").eq("guild_id", selectedGuildId),
+         supabase.from("tierly_admin_game_players").select("guild_id, game_id, display_name, avatar_url, is_active, started_at").eq("guild_id", selectedGuildId),
       ]);
-      state.communities = communities.data || []; state.games = games.data || []; state.rollups = rollups.data || []; state.suggestions = suggestions.data || []; state.players = players.data || [];
+      state.games = games.data || []; state.rollups = rollups.data || []; state.suggestions = suggestions.data || []; state.players = players.data || [];
     }
     state.message = state.message || [events, attendance, ledger].find((result) => result.error)?.error?.message || "";
     state.loading = false;

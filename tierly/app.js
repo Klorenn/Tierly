@@ -1315,6 +1315,15 @@ import { calculatePoints } from "./points.mjs";
       ptr = { data: null, error: invokeError };
     }
     const { data, error } = ptr;
+    // El backend decide si la cuenta es dueña del guild; no se envía guild_id.
+    if (!error && currentSession) {
+      const claim = await supabase.functions.invoke("discord-verify", {
+        body: { action: "claim_community_admin" },
+        headers: { Authorization: `Bearer ${currentSession.access_token}` },
+      });
+      if (claim.error && claim.error.status !== 403) console.error("[TIERLY] community claim failed:", claim.error.message);
+      await checkAdminVisibility(currentSession);
+    }
     if (error || !data?.player) {
       console.error("[TIERLY] discord-verify failed:", error?.message || data?.error || "sin respuesta");
       profileSyncError = data?.error || error?.message || "";

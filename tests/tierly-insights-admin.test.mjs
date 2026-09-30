@@ -33,6 +33,17 @@ test("el panel resuelve al jugador por la sesión y conserva discord_user_id fue
   assert.match(admin, /avatar_url/);
 });
 
+test("el panel selecciona una comunidad autorizada y no serializa sus IDs en HTML", () => {
+  assert.match(admin, /from\(["']community_admins["']\)\.select\(["']guild_id, role["']\)/);
+  assert.match(admin, /state\.selectedCommunity/);
+  assert.match(admin, /id="tierly-admin-community"/);
+  assert.match(admin, /state\.communities\[Number\(event\.target\.value\)\]/);
+  assert.match(admin, /\.eq\(["']guild_id["'], selectedGuildId\)/g);
+  assert.doesNotMatch(admin, /<option value="\$\{esc\(community\.guild_id\)\}/);
+  assert.match(admin, /showOnboarding/);
+  assert.match(admin, /No hay comunidades disponibles/);
+});
+
 test("la migración mantiene RLS y evita filtrar identidades hacia la página pública", () => {
   const migration = readFileSync(new URL("../supabase/migrations/20260930120000_tierly_observed_member_identity.sql", import.meta.url), "utf8");
   assert.match(migration, /security_invoker\s*=\s*true/);
