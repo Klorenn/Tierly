@@ -8,6 +8,19 @@ import { calculatePoints } from "./points.mjs";
   const SUPABASE_KEY = "sb_publishable_oiVUNWzo3p3SXLdr8in3XQ_zbZJiNd7";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  // ID de la aplicación de Discord (público: viaja en la URL de invitación).
+  // PENDIENTE: reemplazar por el Application ID real del portal de Discord. Mientras sea
+  // el placeholder, `inviteUrl()` devuelve null y el CTA no se renderiza — preferimos no
+  // mostrar botón antes que mostrar uno que lleva a un error de Discord.
+  const DISCORD_APP_ID = "000000000000000000";
+  // View Channels + Send Messages + Embed Links + Read Message History. Lo mínimo para
+  // anunciar eventos y recordatorios. `GUILD_PRESENCES` es un intent del Gateway, no un
+  // permiso de invitación, y se aprueba aparte en el portal.
+  const DISCORD_BOT_PERMISSIONS = "84992";
+  const inviteUrl = () => (/^0+$/.test(DISCORD_APP_ID)
+    ? null
+    : `https://discord.com/oauth2/authorize?client_id=${DISCORD_APP_ID}&permissions=${DISCORD_BOT_PERMISSIONS}&scope=bot+applications.commands`);
+
   const STRINGS = {
     en: {
       title: "TIRLY Gaming Leaderboard",
@@ -112,6 +125,9 @@ import { calculatePoints } from "./points.mjs";
       profileSyncing: "Syncing your profile…",
       profileSyncRetry: "Retry",
       navChess: "Chess",
+      navDiscover: "Discover",
+      inviteBot: "Add Tierly to your server",
+      inviteBotHint: "Tierly reads which games your members play — only after each one opts in — and turns that into events worth showing up to.",
       chessBotTitle: "Play the Bot",
       chessChallengeTitle: "Challenge a Player",
       chessChallengePlaceholder: "Enter a player's username…",
@@ -275,6 +291,9 @@ import { calculatePoints } from "./points.mjs";
       profileSyncing: "Sincronizando tu perfil…",
       profileSyncRetry: "Reintentar",
       navChess: "Ajedrez",
+      navDiscover: "Descubrir",
+      inviteBot: "Añadir Tierly a tu servidor",
+      inviteBotHint: "Tierly ve qué juegan tus miembros — solo después de que cada uno acepta — y lo convierte en eventos a los que vale la pena ir.",
       chessBotTitle: "Jugar contra el bot",
       chessChallengeTitle: "Desafiar a un jugador",
       chessChallengePlaceholder: "Ingresa el usuario del jugador…",
@@ -382,6 +401,7 @@ import { calculatePoints } from "./points.mjs";
     player: () => currentPlayer,
     syncState: () => profileSyncState,
      switchView: (view) => switchView(view),
+    inviteUrl,
   };
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -1459,6 +1479,7 @@ import { calculatePoints } from "./points.mjs";
     menuToggle?.setAttribute("aria-expanded", "false");
     if (view !== "player" && location.hash.startsWith("#u/")) history.replaceState(null, "", location.pathname + location.search);
     if (view === "admin") window.TierlyAdmin?.open?.();
+    if (view === "discover") window.TierlyDiscover?.open?.();
   }
 
   function renderNav() {
@@ -1468,6 +1489,7 @@ import { calculatePoints } from "./points.mjs";
       <button class="lb-nav-item${activeView === "ranking" ? " is-active" : ""}" data-view="ranking"><i data-lucide="trophy"></i><span>${t("navRanking")}</span></button>
       <button class="lb-nav-item${activeView === "bracket" ? " is-active" : ""}" data-view="bracket"><i data-lucide="calendar-days"></i><span>${t("navBracket")}</span></button>
       <button class="lb-nav-item${activeView === "rewards" ? " is-active" : ""}" data-view="rewards"><i data-lucide="gift"></i><span>${t("navRewards")}</span></button>
+      <button class="lb-nav-item${activeView === "discover" ? " is-active" : ""}" data-view="discover"><i data-lucide="compass"></i><span>${t("navDiscover")}</span></button>
       <button class="lb-nav-item${activeView === "chess" ? " is-active" : ""}" data-view="chess"><i data-lucide="swords"></i><span>${t("navChess")}</span></button>
       <button class="lb-nav-item${activeView === "profile" ? " is-active" : ""}" data-view="profile"><i data-lucide="user"></i><span>${t("navProfile")}</span></button>
       <button class="lb-nav-item${activeView === "settings" ? " is-active" : ""}" data-view="settings"><i data-lucide="settings"></i><span>${t("navSettings")}</span></button>

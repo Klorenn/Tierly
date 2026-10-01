@@ -64,6 +64,28 @@
     return state.communities.length > 1 ? `<label class="tierly-admin-community-picker">Comunidad<select id="tierly-admin-community" aria-label="Seleccionar comunidad">${state.communities.map((community, index) => `<option value="${index}" ${community.guild_id === communityId() ? "selected" : ""}>${esc(community.name)}</option>`).join("")}</select></label>` : "";
   }
 
+  // Aparecer en el directorio público es opt-in y lo decide el administrador de la guild.
+  // El flag no se escribe directo contra `communities`: la RPC verifica `community_admins`
+  // del lado del servidor.
+  function directoryToggle() {
+    if (!state.isAdmin || !state.selectedCommunity) return "";
+    const listed = state.selectedCommunity.public_directory === true;
+    return `<label class="tierly-admin-directory-toggle" title="Publica el nombre de la comunidad, los juegos agregados y a los jugadores que aceptaron mostrarse."><input type="checkbox" id="tierly-admin-directory" ${listed ? "checked" : ""} ${state.loading ? "disabled" : ""}><span>Aparecer en el directorio público</span></label>`;
+  }
+
+  async function setDirectory(listed) {
+    const guildId = communityId();
+    if (!guildId) return;
+    const result = await supabase.rpc("tierly_set_public_directory", { target_guild: guildId, listed });
+    if (result.error) {
+      state.message = "No se pudo cambiar la visibilidad del directorio.";
+    } else {
+      state.selectedCommunity.public_directory = listed;
+      state.message = listed ? "La comunidad ya aparece en el directorio público." : "La comunidad salió del directorio público.";
+    }
+    render();
+  }
+
   function showOnboarding() {
     root.innerHTML = `<div class="tierly-admin-gate" role="status"><p class="tierly-admin-kicker">Primer paso</p><h2>Conectar una comunidad</h2><p>No hay comunidades administradas para esta cuenta.</p><ul style="margin:16px 0 0 20px; color:var(--ink-dim); font-size:13px; line-height:1.8"><li>Ve a <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a> y configura el bot con los intents de servidor.</li><li>Añade el rol de administrador en la tabla <code>community_admins</code> de Supabase.</li><li>Recarga esta página para ver el panel.</li></ul></div>`;
   }
@@ -205,9 +227,9 @@
 
   function render() {
     if (!state.authorized) return state.message ? (root.innerHTML = `<div class="tierly-admin-gate"><h2>Acceso no autorizado</h2><p>${esc(state.message)}</p></div>`) : showLogin();
-    root.innerHTML = `<div class="tierly-admin-head"><div class="tierly-admin-head-actions">${communitySelector()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh" ${state.loading ? "disabled" : ""} aria-busy="${state.loading}">${state.loading ? "Cargando…" : "Actualizar"}</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
+    root.innerHTML = `<div class="tierly-admin-head"><div class="tierly-admin-head-actions">${communitySelector()}${directoryToggle()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh" ${state.loading ? "disabled" : ""} aria-busy="${state.loading}">${state.loading ? "Cargando…" : "Actualizar"}</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
     root.querySelectorAll("[data-admin-view]").forEach((button) => button.addEventListener("click", () => { state.view = button.dataset.adminView; render(); }));
-    root.querySelector("#tierly-admin-refresh").addEventListener("click", load);
+    root.querySelector("#tierly-admin-refresh").addEventListener("click", load); root.querySelector("#tierly-admin-directory")?.addEventListener("change", (event) => setDirectory(event.target.checked));
     root.querySelector("#tierly-admin-community")?.addEventListener("change", (event) => { state.selectedCommunity = state.communities[Number(event.target.value)] || null; load(); });
     renderContent();
     bindTableTools();
@@ -259,7 +281,7 @@
     const adminResult = await supabase.from("community_admins").select("guild_id, role");
     const guildIds = (adminResult.data || []).map((row) => row.guild_id).filter(Boolean);
     state.isAdmin = !adminResult.error && guildIds.length > 0;
-    const communities = await supabase.from("communities").select("guild_id, name, timezone, presence_enabled").in("guild_id", guildIds);
+    const communities = await supabase.from("communities").select("guild_id, name, timezone, presence_enabled, public_directory").in("guild_id", guildIds);
     state.communities = communities.data || [];
     state.selectedCommunity = state.communities.find((community) => community.guild_id === state.selectedCommunity?.guild_id) || state.communities[0] || null;
     if (!state.selectedCommunity) { state.isAdmin = false; state.loading = false; showOnboarding(); return; }
