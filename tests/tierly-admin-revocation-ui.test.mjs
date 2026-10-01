@@ -51,3 +51,12 @@ test("todos los módulos comparten la misma versión de caché", () => {
   assert.equal(versions.length, 4);
   assert.equal(new Set(versions).size, 1, `versiones desalineadas: ${versions.join(", ")}`);
 });
+
+test("el 403 esperado del claim se lee de context.status, no de error.status", () => {
+  // supabase-js v2 no pone `.status` en FunctionsHttpError: expone `.context`, que
+  // es el Response. Leer `.status` daba undefined, el guard nunca silenciaba el 403
+  // de "no sos dueña del guild" y se logueaba un fallo que no era fallo.
+  const app = readFileSync(new URL("../tierly/app.js", import.meta.url), "utf8");
+  assert.match(app, /claim\.error\.context\?\.status !== 403/);
+  assert.doesNotMatch(app, /claim\.error\.status !== 403/);
+});

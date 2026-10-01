@@ -1382,7 +1382,7 @@ import { calculatePoints } from "./points.mjs";
         body: { action: "claim_community_admin" },
         headers: { Authorization: `Bearer ${currentSession.access_token}` },
       });
-      if (claim.error && claim.error.status !== 403) console.error("[TIERLY] community claim failed:", claim.error.message);
+      if (claim.error && claim.error.context?.status !== 403) console.error("[TIERLY] community claim failed:", claim.error.message);
       await checkAdminVisibility(currentSession);
     }
     if (error || !data?.player) {
