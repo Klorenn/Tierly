@@ -138,7 +138,7 @@
   // devuelve el estado vacio en vez de un thead colgando.
   function renderTable(headers, rows) {
     const filas = (rows || []).filter(Boolean);
-    if (!filas.length) return `<p class="lb-empty">No hay datos para esta vista todavia.</p>`;
+    if (!filas.length) return `<p class="lb-empty">No hay datos disponibles.</p>`;
     return `<div class="tierly-admin-table-wrap"><table class="tierly-admin-table"><thead><tr>${headers.map((header) => `<th scope="col">${esc(header)}</th>`).join("")}</tr></thead><tbody>${filas.join("")}</tbody></table></div>`;
   }
 
