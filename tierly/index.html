@@ -925,6 +925,29 @@
       .lb-chess-challenge { flex-direction: column; }
       .lb-chess-input, .lb-chess-challenge .lb-chess-btn { width: 100%; }
     }
+
+
+    /* ── Accesibilidad transversal ───────────────────────────────────────────
+       Un solo anillo de foco para todo lo interactivo. Antes solo 7 reglas
+       sueltas lo definian, asi que navegar con Tab dejaba controles sin
+       indicador visible. `:focus-visible` no afecta el click con mouse. */
+    a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+    textarea:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+      outline: 2px solid var(--teal-bright);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+
+    /* Respeta la preferencia del sistema de reducir movimiento: el shimmer del
+       skeleton y los hover con translate son decorativos, no informativos. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1092,8 +1115,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-         <script type="module" src="/tierly/chess.js?v=20261001-01"></script>
-         <script type="module" src="/tierly/app.js?v=20261001-01"></script>
-         <script type="module" src="/tierly/admin.js?v=20261001-01"></script>
+         <script type="module" src="/tierly/chess.js?v=20261001-02"></script>
+         <script type="module" src="/tierly/app.js?v=20261001-02"></script>
+         <script type="module" src="/tierly/admin.js?v=20261001-02"></script>
 </body>
 </html>
