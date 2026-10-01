@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const migration = await readFile(new URL("../supabase/migrations/20260930210000_tierly_bot_healthcheck.sql", import.meta.url), "utf8");
+const migration = await readFile(new URL("../supabase/migrations/20260930130606_tierly_bot_healthcheck.sql", import.meta.url), "utf8");
 const bot = await readFile(new URL("../discord-bot/index.js", import.meta.url), "utf8");
 const healthcheck = await readFile(new URL("../discord-bot/healthcheck.mjs", import.meta.url), "utf8");
 const readme = await readFile(new URL("../discord-bot/README.md", import.meta.url), "utf8");

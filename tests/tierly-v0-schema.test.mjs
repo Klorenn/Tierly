@@ -7,7 +7,7 @@ const sql = readFileSync(
   "utf8",
 );
 const consentSql = readFileSync(
-  new URL("../supabase/migrations/20260930151000_tierly_presence_consent.sql", import.meta.url),
+  new URL("../supabase/migrations/20260930035028_tierly_presence_consent.sql", import.meta.url),
   "utf8",
 );
 

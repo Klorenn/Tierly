@@ -1,0 +1,12 @@
+-- Migracion aplicada en el proyecto remoto antes de que esta base pasara a ser
+-- Tierly. Se registra aca solo para que `supabase db push` reconozca la version
+-- 20260717230000 y no la reporte como drift.
+--
+-- NO-OP a proposito. El SQL que realmente se ejecuto esta archivado en
+-- docs/db/remote-ledger/ (rescatado del ledger el 2026-10-01). No se reproduce
+-- aca porque pertenece a la app anterior y la primera de estas migraciones hace
+-- `drop schema public cascade` y `delete from auth.users`: un `db reset` que la
+-- re-ejecutara destruiria la base de Tierly.
+--
+-- Nombre original: keep_x_search_awake
+select 1;

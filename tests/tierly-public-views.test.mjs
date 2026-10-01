@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
 const eventsSql = readFileSync(
-  new URL("../supabase/migrations/20260930250000_tierly_community_events_public_view.sql", import.meta.url),
+  new URL("../supabase/migrations/20260930194121_tierly_community_events_public_view.sql", import.meta.url),
   "utf8",
 );
 const leaderboardSql = readFileSync(
-  new URL("../supabase/migrations/20260930240000_tierly_restore_leaderboard_public_view.sql", import.meta.url),
+  new URL("../supabase/migrations/20260930193714_tierly_restore_leaderboard_public_view.sql", import.meta.url),
   "utf8",
 );
 

@@ -45,7 +45,7 @@ test("el panel selecciona una comunidad autorizada y no serializa sus IDs en HTM
 });
 
 test("la migración mantiene RLS y evita filtrar identidades hacia la página pública", () => {
-  const migration = readFileSync(new URL("../supabase/migrations/20260930120000_tierly_observed_member_identity.sql", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../supabase/migrations/20260930034128_tierly_observed_member_identity.sql", import.meta.url), "utf8");
   assert.match(migration, /security_invoker\s*=\s*true/);
   assert.match(migration, /grant select on public\.tierly_admin_game_players to authenticated/i);
   assert.doesNotMatch(html, /tierly_admin_game_players|observed_members/);
@@ -72,7 +72,7 @@ test("muestra presencia actual agrupada por juego y conserva histórico", () => 
 });
 
 test("la migración de presencia conserva el invocador y no expone discord_user_id", () => {
-  const migration = readFileSync(new URL("../supabase/migrations/20260930220000_tierly_admin_game_presence.sql", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../supabase/migrations/20260930131124_tierly_admin_game_presence.sql", import.meta.url), "utf8");
   assert.match(migration, /security_invoker\s*=\s*true/);
   assert.match(migration, /is_active/);
   assert.match(migration, /ended_at\s+is\s+null/);

@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const sql = readFileSync(new URL("../supabase/migrations/20260930190000_tierly_harden_event_attendance_p1.sql", import.meta.url), "utf8");
+const sql = readFileSync(new URL("../supabase/migrations/20260930125958_tierly_harden_event_attendance_p1.sql", import.meta.url), "utf8");
 const adminJs = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
 
 test("el check-in exige estado válido y ventana completa", () => {

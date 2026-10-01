@@ -8,9 +8,9 @@ const readMigration = (name) => readFileSync(
 );
 
 const v0 = readMigration("20260929090000_tierly_v0_schema.sql");
-const phase1 = readMigration("20260930152000_tierly_phase1_events_attendance_xp.sql");
-const createEvent = readMigration("20260930160000_tierly_create_community_event.sql");
-const confirmAttendance = readMigration("20260930170000_tierly_confirm_attendance_xp.sql");
+const phase1 = readMigration("20260930035043_tierly_phase1_events_attendance_xp.sql");
+const createEvent = readMigration("20260930043107_tierly_create_community_event.sql");
+const confirmAttendance = readMigration("20260930124638_tierly_confirm_attendance_xp.sql");
 
 test("P0: V0 aísla los datos de presencia por guild", () => {
   for (const table of ["observed_members", "play_sessions", "daily_game_rollups", "suggested_events"]) {
@@ -45,7 +45,7 @@ test("P0: las RPCs administrativas quedan limitadas a community_admins", () => {
 });
 
 test("P0: los eventos usan la zona de la comunidad y validan IANA", () => {
-  const timezone = readMigration("20260930211000_tierly_event_timezone.sql");
+  const timezone = readMigration("20260930130620_tierly_event_timezone.sql");
   assert.match(timezone, /coalesce\(nullif\(trim\(p_timezone\), ''\), c\.timezone\)/i);
   assert.match(timezone, /pg_timezone_names/);
   assert.match(timezone, /v_timezone/);
@@ -60,7 +60,7 @@ test("P1: el administrador convierte desde la zona local y muestra la zona del e
 });
 
 test("P0: la privacidad autenticada solo permite modificar el propio Discord", () => {
-  const privacy = readFileSync(new URL("../supabase/migrations/20260930180000_tierly_member_privacy_authenticated.sql", import.meta.url), "utf8");
+  const privacy = readFileSync(new URL("../supabase/migrations/20260930125321_tierly_member_privacy_authenticated.sql", import.meta.url), "utf8");
   assert.match(privacy, /tierly_member_owns_discord_id/);
   assert.match(privacy, /auth_user_id = \(select auth\.uid\(\)\)/);
   assert.match(privacy, /grant execute on function public\.tierly_accept_member_consent[\s\S]*to authenticated/i);

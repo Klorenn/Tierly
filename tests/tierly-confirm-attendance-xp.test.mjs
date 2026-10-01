@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const sql = readFileSync(new URL("../supabase/migrations/20260930170000_tierly_confirm_attendance_xp.sql", import.meta.url), "utf8");
+const sql = readFileSync(new URL("../supabase/migrations/20260930124638_tierly_confirm_attendance_xp.sql", import.meta.url), "utf8");
 
 test("la confirmación escribe XP y stamp explícitos en el ledger", () => {
   assert.match(sql, /insert into public\.tierly_xp_ledger/i);

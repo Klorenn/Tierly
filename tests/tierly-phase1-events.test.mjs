@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const sql = readFileSync(new URL("../supabase/migrations/20260930152000_tierly_phase1_events_attendance_xp.sql", import.meta.url), "utf8");
-const createSql = readFileSync(new URL("../supabase/migrations/20260930160000_tierly_create_community_event.sql", import.meta.url), "utf8");
+const sql = readFileSync(new URL("../supabase/migrations/20260930035043_tierly_phase1_events_attendance_xp.sql", import.meta.url), "utf8");
+const createSql = readFileSync(new URL("../supabase/migrations/20260930043107_tierly_create_community_event.sql", import.meta.url), "utf8");
 const adminJs = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
 
 test("vincula eventos con comunidades y añade horario", () => {

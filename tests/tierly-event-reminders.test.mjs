@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const sql = readFileSync(new URL("../supabase/migrations/20260930201000_tierly_event_reminders.sql", import.meta.url), "utf8");
+const sql = readFileSync(new URL("../supabase/migrations/20260930130042_tierly_event_reminders.sql", import.meta.url), "utf8");
 
 test("modela recordatorios por guild y evento con estado", () => {
   assert.match(sql, /guild_id text not null references public\.communities/i);
