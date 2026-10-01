@@ -7,7 +7,7 @@
   if (!bridge || !root) return;
   root.closest(".lb-view")?.setAttribute("data-view", "admin");
   const supabase = bridge.supabase;
-  const state = { view: "events", communities: [], selectedCommunity: null, games: [], rollups: [], suggestions: [], players: [], events: [], attendance: [], ledger: [], player: null, session: null, authorized: false, isAdmin: false, loading: false, message: "" };
+  const state = { view: "events", communities: [], selectedCommunity: null, renderedGuildId: null, games: [], rollups: [], suggestions: [], players: [], events: [], attendance: [], ledger: [], player: null, session: null, authorized: false, isAdmin: false, loading: false, message: "" };
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
   const number = (value) => new Intl.NumberFormat("es-CL").format(Number(value || 0));
   const timezones = ["America/Santiago", "America/Argentina/Buenos_Aires", "America/Bogota", "America/Mexico_City", "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Madrid", "Asia/Tokyo", "UTC"];
@@ -165,6 +165,10 @@
   }
 
   function renderContent() {
+    if (state.loading && state.renderedGuildId !== communityId()) {
+      root.querySelector("#tierly-admin-content").innerHTML = '<p class="tierly-admin-note" role="status">Cargando comunidad…</p>';
+      return;
+    }
     const view = state.view;
     let title = "Juegos";
     let body = "";
@@ -209,6 +213,7 @@
     const xp = state.ledger.reduce((total, row) => total + Number(row.xp || 0), 0);
     const stamps = state.ledger.reduce((total, row) => total + Number(row.stamps || 0), 0);
     root.querySelector("#tierly-admin-content").innerHTML = `${state.message ? `<p class="tierly-admin-note" role="alert">${esc(state.message)}</p>` : ""}<div class="tierly-admin-stat" aria-label="Progreso confirmado"><strong>${number(xp)} XP</strong><span>${number(stamps)} stamps confirmados</span></div><h2>${title}</h2>${body}`;
+    state.renderedGuildId = communityId();
     if (window.lucide?.createIcons) window.lucide.createIcons();
     root.querySelectorAll(".tierly-admin-action").forEach((button) => button.addEventListener("click", () => button.dataset.eventAction ? eventAction(button) : updateSuggestion(button)));
     root.querySelector("#tierly-event-form")?.addEventListener("submit", createEvent);
@@ -217,7 +222,18 @@
 
   function eventCard(event) {
     const rows = state.attendance.filter((row) => String(row.event_id) === String(event.id));
-    const attendeeList = rows.length ? rows.map((row) => `<li><span>${esc(row.player_name || "Participante")}</span><span class="tierly-admin-attendance-state">${row.confirmed_at ? "Confirmada" : row.checked_in_at ? "Check-in" : row.unregistered_at ? "Salió" : "Registrado"}</span>${state.isAdmin ? (!row.confirmed_at && row.checked_in_at ? `<button class="tierly-admin-action" data-event-action="confirm" data-event-id="${esc(event.id)}" data-player-id="${esc(row.player_id)}">Confirmar</button>` : "") : ""}</li>`).join("") : `<li class="lb-empty">No hay asistentes todavía.</li>`;
+    // `revoked_at` se evalúa primero porque una revocación conserva `confirmed_at`
+    // como evidencia: el orden inverso nunca mostraría el estado revocado.
+    const attendeeState = (row) => row.revoked_at ? "Revocada" : row.confirmed_at ? "Confirmada" : row.checked_in_at ? "Check-in" : row.unregistered_at ? "Salió" : "Registrado";
+    const attendeeAdminActions = (row) => {
+      if (!state.isAdmin) return "";
+      const ids = `data-event-id="${esc(event.id)}" data-player-id="${esc(row.player_id)}"`;
+      if (row.confirmed_at && !row.revoked_at) return `<input class="tierly-admin-reason" type="text" maxlength="200" placeholder="Motivo de la revocación" data-revoke-reason="${esc(row.player_id)}" /><button class="tierly-admin-action" data-event-action="revoke" ${ids}>Revocar</button>`;
+      if (row.revoked_at && row.checked_in_at) return `<button class="tierly-admin-action" data-event-action="confirm" ${ids}>Reconfirmar</button>`;
+      if (!row.confirmed_at && row.checked_in_at) return `<button class="tierly-admin-action" data-event-action="confirm" ${ids}>Confirmar</button>`;
+      return "";
+    };
+    const attendeeList = rows.length ? rows.map((row) => `<li><span>${esc(row.player_name || "Participante")}</span><span class="tierly-admin-attendance-state">${attendeeState(row)}</span>${row.revoked_at && row.revocation_reason ? `<span class="tierly-admin-note">${esc(row.revocation_reason)}</span>` : ""}${attendeeAdminActions(row)}</li>`).join("") : `<li class="lb-empty">No hay asistentes todavía.</li>`;
     const mine = rows.find((row) => row.is_current_user);
      const canLeave = mine && !mine.unregistered_at && !mine.checked_in_at && !mine.confirmed_at;
      const canRegister = !mine || Boolean(mine.unregistered_at && !mine.confirmed_at);
@@ -230,7 +246,7 @@
     root.innerHTML = `<div class="tierly-admin-head"><div class="tierly-admin-head-actions">${communitySelector()}${directoryToggle()}<button type="button" class="lb-mini-btn" id="tierly-admin-refresh" ${state.loading ? "disabled" : ""} aria-busy="${state.loading}">${state.loading ? "Cargando…" : "Actualizar"}</button></div></div><nav class="tierly-admin-tabs" aria-label="Vistas de administración">${["events", "games", "players", "trends", "suggestions"].map((view) => `<button type="button" data-admin-view="${view}" class="${state.view === view ? "is-active" : ""}">${view === "events" ? "Eventos" : view === "games" ? "Juegos" : view === "players" ? "Jugadores" : view === "trends" ? "Tendencias" : "Sugerencias"}</button>`).join("")}</nav><div id="tierly-admin-content"></div>`;
     root.querySelectorAll("[data-admin-view]").forEach((button) => button.addEventListener("click", () => { state.view = button.dataset.adminView; render(); }));
     root.querySelector("#tierly-admin-refresh").addEventListener("click", load); root.querySelector("#tierly-admin-directory")?.addEventListener("change", (event) => setDirectory(event.target.checked));
-    root.querySelector("#tierly-admin-community")?.addEventListener("change", (event) => { state.selectedCommunity = state.communities[Number(event.target.value)] || null; load(); });
+    root.querySelector("#tierly-admin-community")?.addEventListener("change", (event) => { state.selectedCommunity = state.communities[Number(event.target.value)] || null; if (state.loading) render(); load(); });
     renderContent();
     bindTableTools();
   }
@@ -266,8 +282,18 @@
     button.disabled = true;
     const action = button.dataset.eventAction;
     const args = { p_event_id: button.dataset.eventId };
-    if (action === "confirm") args.p_player_id = button.dataset.playerId;
-    const rpc = { register: "tierly_register_event", unregister: "tierly_unregister_event", checkin: "tierly_check_in_event", confirm: "tierly_confirm_event_attendance" }[action];
+    if (action === "confirm" || action === "revoke") args.p_player_id = button.dataset.playerId;
+    if (action === "revoke") {
+      // Sin motivo no hay auditoría: la RPC lo rechaza, pero no vale la pena el viaje.
+      args.p_reason = (root.querySelector(`[data-revoke-reason="${button.dataset.playerId}"]`)?.value || "").trim();
+      if (!args.p_reason) {
+        state.message = "Indicá el motivo de la revocación.";
+        button.disabled = false;
+        render();
+        return;
+      }
+    }
+    const rpc = { register: "tierly_register_event", unregister: "tierly_unregister_event", checkin: "tierly_check_in_event", confirm: "tierly_confirm_event_attendance", revoke: "tierly_revoke_event_confirmation" }[action];
     const result = await supabase.rpc(rpc, args);
     state.message = result.error?.message || (result.data === false ? "La acción no pudo completarse." : "");
     await load();
@@ -290,12 +316,12 @@
     const eventIds = (events.data || []).map((row) => row.id);
     const [player, attendance] = await Promise.all([
       supabase.from("gaming_players").select("id, display_name, avatar_url").eq("auth_user_id", state.session.user.id).maybeSingle(),
-      eventIds.length ? supabase.from("tierly_event_attendance").select("event_id, player_id, registered_at, unregistered_at, checked_in_at, confirmed_at").in("event_id", eventIds) : Promise.resolve({ data: [], error: null }),
+      eventIds.length ? supabase.from("tierly_event_attendance").select("event_id, player_id, registered_at, unregistered_at, checked_in_at, confirmed_at, revoked_at, revocation_reason").in("event_id", eventIds) : Promise.resolve({ data: [], error: null }),
     ]);
     if (player.error) state.message = "No se pudo cargar el perfil autenticado.";
     state.player = player.data || null;
     state.events = events.data || [];
-    const ledger = state.player ? await supabase.from("tierly_xp_ledger").select("xp, stamps, event_id, created_at").eq("player_id", state.player.id) : { data: [], error: null };
+    const ledger = state.player ? await supabase.from("tierly_xp_ledger").select("xp, stamps, event_id, created_at").eq("player_id", state.player.id).eq("guild_id", selectedGuildId) : { data: [], error: null };
     state.ledger = ledger.data || [];
     state.attendance = (attendance.data || []).map((row) => ({ ...row, is_current_user: Boolean(state.player && String(row.player_id) === String(state.player.id)) }));
     if (state.isAdmin) {
@@ -309,6 +335,7 @@
     }
     state.message = state.message || [events, attendance, ledger].find((result) => result.error)?.error?.message || "";
     state.loading = false;
+    if (communityId() !== selectedGuildId) { await load(); return; }
     render();
   }
 

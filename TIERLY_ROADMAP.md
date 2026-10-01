@@ -12,12 +12,12 @@ Tierly ayuda a organizadores de Discord a convocar eventos de gaming, reconocer 
 - Supabase de producción compartido y datos existentes retenidos: no hubo migración ni reset de base de datos.
 - Servidor local y configuración del repo preparados; despliegue Vercel y corte de Auth/CORS/dominio pendientes de verificación en vivo.
 - Tellus mantiene el frontend actual hasta validar el nuevo host y su rollback.
-- Los 122 tests existentes incluyen assertions estáticas/de código; no prueban por sí solos OAuth, permisos, bot o participación reales.
+- La suite Node incluye assertions estáticas/de código y simulaciones; no prueba por sí sola OAuth, permisos, bot o participación reales.
 - La [auditoría histórica del 27 de agosto](docs/archive/2026-08-27-tierly-roadmap-audit.md) conserva hallazgos de esa fecha. Su vigencia requiere auditoría; no se asumen bugs pendientes actuales.
 
 Este roadmap prioriza el producto comunitario. No expande ajedrez/racer ni elimina Passport u otras integraciones sin justificación y transición revisada.
 
-**Estado de implementación al 30 de septiembre de 2026:** Fase 0 y el ciclo técnico de Fase 1 están implementados en el standalone y cubiertos por pruebas. La verificación de producción, la aprobación/confirmación externa de Discord y el piloto con comunidades reales siguen pendientes; smart contracts y credenciales portables quedan fuera de este alcance.
+**Estado de implementación al 1 de octubre de 2026:** La base técnica de Fase 0 y el ciclo de Fase 1 están en el repositorio y cubiertos por pruebas locales, incluida la corrección/reversión auditada de confirmaciones y recompensas erróneas. También está construido un primer descubrimiento público con opt-in por comunidad y un CTA de invitación con Application ID configurado, adelantando parte de Fase 4. Eso no acredita despliegue, permisos de Discord, vistas/RPC aplicadas en producción ni piloto real. La validación en vivo, la confirmación externa de usos de datos y los pilotos siguen pendientes; smart contracts y credenciales portables quedan fuera de este alcance.
 
 ## Orden de ejecución
 
@@ -55,8 +55,9 @@ Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 e
 - [x] Manejar borrador, publicado, cancelado y cerrado; almacenar instante UTC y mostrar zona elegida, incluyendo cambios estacionales.
 - [x] Permitir inscripción, salida y check-in explícitos; perfil privado por defecto, publicación con opt-in separado.
 - [x] Separar consentimientos de evento/comunidad, observación opcional, notificaciones y publicación. Un permiso local no habilita uso entre servidores.
-- [x] Confirmación/corrección del organizador con motivo y auditoría; mostrar emisor y evidencia de cada reconocimiento. *(confirmación e idempotencia implementadas; apelación avanzada queda para el piloto)*
-- [x] XP de participación y stamp de evento con reglas simples, límites por evento/período, idempotencia y reversión de errores. *(reversión avanzada queda para el piloto)*
+- [x] Confirmación del organizador y otorgamiento idempotente de XP/stamp.
+- [x] Corrección o revocación auditada de una confirmación errónea, con motivo, emisor y ajuste del reconocimiento. *(`tierly_revoke_event_confirmation`; migración sin aplicar y verificación live pendiente)*
+- [x] Reversión auditada de XP/stamp ante errores: el ledger queda append-only y la reversión inserta una fila compensatoria que apunta al otorgamiento original. *(migración sin aplicar y verificación live pendiente)*
 - [ ] Separar XP de evento/global permitido de reputación local: asistencia no certifica confianza, habilidad ni estatus en otra comunidad.
 - [ ] Historial offchain solo dentro del alcance autorizado. Agregación personal entre servidores bloqueada hasta aprobación.
 - [x] Recordatorios en canales autorizados; mensajes personales únicamente consentidos y necesarios.
@@ -66,8 +67,10 @@ Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 e
 
 **Criterios de salida:**
 
+Registrar la evidencia y decisión de cada comunidad según el [runbook de validación del piloto](docs/tierly-pilot-validation.md). Los checks siguientes siguen abiertos hasta observarlos en vivo.
+
 - [ ] Dos eventos consecutivos completan el ciclo y permiten convocar el siguiente.
-- [ ] Reintentar/cerrar dos veces no duplica XP/stamps; corrección deja trazabilidad.
+- [ ] Reintentar/cerrar dos veces no duplica XP/stamps; corrección y reversión auditadas dejan trazabilidad. La implementación existe; falta observarla en vivo, incluido reconfirmar después de revocar.
 - [ ] Retirar consentimiento/excluirse detiene el uso correspondiente y permite el borrado definido.
 - [ ] Reconexión y datos faltantes se muestran sin inventar duración/actividad.
 - [ ] Un administrador no puede leer ni modificar actividad privada de otra guild.
@@ -84,11 +87,13 @@ Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 e
 | Validación del organizador | Un emisor confirmó participación | Verdad independiente del emisor |
 | API oficial de juego, futura | Hechos autorizados/documentados por esa API | Hechos fuera de su alcance |
 
-Cada registro guarda fuente, emisor, evento, momento y corrección/revocación. Invisible, desconexión y huecos son datos faltantes. Presencia simultánea nunca se etiqueta como “jugaron juntos”.
+Cada registro de reconocimiento debe permitir identificar fuente, emisor, evento y momento. La corrección/revocación auditada está implementada: el ledger es append-only y cada reversión registra motivo, emisor e instante, sin borrar el otorgamiento original. Invisible, desconexión y huecos son datos faltantes. Presencia simultánea nunca se etiqueta como “jugaron juntos”.
 
 ## Fase 2 — piloto, repetición y utilidad (P1)
 
 **Dependencia:** ciclo completo funcional. **Entregable:** evidencia de recurrencia y ahorro de trabajo.
+
+El [runbook del piloto](docs/tierly-pilot-validation.md) fija puertas de entrada, captura de línea base y evidencia para dos eventos consecutivos en cada comunidad. El reporte técnico disponible es global y agregado; las métricas por comunidad requieren registro consentido del piloto y no se infieren de esa RPC.
 
 - [ ] Medir línea base previa: eventos, inscritos, asistencia confirmada, retorno y minutos de administración con el método anterior.
 - [ ] Pilotear con 3 comunidades y al menos 2 eventos por comunidad, ajustando tamaño a capacidad. Es hipótesis de diseño, no tracción medida.
@@ -118,6 +123,8 @@ Métrica principal: **organizadores que repiten eventos con participantes que vu
 ## Fase 4 — descubrimiento de comunidades y eventos (P2)
 
 **Dependencia:** suficientes eventos reales, recurrencia y permisos de publicación/intercambio. **Entregable:** encontrar eventos relevantes con cupos.
+
+**Adelanto técnico:** la vista pública de comunidades, juegos y jugadores, con opt-in por comunidad y consentimiento nominal separado, está implementada localmente ([diseño y límites](docs/superpowers/specs/2026-10-01-tierly-public-discovery-design.md)). No equivale a validar la dependencia de esta fase: faltan despliegue comprobado, oferta real, moderación y evidencia de inscripción/asistencia originada por descubrimiento.
 
 - [ ] Definir densidad mínima por juego/horario/idioma; no abrir catálogos vacíos.
 - [ ] Publicar eventos/comunidades autorizados por organizador; respetar membresía y servidores privados.
@@ -152,5 +159,5 @@ Métrica principal: **organizadores que repiten eventos con participantes que vu
 1. **Expediente Discord y mapa de datos.** Producto + técnico. Bloqueo: confirmación externa para presencia, perfil cruzado y analytics; usos apagados mientras tanto.
 2. **Auditar baseline y verificar nuevo host.** Técnico. Bloqueos: dominio final, accesos Vercel/Auth/CORS y bot operativo. Mantener Tellus/rollback hasta validación en vivo.
 3. **Contrato del primer evento con pilotos.** Producto. Entregable: reglas, evidencia, privacidad y línea base; bloqueo: alcance mínimo de datos validado.
-4. **Especificar y entregar primera porción del ciclo completo.** Implementación. Check-in/confirmación y reconocimiento acotado; bloqueos: aceptación, identidad estable y autorización por guild auditadas.
-5. **Ejecutar dos eventos, medir y decidir.** Piloto. Bloqueos: flujo funcional y comunidades disponibles. Revisar recurrencia antes de analytics, discovery o credenciales.
+4. **Cerrar y validar el ciclo de punta a punta.** Técnico + producto. La corrección/reversión auditada ya está implementada; falta aplicar las migraciones pendientes y verificar inscripción, check-in, confirmación, XP/stamp, revocación, reconfirmación, privacidad, aislamiento e idempotencia con identidades autorizadas antes del piloto.
+5. **Ejecutar y evaluar el piloto.** Producto. Seguir el [runbook](docs/tierly-pilot-validation.md) con tres comunidades y dos eventos consecutivos por cada una; medir retorno y trabajo administrativo antes de ampliar descubrimiento, analytics o credenciales.
