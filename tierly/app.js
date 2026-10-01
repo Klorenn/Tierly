@@ -8,11 +8,13 @@ import { calculatePoints } from "./points.mjs";
   const SUPABASE_KEY = "sb_publishable_oiVUNWzo3p3SXLdr8in3XQ_zbZJiNd7";
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // ID de la aplicación de Discord (público: viaja en la URL de invitación).
-  // PENDIENTE: reemplazar por el Application ID real del portal de Discord. Mientras sea
-  // el placeholder, `inviteUrl()` devuelve null y el CTA no se renderiza — preferimos no
-  // mostrar botón antes que mostrar uno que lleva a un error de Discord.
-  const DISCORD_APP_ID = "000000000000000000";
+  // ID de la aplicación de Discord. Público: viaja en la URL de invitación que ve
+  // cualquiera que sume el bot. No confundir con el client secret ni con el bot token,
+  // que viven en `discord-bot/.env` y nunca llegan al navegador.
+  //
+  // Si queda en ceros, `inviteUrl()` devuelve null y el CTA no se renderiza: preferimos
+  // no mostrar botón antes que mostrar uno que lleva a un error de Discord.
+  const DISCORD_APP_ID = "1541959782494117949";
   // View Channels + Send Messages + Embed Links + Read Message History. Lo mínimo para
   // anunciar eventos y recordatorios. `GUILD_PRESENCES` es un intent del Gateway, no un
   // permiso de invitación, y se aprueba aparte en el portal.
