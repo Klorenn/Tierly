@@ -33,7 +33,7 @@
 - Consumes: nada (primera tarea).
 - Produces: las tablas `communities`, `community_admins`, `observed_members`, `games`, `game_aliases`, `play_sessions`, `daily_game_rollups`, `suggested_events`. Toda tarea posterior usa exactamente estos nombres de tabla y columna.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-v0-schema.test.mjs`:
 
@@ -96,12 +96,12 @@ test("rollups son unicos por guild+juego+dia", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-v0-schema.test.mjs`
 Expected: FAIL con `ENOENT` — el archivo de migración no existe todavía.
 
-- [ ] **Step 3: Escribir la migración**
+- [x] **Step 3: Escribir la migración**
 
 Crear `supabase/migrations/20260929090000_tierly_v0_schema.sql`:
 
@@ -271,12 +271,12 @@ grant select, insert, update, delete on
 to service_role;
 ```
 
-- [ ] **Step 4: Correr el test para verificar que pasa**
+- [x] **Step 4: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-v0-schema.test.mjs`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/20260929090000_tierly_v0_schema.sql tests/tierly-v0-schema.test.mjs
@@ -296,7 +296,7 @@ git commit -m "feat: schema V0 de inteligencia de presence"
 - Consumes: nada de la Tarea 1.
 - Produces: la ausencia de `gaming_events`, `gaming_tournaments`, `gaming_matches`, `gaming_rewards`, `gaming_tournament_registrations`, `gaming_bot_notifications` y sus vistas. `gaming_players` y `gaming_match_participants` SOBREVIVEN porque Racer y Chess dependen de ellas.
 
-- [ ] **Step 1: Verificar dependencias antes de borrar**
+- [x] **Step 1: Verificar dependencias antes de borrar**
 
 Antes de escribir el DROP, confirmar qué depende de cada tabla. Correr contra la base:
 
@@ -318,7 +318,7 @@ order by 2, 1;
 
 Si aparece algo de Racer o Chess (`gaming_racer_*`, `gaming_chess_*`), PARAR y reportar: significa que el acoplamiento es mayor al mapeado y el alcance del borrado hay que revisarlo con el humano antes de seguir.
 
-- [ ] **Step 2: Escribir el test que falla**
+- [x] **Step 2: Escribir el test que falla**
 
 Agregar al final de `tests/tierly-v0-schema.test.mjs`:
 
@@ -349,12 +349,12 @@ test("conserva las tablas de las que dependen racer y chess", () => {
 });
 ```
 
-- [ ] **Step 3: Correr el test para verificar que falla**
+- [x] **Step 3: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-v0-schema.test.mjs`
 Expected: FAIL con `ENOENT` en la migración de drop.
 
-- [ ] **Step 4: Escribir la migración**
+- [x] **Step 4: Escribir la migración**
 
 Crear `supabase/migrations/20260929091000_tierly_drop_bracket_layer.sql`:
 
@@ -380,12 +380,12 @@ drop table if exists public.gaming_events cascade;
 
 Nota sobre `cascade`: solo en las tres tablas del bracket, porque tienen FKs entre sí. Si el Step 1 reveló dependencias fuera del bracket, esas hay que resolverlas explícitamente, NO ampliando el `cascade`.
 
-- [ ] **Step 5: Correr el test para verificar que pasa**
+- [x] **Step 5: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-v0-schema.test.mjs`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 6: Borrar el test que prueba la UI de bracket**
+- [x] **Step 6: Borrar el test que prueba la UI de bracket**
 
 `tests/leaderboard-public.test.mjs` afirma que la página pública renderiza bracket y rewards. Eso deja de ser verdad.
 
@@ -396,7 +396,7 @@ node --test tests/*.test.mjs
 
 Expected: pasan todos menos los que dependen del leaderboard público, que se limpian en la Tarea 9. Anotar cuáles fallan; no arreglarlos acá.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add supabase/migrations/20260929091000_tierly_drop_bracket_layer.sql tests/tierly-v0-schema.test.mjs
@@ -416,7 +416,7 @@ git commit -m "feat: retirar capa de brackets y torneos"
 - Consumes: nada.
 - Produces: `normalizeGameName(raw) -> string` (nombre canónico, minúsculas, sin espacios extra ni sufijos de edición) y `displayNameFor(raw) -> string` (nombre limpio para mostrar, conservando mayúsculas originales). La Tarea 5 los importa.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-game-normalize.test.mjs`:
 
@@ -454,12 +454,12 @@ test("entrada vacia o invalida devuelve cadena vacia", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-game-normalize.test.mjs`
 Expected: FAIL — no se puede resolver `../discord-bot/game-normalize.mjs`.
 
-- [ ] **Step 3: Escribir la implementación**
+- [x] **Step 3: Escribir la implementación**
 
 Crear `discord-bot/game-normalize.mjs`:
 
@@ -490,12 +490,12 @@ export function normalizeGameName(raw) {
 }
 ```
 
-- [ ] **Step 4: Correr el test para verificar que pasa**
+- [x] **Step 4: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-game-normalize.test.mjs`
 Expected: PASS, 5 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add discord-bot/game-normalize.mjs tests/tierly-game-normalize.test.mjs
@@ -514,7 +514,7 @@ git commit -m "feat: normalizar nombres de juego de presence"
 - Consumes: nada.
 - Produces: `playingGames(presence) -> string[]` (nombres crudos de actividades de tipo Playing) y `presenceDelta(oldPresence, newPresence) -> { started: string[], stopped: string[] }`. La Tarea 6 los importa.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-presence-delta.test.mjs`:
 
@@ -573,12 +573,12 @@ test("oldPresence indefinido trata todo como started", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-presence-delta.test.mjs`
 Expected: FAIL — no se puede resolver `../discord-bot/presence-delta.mjs`.
 
-- [ ] **Step 3: Escribir la implementación**
+- [x] **Step 3: Escribir la implementación**
 
 Crear `discord-bot/presence-delta.mjs`:
 
@@ -609,12 +609,12 @@ export function presenceDelta(oldPresence, newPresence) {
 }
 ```
 
-- [ ] **Step 4: Correr el test para verificar que pasa**
+- [x] **Step 4: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-presence-delta.test.mjs`
 Expected: PASS, 8 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add discord-bot/presence-delta.mjs tests/tierly-presence-delta.test.mjs
@@ -640,7 +640,7 @@ git commit -m "feat: calcular deltas de presence de Discord"
 
   La Tarea 6 usa exactamente estas firmas.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-session-store.test.mjs`. El fake de Supabase registra las llamadas en vez de hablar con la red:
 
@@ -760,12 +760,12 @@ test("al arrancar cierra las sesiones huerfanas como crash", async () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-session-store.test.mjs`
 Expected: FAIL — no se puede resolver `../discord-bot/session-store.mjs`.
 
-- [ ] **Step 3: Escribir la implementación**
+- [x] **Step 3: Escribir la implementación**
 
 Crear `discord-bot/session-store.mjs`:
 
@@ -902,7 +902,7 @@ export class SessionStore {
 
 Nota: `ended_at = last_heartbeat_at` es una asignación columna-a-columna que PostgREST no expresa desde el cliente JS, por eso las dos RPC (`tierly_close_sessions_at_heartbeat`, `tierly_close_orphan_sessions`). Se definen en la Tarea 7.
 
-- [ ] **Step 4: Agregar `rpc` al fake y correr el test**
+- [x] **Step 4: Agregar `rpc` al fake y correr el test**
 
 El fake de Supabase necesita el método `rpc`. Agregarlo dentro de `api` en el archivo de test:
 
@@ -916,7 +916,7 @@ El fake de Supabase necesita el método `rpc`. Agregarlo dentro de `api` en el a
 Run: `node --test tests/tierly-session-store.test.mjs`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add discord-bot/session-store.mjs tests/tierly-session-store.test.mjs
@@ -936,7 +936,7 @@ git commit -m "feat: store de sesiones de juego"
 - Consumes: `presenceDelta`, `playingGames` (Tarea 4); `SessionStore` (Tarea 5).
 - Produces: nada que consuman tareas posteriores.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Agregar a `tests/discord-bot.test.mjs` (el archivo ya lee `discord-bot/index.js` como texto; reusar esa constante de fuente, que se llama según lo que ya exista en el archivo — si se llama distinto, usar el nombre existente):
 
@@ -965,12 +965,12 @@ test("sigue sin credenciales hardcodeadas", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/discord-bot.test.mjs`
 Expected: FAIL — falta `GuildPresences`, falta `presenceUpdate`, falta el heartbeat.
 
-- [ ] **Step 3: Agregar el intent**
+- [x] **Step 3: Agregar el intent**
 
 En `discord-bot/index.js`, en el bloque de intents (~línea 29-32), agregar `GatewayIntentBits.GuildPresences` a la lista. Queda:
 
@@ -986,7 +986,7 @@ const client = new Client({
 });
 ```
 
-- [ ] **Step 4: Cablear el store y el handler de presence**
+- [x] **Step 4: Cablear el store y el handler de presence**
 
 Cerca de los otros imports en `discord-bot/index.js`:
 
@@ -1029,7 +1029,7 @@ client.on("presenceUpdate", async (oldPresence, newPresence) => {
 });
 ```
 
-- [ ] **Step 5: Agregar reconciliación y heartbeat al arranque**
+- [x] **Step 5: Agregar reconciliación y heartbeat al arranque**
 
 Dentro del handler `client.once("ready", ...)` (línea ~166), después de lo que ya hace:
 
@@ -1078,12 +1078,12 @@ async function runHeartbeat() {
 }
 ```
 
-- [ ] **Step 6: Correr el test para verificar que pasa**
+- [x] **Step 6: Correr el test para verificar que pasa**
 
 Run: `node --test tests/discord-bot.test.mjs`
 Expected: PASS, incluyendo los 5 tests nuevos.
 
-- [ ] **Step 7: Documentar el intent privilegiado**
+- [x] **Step 7: Documentar el intent privilegiado**
 
 En `discord-bot/README.md`, en la sección de configuración del bot, agregar:
 
@@ -1099,7 +1099,7 @@ cobertura nunca es del 100% — el panel lo declara explícitamente en vez de
 presentar los números como un censo del servidor.
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add discord-bot/index.js discord-bot/README.md tests/discord-bot.test.mjs
@@ -1118,7 +1118,7 @@ git commit -m "feat: observar presence y mantener sesiones vivas"
 - Consumes: las tablas de la Tarea 1.
 - Produces: las funciones `tierly_close_sessions_at_heartbeat(session_ids bigint[])`, `tierly_close_orphan_sessions(target_guild text)`, `tierly_close_stale_sessions()`, `tierly_rollup_day(target_day date)`, `tierly_generate_suggestions()`. La Tarea 5 ya llama a las dos primeras.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-v0-jobs.test.mjs`:
 
@@ -1163,12 +1163,12 @@ test("programa los jobs con pg_cron", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-v0-jobs.test.mjs`
 Expected: FAIL con `ENOENT`.
 
-- [ ] **Step 3: Escribir la migración**
+- [x] **Step 3: Escribir la migración**
 
 Crear `supabase/migrations/20260929092000_tierly_v0_jobs.sql`:
 
@@ -1332,12 +1332,12 @@ grant execute on function public.tierly_close_sessions_at_heartbeat(bigint[]) to
 grant execute on function public.tierly_close_orphan_sessions(text) to service_role;
 ```
 
-- [ ] **Step 4: Correr el test para verificar que pasa**
+- [x] **Step 4: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-v0-jobs.test.mjs`
 Expected: PASS, 6 tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add supabase/migrations/20260929092000_tierly_v0_jobs.sql tests/tierly-v0-jobs.test.mjs
@@ -1358,7 +1358,7 @@ git commit -m "feat: jobs de rollup, purga y sugerencias"
 - Consumes: tablas de la Tarea 1; datos poblados por Tareas 6 y 7.
 - Produces: nada que consuman tareas posteriores.
 
-- [ ] **Step 1: Escribir el test que falla**
+- [x] **Step 1: Escribir el test que falla**
 
 Crear `tests/tierly-insights-admin.test.mjs`:
 
@@ -1422,12 +1422,12 @@ test("cache busting coherente entre app.js y styles.css", () => {
 });
 ```
 
-- [ ] **Step 2: Correr el test para verificar que falla**
+- [x] **Step 2: Correr el test para verificar que falla**
 
 Run: `node --test tests/tierly-insights-admin.test.mjs`
 Expected: FAIL — las vistas viejas siguen, falta el cache busting.
 
-- [ ] **Step 3: Integrar el estado y las vistas en `tierly/admin.js`**
+- [x] **Step 3: Integrar el estado y las vistas en `tierly/admin.js`**
 
 Dentro del IIFE existente, reemplazar el objeto `state` (líneas ~11-22) y todo el bloque `renderView()` (líneas ~239-330) por:
 
@@ -1606,7 +1606,7 @@ En el handler de acciones de sugerencias, "aceptar" solo cambia el estado y ofre
   }
 ```
 
-- [ ] **Step 4: Borrar el resto del código de brackets**
+- [x] **Step 4: Borrar el resto del código de brackets**
 
 Mantener la capa existente de `ops/tierly/` sin convertirla en una dependencia nueva. Las vistas administrativas nuevas deben vivir en `tierly/admin.js` y consultar únicamente los agregados V0.
 
@@ -1616,7 +1616,7 @@ rg -n "daily_game_rollups|suggested_events|community_admins" tierly/admin.js
 
 Expected: sin resultados.
 
-- [ ] **Step 5: Agregar cache busting en `tierly/index.html`**
+- [x] **Step 5: Agregar cache busting en `tierly/index.html`**
 
 Cambiar las referencias a assets para que ambas usen la MISMA versión:
 
@@ -1625,12 +1625,12 @@ Cambiar las referencias a assets para que ambas usen la MISMA versión:
 <script src="./app.js?v=20260929-01"></script>
 ```
 
-- [ ] **Step 6: Correr el test para verificar que pasa**
+- [x] **Step 6: Correr el test para verificar que pasa**
 
 Run: `node --test tests/tierly-insights-admin.test.mjs`
 Expected: PASS, 7 tests.
 
-- [ ] **Step 7: Actualizar el README del panel**
+- [x] **Step 7: Actualizar el README del panel**
 
 En la documentación de Tierly, describir `/tierly/admin` como la superficie administrativa oficial:
 
@@ -1647,7 +1647,7 @@ Bump del cache busting: `app.js` y `styles.css` se referencian con `?v=` en
 falla si difieren.
 ```
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add tierly/app.js tierly/admin.js tierly/index.html tests/tierly-insights-admin.test.mjs
@@ -1669,7 +1669,7 @@ git commit -m "feat: panel de inteligencia de comunidad"
 - Consumes: el estado del repo tras la Tarea 8.
 - Produces: una suite verde.
 
-- [ ] **Step 1: Confirmar quién importa lo que se va a borrar**
+- [x] **Step 1: Confirmar quién importa lo que se va a borrar**
 
 ```bash
 rg -n "ranks\.mjs|rankForPoints|GAMING_RANKS|leaderboard_public_view|event_bracket_public_view|gaming_rewards_public_view|gaming_events_catalog_public_view" --glob '!docs/**'
@@ -1677,19 +1677,19 @@ rg -n "ranks\.mjs|rankForPoints|GAMING_RANKS|leaderboard_public_view|event_brack
 
 Anotar cada resultado: son exactamente los puntos a editar en los pasos siguientes. `discord-bot/index.js:3` importa `../tierly/ranks.mjs` — ese import y las funciones `announceRankUps` / `announceNewEvents` / `runNotificationPoll` que lo usan salen en el Step 3.
 
-- [ ] **Step 2: Quitar del frontend público las superficies retiradas**
+- [x] **Step 2: Quitar del frontend público las superficies retiradas**
 
 En `tierly/app.js`, eliminar las funciones y bloques de render que consultan `leaderboard_public_view` (líneas ~539, 551, 1604), `event_bracket_public_view` (~669), `gaming_events_catalog_public_view` (~674), `gaming_rewards_public_view` (~697) y la RPC `tierly_seed_bracket` (~816). En `tierly/index.html`, eliminar las secciones de ranking, tiers, bracket y rewards que quedan sin datos, y subir el cache busting de `?v=20260925-25` a `?v=20260929-01` en las dos referencias (líneas ~1013-1014).
 
 Racer y Chess NO se tocan: siguen funcionando sobre `gaming_players` y `gaming_match_participants`, que sobreviven.
 
-- [ ] **Step 3: Quitar del bot el poll de anuncios y rank-ups**
+- [x] **Step 3: Quitar del bot el poll de anuncios y rank-ups**
 
 En `discord-bot/index.js`: borrar el import de `../tierly/ranks.mjs` (línea 3), las funciones `runNotificationPoll`, `announceNewEvents` y `announceRankUps`, la constante `POLL_INTERVAL_MS` (línea ~25) y el `setInterval` del poll dentro de `ready`. Consultaban `gaming_events` y `gaming_bot_notifications`, que ya no existen desde la Tarea 2.
 
 El heartbeat de la Tarea 6 se queda: es otro `setInterval`, con su propia constante.
 
-- [ ] **Step 4: Borrar los módulos y tests obsoletos**
+- [x] **Step 4: Borrar los módulos y tests obsoletos**
 
 ```bash
 git rm tierly/ranks.mjs tests/leaderboard-ranks.test.mjs tests/leaderboard-points.test.mjs tests/leaderboard-ops.test.mjs
@@ -1697,12 +1697,12 @@ git rm tierly/ranks.mjs tests/leaderboard-ranks.test.mjs tests/leaderboard-point
 
 `tests/leaderboard-ops.test.mjs` valida RLS sobre la migración original de brackets, que ya no aplica; su rol lo cumple ahora `tests/tierly-v0-schema.test.mjs`. `tierly/points.mjs` se borra solo si `rg -n "points.mjs" ` no devuelve consumidores vivos; si Racer o Chess lo usan, se conserva.
 
-- [ ] **Step 5: Correr la suite completa**
+- [x] **Step 5: Correr la suite completa**
 
 Run: `npm test`
 Expected: PASS en todos los archivos. Si `tests/tierly-chess.test.mjs` o `tests/tierly-racer.test.mjs` fallan, es porque afirmaban algo sobre secciones de `tierly/index.html` que se borraron: ajustar esas aserciones al HTML nuevo, sin tocar la lógica de chess ni de racer.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A
