@@ -133,6 +133,15 @@
     return [...groups.entries()].map(([id, rows]) => `<article class="tierly-admin-presence-game"><h3><span class="tierly-admin-game-name">${gameIconMarkup(id)}<span>${esc(gameName(id))}</span></span><span class="tierly-admin-presence-count">${number(rows.length)}</span></h3><div class="tierly-admin-player-list">${rows.map(playerMarkup).join("")}</div></article>`).join("");
   }
 
+  // Las filas llegan ya como <tr> desde cada vista; aca solo se arma el marco.
+  // Si no hay ninguna, la tabla vacia confunde mas que un mensaje, asi que se
+  // devuelve el estado vacio en vez de un thead colgando.
+  function renderTable(headers, rows) {
+    const filas = (rows || []).filter(Boolean);
+    if (!filas.length) return `<p class="lb-empty">No hay datos para esta vista todavia.</p>`;
+    return `<div class="tierly-admin-table-wrap"><table class="tierly-admin-table"><thead><tr>${headers.map((header) => `<th scope="col">${esc(header)}</th>`).join("")}</tr></thead><tbody>${filas.join("")}</tbody></table></div>`;
+  }
+
   function renderContent() {
     const view = state.view;
     let title = "Juegos";

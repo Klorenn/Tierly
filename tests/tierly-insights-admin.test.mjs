@@ -110,3 +110,30 @@ test("los dos módulos usan versiones de cache busting coherentes", () => {
   assert.ok(versions.length >= 3);
   assert.equal(new Set(versions).size, 1);
 });
+
+// renderTable se perdio en una edicion y el panel entero moria con
+// "renderTable is not defined" en runtime: ningun assert.match lo habria
+// detectado, asi que este test verifica el grafo de llamadas completo.
+test("toda funcion que admin.js invoca esta declarada en el archivo", () => {
+  const codigo = admin.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const declaradas = new Set();
+  for (const match of codigo.matchAll(/(?:function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) declaradas.add(match[1]);
+  // Parametros y destructuring: el nombre puede llegar desde la firma.
+  for (const match of codigo.matchAll(/(?:\(|,)\s*([A-Za-z_$][\w$]*)\s*(?:,|\)|=>|=[^=])/g)) declaradas.add(match[1]);
+  const globales = new Set([
+    "if", "for", "while", "switch", "catch", "return", "typeof", "await", "new", "function", "else", "do",
+    "String", "Number", "Boolean", "Array", "Object", "Map", "Set", "Date", "JSON", "Math", "Intl", "URL",
+    "RegExp", "Error", "Promise", "parseInt", "parseFloat", "isNaN", "fetch", "setTimeout", "clearTimeout",
+    "setInterval", "clearInterval", "queueMicrotask", "encodeURIComponent", "decodeURIComponent", "require",
+    "Blob", "FormData", "URLSearchParams",
+    // Texto dentro de template literals que el regex lee como llamada:
+    // "var(--teal)" en CSS inline y "Asistentes (3)" en un <summary>.
+    "var", "Asistentes",
+  ]);
+  const faltantes = new Set();
+  for (const match of codigo.matchAll(/(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(/g)) {
+    const nombre = match[1];
+    if (!globales.has(nombre) && !declaradas.has(nombre)) faltantes.add(nombre);
+  }
+  assert.deepEqual([...faltantes], [], `funciones invocadas pero no declaradas: ${[...faltantes].join(", ")}`);
+});
