@@ -47,9 +47,13 @@ Requiere acceso que el agente no tiene. Checklist para correr a mano:
 
 ## Deuda de documentación
 
-Fase 1 y "teams mode" se construyeron **sin spec de diseño**. En `docs/superpowers/specs/`
-solo existen tres specs, y ninguna cubre eventos/asistencia/XP ni equipos. El código está
-testeado, pero no hay documento que explique por qué se tomó cada decisión.
+Fase 1 se construyó **sin spec de diseño**: ninguna de las specs existentes cubre
+eventos/asistencia/XP. El código está testeado, pero no hay documento que explique por qué
+se tomó cada decisión. Escribirlo requiere a quien tomó esas decisiones; reconstruir el
+porqué leyendo el código produciría una racionalización, no un registro.
+
+El descubrimiento público sí quedó documentado en
+`docs/superpowers/specs/2026-10-01-tierly-public-discovery-design.md`.
 
 ## Qué sigue para V1
 
@@ -60,14 +64,28 @@ diseñarlo. Lo que el plan de V0 anotaba como alcance de V1:
   un evento, pero el flujo no está especificado end-to-end)
 - Consentimiento para listas nominales de jugadores
 
-## Trabajo parkeado, sin commitear
+## Descubrimiento público — construido el 2026-10-01
 
-"Teams mode" (equipos de jugadores) vive sin commitear en la rama `fix/admin-render-table`:
+"Teams mode" fue **eliminado**, no parkeado: estaba fuera del roadmap y el dueño del
+producto lo descartó. En su lugar se construyó el descubrimiento público:
 
-- `supabase/migrations/20261001000000_tierly_teams_mode.sql`
-- `tests/tierly-teams.test.mjs`
-- `tierly/teams.js`
-- cambios en `tierly/app.js` y `tierly/index.html`
+| Pieza | Dónde |
+|---|---|
+| Opt-in por comunidad + RPC autorizada | `supabase/migrations/20261001010000_tierly_public_discovery.sql` |
+| Tres vistas públicas | misma migración |
+| Página `#discover` | `tierly/discover.js`, `tierly/index.html` |
+| Toggle del directorio | `tierly/admin.js` |
+| Diseño y límites de política | `docs/superpowers/specs/2026-10-01-tierly-public-discovery-design.md` |
 
-Se construyó por un malentendido de alcance. Está completo y testeado, pero fuera del
-roadmap de V0. Decidir si se commitea, se descarta o se difiere.
+Adelanta la superficie de Fase 4 sin adelantar permisos: nada aparece sin opt-in del
+administrador, el ranking de jugadores no agrega entre guilds y el nominal exige
+`identity_visible`. Commits `a033501`, `5f3e87d`, `0406127`.
+
+**Bloqueado**: el CTA "Añadir Tierly a tu servidor" no se renderiza porque
+`DISCORD_APP_ID` en `tierly/app.js` sigue siendo el placeholder de ceros. Falta el
+Application ID real del portal de Discord — un solo valor.
+
+**Sin aplicar**: las 28 migraciones del repo no están aplicadas en el proyecto hosted
+(`rhzanxzoqmbxptvxgnfj`, "Tellus | Tirly"). El proyecto no está linkeado y no hay registro
+de qué tiene la base remota. Antes de `supabase db push`, correr `supabase link` y revisar
+`supabase migration list --linked`.
