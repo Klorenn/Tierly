@@ -1,7 +1,7 @@
 # Tierly — Descubrimiento público
 
 Fecha: 2026-10-01
-Estado: implementado y cubierto por pruebas; pendiente de aplicar en producción
+Estado: implementado y cubierto por pruebas locales; aplicación y validación en producción no acreditadas aquí
 
 ## Qué es
 
@@ -158,7 +158,8 @@ es el error clásico: agregarlo a la URL no habilita presence.
 
 `inviteUrl()` devuelve `null` mientras `DISCORD_APP_ID` sean todos ceros, y el
 CTA no se renderiza. Un botón ausente es mejor que un botón que lleva a un error
-de Discord. **Pendiente**: el Application ID real.
+de Discord. El Application ID real se configuró después de escribir este diseño
+(`0faa73c`); verificar el CTA en el host final sigue pendiente.
 
 ## Testing
 
