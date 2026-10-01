@@ -23,6 +23,16 @@
 
 ---
 
+> **Nota de estado (2026-10-01).** Tasks 1-9 completas; Task 10 es verificación en vivo, pendiente del usuario.
+>
+> Tres pasos de este plan quedaron **superados por decisiones posteriores** y se marcan hechos a sabiendas de que NO se ejecutaron literalmente:
+>
+> - **Task 2 Step 6** (`rm tests/leaderboard-public.test.mjs`) y **Task 9 Step 2** (quitar el leaderboard público): la migración `20260930240000_tierly_restore_leaderboard_public_view.sql` restauró `leaderboard_public_view` y `tierly/app.js:634` la sigue consumiendo. El leaderboard público volvió al producto. El test se actualizó a la realidad nueva en vez de borrarse.
+> - **Task 9 Step 4** (`git rm tierly/ranks.mjs` + 3 tests legacy): `ranks.mjs` lo importan `tierly/app.js:2` y `discord-bot/index.js:3`; `points.mjs` lo importan `app.js:3` y `ops/tierly/index.html`. Borrarlos rompe la app. `tests/leaderboard-ops.test.mjs` cubre hoy la seguridad de `discord-verify` (secretos, RLS, service-role), no brackets — borrarlo quitaría cobertura viva.
+> - **Task 9 Step 3** (quitar el poll de anuncios del bot): innecesario. `gaming_events` nunca se borró (solo su vista) y `gaming_bot_notifications` se restauró en `20260930260000`. El poll funciona.
+> - **Task 8 Step 5** (cache-busting de `styles.css`): no aplica a `tierly/index.html`, cuyo CSS es inline en un `<style>`. La referencia a `styles.css?v=` vive en `ops/tierly/index.html:12` y ya coincide con `app.js?v=` (test `admin cache-busting versions match`).
+
+
 ### Task 1: Schema V0 — tenencia, catálogo de juegos y hechos
 
 **Files:**
