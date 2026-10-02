@@ -44,6 +44,8 @@ test("shell visual usa tipografía de display no Inter-only y atmósfera de fond
   assert.match(page, /lb-atmosphere/);
   assert.match(page, /radial-gradient/);
   assert.match(page, /--content-max/);
+  assert.match(page, /h2\.lb-view-head/);
+  assert.match(page, /\.lb-rank-tabs button\.is-active/);
 });
 
 test("discover se auto-abre si Home ya está visible (evita race con app.js)", () => {

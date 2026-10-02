@@ -44,7 +44,11 @@ La home **puede** verse pro (hero de juegos + teal/sand), pero hoy peca de: (1) 
 
 ## Prioridad de implementación
 
-1. Fix boot Home (P0).
-2. Sistema: max-width, menos glass, stats compactos, pulse condicional.
-3. Unificar heads de Ranking/Events/Profile al mismo ritmo tipográfico.
+1. Fix boot Home (P0). ✅ `discover.js` auto-open + retry si root vacío.
+2. Sistema: max-width, menos glass, stats compactos, pulse condicional. ✅
+3. Unificar heads de Ranking/Events/Profile al mismo ritmo tipográfico. ✅ Fraunces 28px en `h2.lb-view-head`, tabs pill teal, stats flat, footer border, promo sidebar compacta.
 4. (Luego) Admin React island alineado a mockups — fuera de este pase público.
+
+## Cache
+
+Assets públicos en `?v=20261002-11`.

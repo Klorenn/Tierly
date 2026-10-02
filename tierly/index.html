@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-10" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-11" />
   <style>
     :root {
       --sand: #E7DCC8; --sand-soft: #F3EDE2; --teal: #3F8487; --teal-bright: #0F8F78; --teal-deep: #17665F; --teal-ink: #1A2E2F; --clay: #B84F24;
@@ -89,13 +89,13 @@
     .lb-nav-item.is-active { background: var(--teal-bright); color: #fff; }
 
     .lb-sidebar-promo {
-      margin-top: auto; position: relative; background: var(--sand); border-radius: 18px;
-      padding: 18px 16px 60px; text-align: center; overflow: visible;
+      margin-top: auto; position: relative; background: var(--sand); border-radius: 14px;
+      padding: 12px 12px 48px; text-align: center; overflow: visible;
     }
-    .lb-sidebar-promo p { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.4; }
+    .lb-sidebar-promo p { font-size: 12px; font-weight: 600; color: var(--ink); line-height: 1.35; }
     .lb-sidebar-promo img {
-      position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%);
-      width: 96px; height: auto; filter: drop-shadow(0 8px 14px rgba(15,35,30,0.22));
+      position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+      width: 72px; height: auto; filter: drop-shadow(0 6px 10px rgba(15,35,30,0.18));
     }
 
     .lb-main {
@@ -416,22 +416,22 @@
     }
     #lb-retry-verify:hover { border-color: var(--glow); color: var(--glow); }
 
-    .lb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .lb-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
     .lb-stat-card {
-      background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 16px 18px;
-      display: flex; align-items: center; gap: 14px; box-shadow: var(--card-shadow);
-      transition: box-shadow 160ms ease, transform 160ms ease;
+      background: var(--card); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px; box-shadow: none;
+      transition: border-color 160ms ease;
     }
-    .lb-stat-card:hover { box-shadow: 0 6px 24px rgba(15,35,30,0.07); transform: translateY(-1px); }
+    .lb-stat-card:hover { border-color: color-mix(in srgb, var(--teal-bright) 35%, var(--card-border)); }
     .lb-stat-icon {
-      width: 40px; height: 40px; border-radius: 12px; background: var(--chip-bg);
+      width: 34px; height: 34px; border-radius: 10px; background: var(--chip-bg);
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .lb-stat-icon svg { width: 20px; height: 20px; color: var(--ink-dim); }
+    .lb-stat-icon svg { width: 17px; height: 17px; color: var(--ink-dim); }
     .lb-stat-accent .lb-stat-icon { background: rgba(199,90,42,0.12); }
     .lb-stat-accent .lb-stat-icon svg { color: var(--clay); }
-    .lb-stat-label { display: block; font-size: 12px; color: var(--ink-dim); margin-bottom: 2px; }
-    .lb-stat-card strong { display: block; font-family: var(--serif); font-size: 22px; color: var(--ink); line-height: 1.2; }
+    .lb-stat-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-dim); margin-bottom: 1px; }
+    .lb-stat-card strong { display: block; font-family: var(--serif); font-size: 20px; color: var(--ink); line-height: 1.15; }
     .lb-stat-cta { display: inline-flex; align-items: center; min-height: 24px; margin: 2px 0 0 -6px; padding: 2px 6px; font-size: 11.5px; font-weight: 700; color: var(--clay); text-decoration: none; border-radius: 6px; }
 
     .lb-content-grid { display: flex; gap: 24px; align-items: flex-start; }
@@ -443,15 +443,23 @@
     }
 
     .lb-view-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
-    .lb-season-note { display: block; font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
-    .lb-view-head h2 { font-family: var(--serif); font-size: 21px; color: var(--ink); }
-    .lb-rank-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
-    .lb-rank-tabs { display: flex; gap: 20px; }
-    .lb-rank-tabs button {
-      background: none; border: none; font-family: var(--sans); font-size: 13.5px; font-weight: 600;
-      color: var(--ink-dim); cursor: pointer; padding: 5px 0; border-bottom: 2px solid transparent;
+    h2.lb-view-head {
+      display: block; font-family: var(--serif); font-size: 28px; font-weight: 600; line-height: 1.2;
+      color: var(--ink); margin-bottom: 18px; letter-spacing: -0.02em;
     }
-    .lb-rank-tabs button.is-active { color: var(--ink); border-color: var(--glow); }
+    .lb-season-note { display: block; font-size: 12px; color: var(--ink-dim); margin-top: 2px; }
+    .lb-view-head h2 { font-family: var(--serif); font-size: 24px; font-weight: 600; color: var(--ink); letter-spacing: -0.02em; }
+    .lb-rank-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
+    .lb-rank-tabs {
+      display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px;
+      background: var(--sand-soft); border: 1px solid var(--card-border);
+    }
+    .lb-rank-tabs button {
+      background: transparent; border: none; font-family: var(--sans); font-size: 13px; font-weight: 600;
+      color: var(--ink-dim); cursor: pointer; padding: 7px 14px; border-radius: 999px;
+      transition: background 140ms ease, color 140ms ease;
+    }
+    .lb-rank-tabs button.is-active { background: var(--teal-bright); color: #fff; }
 
     .lb-ranks-info-btn {
       display: inline-flex; align-items: center; gap: 7px; background: var(--sand-soft);
@@ -646,12 +654,12 @@
 
     p.lb-empty { color: var(--ink-dim); font-size: 13.5px; }
 
-    .lb-secondary-grid { display: flex; gap: 24px; margin-top: 24px; }
+    .lb-secondary-grid { display: flex; gap: 16px; margin-top: 20px; }
     .lb-secondary-card {
-      flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
-      padding: 20px 22px; box-shadow: var(--card-shadow);
+      flex: 1; min-width: 0; background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+      padding: 16px 18px; box-shadow: none;
     }
-    .lb-secondary-card h2 { font-family: var(--serif); font-size: 17px; margin-bottom: 14px; color: var(--ink); }
+    .lb-secondary-card h2 { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 12px; color: var(--ink); }
     .lb-upcoming-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
     .lb-upcoming-row:last-child { border-bottom: none; }
     .lb-upcoming-row strong { display: block; font-size: 14px; color: var(--ink); }
@@ -661,7 +669,11 @@
     .lb-activity-row svg { width: 16px; height: 16px; color: var(--clay); flex-shrink: 0; }
     .lb-activity-row strong { color: var(--ink); font-weight: 600; }
 
-    .lb-footer { margin-top: auto; padding-top: 36px; display: flex; flex-direction: column; align-items: center; gap: 28px; text-align: center; }
+    .lb-footer {
+      margin-top: auto; padding-top: 40px;
+      border-top: 1px solid var(--card-border);
+      display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;
+    }
     .lb-footer-brand { display: flex; align-items: center; gap: 14px; }
     .lb-footer-brand img { height: 26px; width: auto; object-fit: contain; }
     .lb-footer-brand .lb-footer-tierly-mark { height: 30px; width: 30px; border-radius: 50%; object-fit: cover; }
@@ -1015,7 +1027,7 @@
 
     /* ── Live Presence (Quién está jugando ahora) ────────────────────────────── */
     .lb-live-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
-    .lb-live-head h2 { font-family: var(--serif); font-size: 24px; color: var(--ink); }
+    .lb-live-head h2 { font-family: var(--serif); font-size: 28px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
     .lb-live-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--teal-bright); color: #fff; font-size: 12px; font-weight: 700; }
     .lb-live-badge.is-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: lb-live-pulse 1.5s ease-in-out infinite; }
     @keyframes lb-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -1247,8 +1259,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-10"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-10"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-10"></script>
+<script type="module" src="/tierly/app.js?v=20261002-11"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-11"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-11"></script>
 </body>
 </html>
