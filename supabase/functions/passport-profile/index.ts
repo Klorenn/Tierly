@@ -4,7 +4,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const PASSPORT_API_BASE = "https://demo.stellarpassport.xyz/api/v1";
 const TIERLY_ORG_SLUG = "stellar-chile";
 
-const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org"];
+const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org", "https://tirly.xyz", "https://www.tirly.xyz", "https://telluscoop.org/tierly", "https://www.telluscoop.org/tierly"];
 const LOCAL_ORIGIN = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+$/;
 const PASSPORT_PUBLIC_BASE = "https://demo.stellarpassport.xyz";
 

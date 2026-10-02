@@ -1,0 +1,135 @@
+- main [ref=f5e2]:
+  - generic [ref=f5e3]:
+    - complementary [ref=f5e4]:
+      - generic [ref=f5e5]:
+        - img "TIRLY" [ref=f5e6]
+        - heading "TIRLY" [level=1] [ref=f5e7]
+      - navigation [ref=f5e8]:
+        - button "Leaderboard" [ref=f5e291] [cursor=pointer]
+        - button "Events" [ref=f5e299] [cursor=pointer]
+        - button "Rewards" [ref=f5e303] [cursor=pointer]
+        - button "Discover" [active] [ref=f5e309] [cursor=pointer]
+        - button "Chess" [ref=f5e314] [cursor=pointer]
+        - button "Profile" [ref=f5e325] [cursor=pointer]
+        - button "Settings" [ref=f5e330] [cursor=pointer]
+        - button "Admin" [ref=f5e335] [cursor=pointer]
+      - generic [ref=f5e53]:
+        - paragraph [ref=f5e54]: Climb the ranks. Earn rewards.
+        - img "TIRLY" [ref=f5e55]
+    - generic [ref=f5e56]:
+      - region [ref=f5e191]:
+        - link "Admin panel" [ref=f5e339] [cursor=pointer]:
+          - /url: /tierly/admin
+      - text: ✦ ✦
+      - generic [ref=f5e538]:
+        - generic [ref=f5e539]:
+          - paragraph [ref=f5e540]: Descubrir
+          - heading "Qué juega la comunidad" [level=2] [ref=f5e541]
+          - paragraph [ref=f5e542]: "Minutos de presencia de los últimos 30 días en las comunidades que eligieron aparecer acá. La presencia dice que Discord reportó actividad en una ventana: no certifica partida compartida, duración exacta ni victoria."
+        - generic [ref=f5e543]:
+          - generic [ref=f5e544]:
+            - heading "Add Tierly to your server" [level=3] [ref=f5e545]
+            - paragraph [ref=f5e546]: Tierly reads which games your members play — only after each one opts in — and turns that into events worth showing up to.
+          - link "Add Tierly to your server" [ref=f5e547] [cursor=pointer]:
+            - /url: https://discord.com/oauth2/authorize?client_id=1541959782494117949&permissions=84992&scope=bot+applications.commands
+        - generic [ref=f5e550]:
+          - generic [ref=f5e551]:
+            - generic [ref=f5e556]: "1"
+            - generic [ref=f5e557]: Comunidades
+          - generic [ref=f5e558]:
+            - generic [ref=f5e562]: "6"
+            - generic [ref=f5e563]: Juegos
+          - generic [ref=f5e564]:
+            - generic [ref=f5e569]: 5 h 9 min
+            - generic [ref=f5e570]: Minutos jugados
+        - generic [ref=f5e571]:
+          - heading "Juegos más jugados" [level=3] [ref=f5e572]
+          - table [ref=f5e574]:
+            - rowgroup [ref=f5e575]:
+              - row [ref=f5e576]:
+                - columnheader "#" [ref=f5e577]
+                - columnheader "Juego" [ref=f5e578]
+                - columnheader "Minutos" [ref=f5e579]
+                - columnheader "Sesiones" [ref=f5e580]
+                - columnheader "Comunidades" [ref=f5e581]
+                - columnheader "Último día" [ref=f5e582]
+            - rowgroup [ref=f5e583]:
+              - row [ref=f5e584]:
+                - cell "1" [ref=f5e585]
+                - cell "ROBLOX" [ref=f5e587]
+                - cell "1 h 47 min" [ref=f5e588]
+                - cell "5" [ref=f5e589]
+                - cell "1" [ref=f5e590]
+                - cell "29 sept" [ref=f5e591]
+              - row [ref=f5e592]:
+                - cell "2" [ref=f5e593]
+                - cell "Minecraft" [ref=f5e595]
+                - cell "1 h 15 min" [ref=f5e596]
+                - cell "2" [ref=f5e597]
+                - cell "1" [ref=f5e598]
+                - cell "29 sept" [ref=f5e599]
+              - row [ref=f5e600]:
+                - cell "3" [ref=f5e601]
+                - cell "League of Legends" [ref=f5e603]
+                - cell "1 h 6 min" [ref=f5e604]
+                - cell "2" [ref=f5e605]
+                - cell "1" [ref=f5e606]
+                - cell "29 sept" [ref=f5e607]
+              - row [ref=f5e608]:
+                - cell "4" [ref=f5e609]
+                - cell "Counter-Strike 2" [ref=f5e611]
+                - cell "53 min" [ref=f5e612]
+                - cell "2" [ref=f5e613]
+                - cell "1" [ref=f5e614]
+                - cell "29 sept" [ref=f5e615]
+              - row [ref=f5e616]:
+                - cell "5" [ref=f5e617]
+                - cell "Among Us" [ref=f5e619]
+                - cell "7 min" [ref=f5e620]
+                - cell "1" [ref=f5e621]
+                - cell "1" [ref=f5e622]
+                - cell "29 sept" [ref=f5e623]
+              - row [ref=f5e624]:
+                - cell "6" [ref=f5e625]
+                - cell "Overwatch" [ref=f5e627]
+                - cell "1 min" [ref=f5e628]
+                - cell "2" [ref=f5e629]
+                - cell "1" [ref=f5e630]
+                - cell "29 sept" [ref=f5e631]
+        - generic [ref=f5e632]:
+          - heading "Quién juega más" [level=3] [ref=f5e633]
+          - paragraph [ref=f5e634]: El ranking es por comunidad y solo incluye a quienes aceptaron mostrarse.
+          - paragraph [ref=f5e635]: Nadie eligió mostrarse en el ranking público todavía.
+        - generic [ref=f5e636]:
+          - heading "Servidores con Tierly" [level=3] [ref=f5e637]
+          - article [ref=f5e639]:
+            - heading "Tellus Cooperative" [level=4] [ref=f5e640]
+            - paragraph [ref=f5e641]: 0 jugadores · 6 juegos
+            - paragraph [ref=f5e642]: America/Santiago
+      - generic [ref=f5e113]:
+        - generic [ref=f5e114]:
+          - img "TIRLY" [ref=f5e115]
+          - generic [ref=f5e116]: ×
+          - img "Tellus Cooperative" [ref=f5e117]
+        - navigation [ref=f5e118]:
+          - link "Tellus Cooperative" [ref=f5e119] [cursor=pointer]:
+            - /url: https://telluscoop.org
+          - link "Recursos" [ref=f5e120] [cursor=pointer]:
+            - /url: https://telluscoop.org/resources
+          - link "Hub" [ref=f5e121] [cursor=pointer]:
+            - /url: https://telluscoop.org/hub
+        - generic [ref=f5e122]:
+          - link "Discord" [ref=f5e123] [cursor=pointer]:
+            - /url: https://discord.gg/Fy2SgR3XRu
+          - link "X" [ref=f5e126] [cursor=pointer]:
+            - /url: https://x.com/TellusCoop
+          - link "Instagram" [ref=f5e129] [cursor=pointer]:
+            - /url: https://www.instagram.com/telluscoop/
+          - link "LinkedIn" [ref=f5e132] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/tellus-cooperative/
+          - link "YouTube" [ref=f5e135] [cursor=pointer]:
+            - /url: https://www.youtube.com/@telluscoop
+          - link "WhatsApp" [ref=f5e138] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/FsNIUPsmNCl2YJkQi5r4p4
+        - generic [ref=f5e142]: © 2026 Tellus Cooperative · TIRLY
+  - text: ▾ ▾ ▾ ▾ ▾

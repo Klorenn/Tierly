@@ -2,7 +2,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { Chess } from "npm:chess.js@1.4.0";
 
-const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org"];
+const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org", "https://tirly.xyz", "https://www.tirly.xyz", "https://telluscoop.org/tierly", "https://www.telluscoop.org/tierly"];
 const LOCAL_ORIGIN = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+$/;
 
 const isAllowedOrigin = (origin: string | null) =>

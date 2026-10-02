@@ -12,7 +12,7 @@ import {
 type DbClient = ReturnType<typeof createClient<any, "public", any>>;
 type RpcPayload = Record<string, unknown>;
 
-const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org"];
+const ALLOWED_ORIGINS = ["https://telluscoop.org", "https://www.telluscoop.org", "https://tirly.xyz", "https://www.tirly.xyz", "https://telluscoop.org/tierly", "https://www.telluscoop.org/tierly"];
 const LOCAL_ORIGIN = /^https?:\/\/(?:localhost|127\.0\.0\.1):\d+$/;
 const TICKET_BYTES = 32;
 const TICKET_TTL_MS = 20 * 60 * 1000;

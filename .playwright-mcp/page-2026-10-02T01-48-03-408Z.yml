@@ -1,0 +1,125 @@
+- main [ref=f5e2]:
+  - generic [ref=f5e3]:
+    - complementary [ref=f5e4]:
+      - generic [ref=f5e5]:
+        - img "TIRLY" [ref=f5e6]
+        - heading "TIRLY" [level=1] [ref=f5e7]
+      - navigation [ref=f5e8]:
+        - button "Leaderboard" [ref=f5e291] [cursor=pointer]
+        - button "Events" [ref=f5e299] [cursor=pointer]
+        - button "Rewards" [ref=f5e303] [cursor=pointer]
+        - button "Discover" [ref=f5e309] [cursor=pointer]
+        - button "Chess" [ref=f5e314] [cursor=pointer]
+        - button "Profile" [ref=f5e325] [cursor=pointer]
+        - button "Settings" [ref=f5e330] [cursor=pointer]
+        - button "Admin" [ref=f5e335] [cursor=pointer]
+      - generic [ref=f5e53]:
+        - paragraph [ref=f5e54]: Climb the ranks. Earn rewards.
+        - img "TIRLY" [ref=f5e55]
+    - generic [ref=f5e56]:
+      - region [ref=f5e191]:
+        - link "Admin panel" [ref=f5e339] [cursor=pointer]:
+          - /url: /tierly/admin
+      - generic [ref=f5e57]:
+        - generic [ref=f5e193]:
+          - generic [ref=f5e201]:
+            - generic [ref=f5e202]: Active players
+            - strong [ref=f5e203]: "3"
+          - generic [ref=f5e208]:
+            - generic [ref=f5e209]: Live events
+            - strong [ref=f5e210]: "0"
+            - link "Join and compete!" [ref=f5e211] [cursor=pointer]:
+              - /url: "#"
+          - generic [ref=f5e218]:
+            - generic [ref=f5e219]: Rewards claimed
+            - strong [ref=f5e220]: "0"
+          - generic [ref=f5e225]:
+            - generic [ref=f5e226]: Matches played
+            - strong [ref=f5e227]: "0"
+        - generic [ref=f5e58]:
+          - generic [ref=f5e60]:
+            - generic [ref=f5e61]:
+              - generic [ref=f5e62]:
+                - heading "Top Players" [level=2] [ref=f5e63]
+                - generic [ref=f5e64]: Season resets on February 26, 2027
+              - generic [ref=f5e65]:
+                - button "View ranks" [ref=f5e66] [cursor=pointer]
+                - generic [ref=f5e70]:
+                  - button "Top 5" [ref=f5e71] [cursor=pointer]
+                  - button "All Players" [ref=f5e72] [cursor=pointer]
+                - searchbox "Search player by name" [ref=f5e73]
+            - generic "ranking" [ref=f5e74]:
+              - generic [ref=f5e230]:
+                - generic [ref=f5e231]:
+                  - generic [ref=f5e232]: Rank
+                  - generic [ref=f5e233]: Player
+                  - generic [ref=f5e234]: Points
+                - button "1 kl0ren 1" [ref=f5e235] [cursor=pointer]:
+                  - generic [ref=f5e236]: "1"
+                  - generic [ref=f5e237]: kl0ren
+                  - generic [ref=f5e241]: "1"
+                - button "2 tucara8 0" [ref=f5e242] [cursor=pointer]:
+                  - generic [ref=f5e243]: "2"
+                  - generic [ref=f5e244]: tucara8
+                  - generic [ref=f5e248]: "0"
+                - button "3 alex0tico 0" [ref=f5e249] [cursor=pointer]:
+                  - generic [ref=f5e250]: "3"
+                  - generic [ref=f5e251]: alex0tico
+                  - generic [ref=f5e255]: "0"
+            - button "View Full Leaderboard →" [ref=f5e75] [cursor=pointer]
+          - complementary [ref=f5e76]:
+            - generic [ref=f5e256]:
+              - text: ✦
+              - img "TIRLY" [ref=f5e257]
+              - heading "Climb the ranks. Become legendary." [level=3] [ref=f5e258]: Climb the ranks.Become legendary.
+              - paragraph [ref=f5e259]: Compete in events and earn exclusive rewards.
+              - button "Explore Events →" [ref=f5e260] [cursor=pointer]
+              - text: ✦
+            - generic [ref=f5e261]:
+              - generic [ref=f5e265]:
+                - strong [ref=f5e266]: Signed in as
+                - paragraph [ref=f5e267]: Sync your profile, check your history, and join events.
+              - button "View your profile" [ref=f5e269] [cursor=pointer]
+            - generic [ref=f5e270]:
+              - generic [ref=f5e271]:
+                - generic [ref=f5e272]: Latest Event
+                - generic [ref=f5e276]: No events yet
+                - button "View Event →" [ref=f5e277] [cursor=pointer]
+              - generic [ref=f5e278]:
+                - generic [ref=f5e279]: Top Reward
+                - generic [ref=f5e285]: No rewards yet
+                - button "View Rewards →" [ref=f5e286] [cursor=pointer]
+        - generic [ref=f5e108]:
+          - generic [ref=f5e109]:
+            - heading "Upcoming events" [level=2] [ref=f5e110]
+            - paragraph [ref=f5e288]: No upcoming events yet.
+          - generic [ref=f5e111]:
+            - heading "Recent activity" [level=2] [ref=f5e112]
+            - paragraph [ref=f5e290]: No recent activity yet.
+      - generic [ref=f5e113]:
+        - generic [ref=f5e114]:
+          - img "TIRLY" [ref=f5e115]
+          - generic [ref=f5e116]: ×
+          - img "Tellus Cooperative" [ref=f5e117]
+        - navigation [ref=f5e118]:
+          - link "Tellus Cooperative" [ref=f5e119] [cursor=pointer]:
+            - /url: https://telluscoop.org
+          - link "Recursos" [ref=f5e120] [cursor=pointer]:
+            - /url: https://telluscoop.org/resources
+          - link "Hub" [ref=f5e121] [cursor=pointer]:
+            - /url: https://telluscoop.org/hub
+        - generic [ref=f5e122]:
+          - link "Discord" [ref=f5e123] [cursor=pointer]:
+            - /url: https://discord.gg/Fy2SgR3XRu
+          - link "X" [ref=f5e126] [cursor=pointer]:
+            - /url: https://x.com/TellusCoop
+          - link "Instagram" [ref=f5e129] [cursor=pointer]:
+            - /url: https://www.instagram.com/telluscoop/
+          - link "LinkedIn" [ref=f5e132] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/tellus-cooperative/
+          - link "YouTube" [ref=f5e135] [cursor=pointer]:
+            - /url: https://www.youtube.com/@telluscoop
+          - link "WhatsApp" [ref=f5e138] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/FsNIUPsmNCl2YJkQi5r4p4
+        - generic [ref=f5e142]: © 2026 Tellus Cooperative · TIRLY
+  - text: ▾ ▾ ▾ ▾ ▾

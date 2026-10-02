@@ -1,0 +1,21 @@
+[    1085ms] [LOG] [CHESS] módulo de ajedrez inicializado @ https://www.tirly.xyz/tierly/chess.js?v=20261002-01:665
+[   24261ms] [INFO] %c[libdiscore] 
+font-weight: bold;
+color: purple;
+ [experiment_manager] Loaded experiments from cache @ https://discord.com/assets/556707.bb1a25f3c212ce8f.js:464
+[   24334ms] [LOG] %c[ProcessUtilsElectron] 
+font-weight: bold;
+color: purple;
+ setMemoryInformation not available. @ https://discord.com/assets/556707.bb1a25f3c212ce8f.js:464
+[   24528ms] [LOG] %c[default] 
+font-weight: bold;
+color: purple;
+ [BUILD INFO] Release Channel: stable, Build Number: 626571, Version Hash: 222f262f506dcb82f5282d658a3d843f2ba4e44d @ https://discord.com/assets/556707.bb1a25f3c212ce8f.js:464
+[   24530ms] [LOG] AppCrashedFatalReport: getLastCrash not supported. @ https://discord.com/assets/556707.bb1a25f3c212ce8f.js:464
+[   24640ms] [INFO] %c[libdiscore] 
+font-weight: bold;
+color: purple;
+ The answer for life the universe and everything is: 42 @ https://discord.com/assets/556707.bb1a25f3c212ce8f.js:464
+[   33835ms] [LOG] [CHESS] módulo de ajedrez inicializado @ https://www.tirly.xyz/tierly/chess.js?v=20261002-01:665
+[   37684ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://rhzanxzoqmbxptvxgnfj.supabase.co/functions/v1/discord-verify:0
+[   38471ms] [ERROR] Failed to load resource: the server responded with a status of 403 () @ https://rhzanxzoqmbxptvxgnfj.supabase.co/functions/v1/discord-verify:0

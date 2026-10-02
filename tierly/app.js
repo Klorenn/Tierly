@@ -132,8 +132,18 @@ import { calculatePoints } from "./points.mjs";
       profileSyncRetry: "Retry",
       navChess: "Chess",
       navDiscover: "Discover",
+      navLive: "Live",
       inviteBot: "Add Tierly to your server",
       inviteBotHint: "Tierly reads which games your members play — only after each one opts in — and turns that into events worth showing up to.",
+      liveTitle: "Live Now",
+      liveSubtitle: "Who's playing right now",
+      livePlayers: "Players online",
+      liveGames: "Games being played",
+      liveCommunities: "Active communities",
+      liveEmptyTitle: "No one is playing right now",
+      liveEmptyBody: "Be the first to start a session!",
+      livePlayingFor: "playing for {minutes}m",
+      liveLastUpdate: "Updated {time}s ago",
       chessBotTitle: "Play the Bot",
       chessChallengeTitle: "Challenge a Player",
       chessChallengePlaceholder: "Enter a player's username…",
@@ -302,8 +312,18 @@ import { calculatePoints } from "./points.mjs";
       profileSyncRetry: "Reintentar",
       navChess: "Ajedrez",
       navDiscover: "Descubrir",
+      navLive: "En vivo",
       inviteBot: "Añadir Tierly a tu servidor",
       inviteBotHint: "Tierly ve qué juegan tus miembros — solo después de que cada uno acepta — y lo convierte en eventos a los que vale la pena ir.",
+      liveTitle: "En vivo ahora",
+      liveSubtitle: "Quién está jugando ahora",
+      livePlayers: "Jugadores en línea",
+      liveGames: "Jugándose ahora",
+      liveCommunities: "Comunidades activas",
+      liveEmptyTitle: "Nadie está jugando ahora",
+      liveEmptyBody: "¡Sé el primero en empezar una sesión!",
+      livePlayingFor: "jugando hace {minutes}m",
+      liveLastUpdate: "Actualizado hace {time}s",
       chessBotTitle: "Jugar contra el bot",
       chessChallengeTitle: "Desafiar a un jugador",
       chessChallengePlaceholder: "Ingresa el usuario del jugador…",
@@ -402,6 +422,9 @@ import { calculatePoints } from "./points.mjs";
   let rewardsRows = [];
   let viewingPlayer = null;
   let isAdmin = false;
+  let livePresenceRows = [];
+  let livePresenceChannel = null;
+  let livePresenceLoading = false;
 
   window.TierlyBridge = {
     supabase,
@@ -1169,6 +1192,144 @@ import { calculatePoints } from "./points.mjs";
     window.lucide?.createIcons();
   }
 
+  // ── Live Presence (Quién está jugando ahora) ─────────────────────────────────
+  function formatMinutesPlaying(minutes) {
+    const m = Math.floor(minutes);
+    if (m < 1) return "empezando";
+    if (m === 1) return "1 min";
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60);
+    const rem = m % 60;
+    return rem === 0 ? `${h}h` : `${h}h ${rem}min`;
+  }
+
+  function gameIconSvg(gameName) {
+    const name = (gameName || "").toLowerCase();
+    if (name.includes("chess") || name.includes("ajedrez")) return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L4 7v10l8 5 8-5V7L12 2z"/><path d="M4 7l8 5 8-5"/><path d="M4 17l8-5 8 5"/></svg>`;
+    if (name.includes("league") || name.includes("lol")) return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5.52 14H6.48V9.83L12 5.5l5.52 4.33V16z"/></svg>`;
+    if (name.includes("valorant") || name.includes("val")) return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.18L20 8.82V15.18L12 21.82 4 15.18V8.82L12 4.18z"/></svg>`;
+    if (name.includes("counter") || name.includes("cs2") || name.includes("csgo")) return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41z"/></svg>`;
+    // Generic gamepad icon
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M16 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 8a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 16a2 2 0 100-4 2 2 0 000 4z"/></svg>`;
+  }
+
+  async function loadLivePresence() {
+    livePresenceLoading = true;
+    const el = document.querySelector("#lb-live");
+    if (el) el.innerHTML = `<div class="lb-live-skeleton"><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div></div>`;
+    try {
+      const { data, error } = await supabase
+        .from("tierly_public_live_presence_view")
+        .select("*");
+      if (error) throw error;
+      livePresenceRows = data || [];
+    } catch (e) {
+      console.error("[TIERLY] live presence load failed:", e);
+      livePresenceRows = [];
+    }
+    livePresenceLoading = false;
+    renderLivePresence();
+    subscribeLivePresence();
+  }
+
+  function unsubscribeLivePresence() {
+    if (livePresenceChannel) {
+      try { livePresenceChannel.unsubscribe(); } catch {}
+      livePresenceChannel = null;
+    }
+  }
+
+  function subscribeLivePresence() {
+    unsubscribeLivePresence();
+    livePresenceChannel = supabase.channel("public:tierly_public_live_presence_view", {
+      config: { broadcast: { self: false } }
+    });
+    livePresenceChannel
+      .on("postgres_changes", { event: "*", schema: "public", table: "play_sessions" }, () => {
+        loadLivePresence();
+      })
+      .subscribe();
+  }
+
+  function renderLivePresence() {
+    const el = document.querySelector("#lb-live");
+    if (!el) return;
+    const titleEl = document.querySelector("#lb-live-title");
+    if (titleEl) titleEl.textContent = t("liveTitle");
+
+    if (livePresenceLoading) return; // skeleton already shown
+
+    // Group by game
+    const byGame = new Map();
+    for (const row of livePresenceRows) {
+      if (!byGame.has(row.game_name)) {
+        byGame.set(row.game_name, { game_name: row.game_name, players: [], community_name: row.community_name, community_icon_url: row.community_icon_url });
+      }
+      byGame.get(row.game_name).players.push(row);
+    }
+
+    if (!byGame.size) {
+      el.innerHTML = `
+        <div class="lb-live-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M16 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 8a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 16a2 2 0 100-4 2 2 0 000 4z"/></svg>
+          <p>${t("liveEmptyTitle")}</p>
+          <p style="font-size:12.5px; margin-top:4px;">${t("liveEmptyBody")}</p>
+        </div>`;
+      return;
+    }
+
+    // Stats
+    const totalPlayers = livePresenceRows.length;
+    const totalGames = byGame.size;
+    const communities = new Set(livePresenceRows.map(r => r.community_name)).size;
+
+    el.innerHTML = `
+      <div class="lb-live-head">
+        <h2>${t("liveTitle")}</h2>
+        <span class="lb-live-badge" aria-live="polite">${t("liveSubtitle")}</span>
+      </div>
+      <div class="lb-live-stats">
+        <div class="lb-live-stat">
+          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="users"></i></span>
+          <span class="lb-live-stat-value">${totalPlayers}</span>
+          <span class="lb-live-stat-label">${t("livePlayers")}</span>
+        </div>
+        <div class="lb-live-stat">
+          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="gamepad-2"></i></span>
+          <span class="lb-live-stat-value">${totalGames}</span>
+          <span class="lb-live-stat-label">${t("liveGames")}</span>
+        </div>
+        <div class="lb-live-stat">
+          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="server"></i></span>
+          <span class="lb-live-stat-value">${communities}</span>
+          <span class="lb-live-stat-label">${t("liveCommunities")}</span>
+        </div>
+      </div>
+      <div class="lb-live-grid">${Array.from(byGame.values()).map((game) => `
+        <article class="lb-live-card">
+          <div class="lb-live-card-header">
+            <span class="lb-live-game-icon" aria-hidden="true">${gameIconSvg(game.game_name)}</span>
+            <div>
+              <strong class="lb-live-game-name">${esc(game.game_name)}</strong>
+              <span class="lb-live-community">${esc(game.community_name)}</span>
+            </div>
+          </div>
+          <div class="lb-live-players">${game.players.map((p) => `
+            <div class="lb-live-player">
+              ${p.player_avatar_url
+                ? `<img src="${esc(p.player_avatar_url)}" alt="" class="lb-live-player-avatar" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" />`
+                : ""}
+              <span class="lb-live-player-avatar-fallback" aria-hidden="true" style="${p.player_avatar_url ? 'display:none' : ''}">${initials(p.player_name)}</span>
+              <div class="lb-live-player-info">
+                <div class="lb-live-player-name">${esc(p.player_name)}</div>
+                <div class="lb-live-player-time">${t("livePlayingFor").replace("{minutes}", formatMinutesPlaying(p.minutes_playing))}</div>
+              </div>
+            </div>`).join("")}
+          </div>
+        </article>`).join("")}</div>`;
+    window.lucide?.createIcons();
+  }
+
   function renderFooter() {
     const el = document.querySelector("#lb-footer-links");
     if (!el) return;
@@ -1538,6 +1699,7 @@ import { calculatePoints } from "./points.mjs";
   }
 
   function switchView(view) {
+    if (activeView === "live" && view !== "live") unsubscribeLivePresence();
     activeView = view;
     document.querySelectorAll(".lb-view").forEach((section) => { section.hidden = section.dataset.view !== view; });
     document.querySelectorAll(".lb-nav-item").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.view === view));
@@ -1548,6 +1710,7 @@ import { calculatePoints } from "./points.mjs";
     if (view !== "player" && location.hash.startsWith("#u/")) history.replaceState(null, "", location.pathname + location.search);
     if (view === "admin") window.TierlyAdmin?.open?.();
     if (view === "discover") window.TierlyDiscover?.open?.();
+    if (view === "live") loadLivePresence();
   }
 
   function renderNav() {
@@ -1557,6 +1720,7 @@ import { calculatePoints } from "./points.mjs";
       <button class="lb-nav-item${activeView === "ranking" ? " is-active" : ""}" data-view="ranking"><i data-lucide="trophy"></i><span>${t("navRanking")}</span></button>
       <button class="lb-nav-item${activeView === "bracket" ? " is-active" : ""}" data-view="bracket"><i data-lucide="calendar-days"></i><span>${t("navBracket")}</span></button>
       <button class="lb-nav-item${activeView === "rewards" ? " is-active" : ""}" data-view="rewards"><i data-lucide="gift"></i><span>${t("navRewards")}</span></button>
+      <button class="lb-nav-item${activeView === "live" ? " is-active" : ""}" data-view="live"><i data-lucide="activity"></i><span>${t("navLive")}</span></button>
       <button class="lb-nav-item${activeView === "discover" ? " is-active" : ""}" data-view="discover"><i data-lucide="compass"></i><span>${t("navDiscover")}</span></button>
       <button class="lb-nav-item${activeView === "chess" ? " is-active" : ""}" data-view="chess"><i data-lucide="swords"></i><span>${t("navChess")}</span></button>
       <button class="lb-nav-item${activeView === "profile" ? " is-active" : ""}" data-view="profile"><i data-lucide="user"></i><span>${t("navProfile")}</span></button>
@@ -2002,6 +2166,7 @@ import { calculatePoints } from "./points.mjs";
     setText("#lb-profile-stamps-title", t("profileStampsTitle"));
     setText("#lb-profile-history-title", t("profileHistoryTitle"));
     setText("#lb-settings-title", t("settingsTitle"));
+    setText("#lb-live-title", t("liveTitle"));
     setText("#lb-view-full", t("viewFull") + " →");
     setText("#lb-ranks-info-btn-label", t("ranksInfoBtn"));
     setText("#lb-sidebar-promo-text", t("promoSidebar"));

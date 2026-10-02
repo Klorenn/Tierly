@@ -1,0 +1,121 @@
+- main [ref=e2]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - img "TIRLY" [ref=e6]
+        - heading "TIRLY" [level=1] [ref=e7]
+      - navigation [ref=e8]:
+        - button "Leaderboard" [ref=e9] [cursor=pointer]
+        - button "Events" [ref=e17] [cursor=pointer]
+        - button "Rewards" [ref=e21] [cursor=pointer]
+        - button "Discover" [ref=e27] [cursor=pointer]
+        - button "Chess" [ref=e32] [cursor=pointer]
+        - button "Profile" [ref=e43] [cursor=pointer]
+        - button "Settings" [ref=e48] [cursor=pointer]
+      - generic [ref=e53]:
+        - paragraph [ref=e54]: Climb the ranks. Earn rewards.
+        - img "TIRLY" [ref=e55]
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - generic [ref=e58]:
+          - generic [ref=e66]:
+            - generic [ref=e67]: Active players
+            - strong [ref=e68]: "3"
+          - generic [ref=e73]:
+            - generic [ref=e74]: Live events
+            - strong [ref=e75]: "0"
+            - link "Join and compete!" [ref=e76] [cursor=pointer]:
+              - /url: "#"
+          - generic [ref=e83]:
+            - generic [ref=e84]: Rewards claimed
+            - strong [ref=e85]: "0"
+          - generic [ref=e90]:
+            - generic [ref=e91]: Matches played
+            - strong [ref=e92]: "0"
+        - generic [ref=e93]:
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - heading "Top Players" [level=2] [ref=e98]
+                - generic [ref=e99]: Season resets on February 26, 2027
+              - generic [ref=e100]:
+                - button "View ranks" [ref=e101] [cursor=pointer]
+                - generic [ref=e105]:
+                  - button "Top 5" [ref=e106] [cursor=pointer]
+                  - button "All Players" [ref=e107] [cursor=pointer]
+                - searchbox "Search player by name" [ref=e108]
+            - generic "ranking" [ref=e109]:
+              - generic [ref=e110]:
+                - generic [ref=e111]:
+                  - generic [ref=e112]: Rank
+                  - generic [ref=e113]: Player
+                  - generic [ref=e114]: Points
+                - button "1 kl0ren 1" [ref=e115] [cursor=pointer]:
+                  - generic [ref=e116]: "1"
+                  - generic [ref=e117]: kl0ren
+                  - generic [ref=e121]: "1"
+                - button "2 tucara8 0" [ref=e122] [cursor=pointer]:
+                  - generic [ref=e123]: "2"
+                  - generic [ref=e124]: tucara8
+                  - generic [ref=e128]: "0"
+                - button "3 alex0tico 0" [ref=e129] [cursor=pointer]:
+                  - generic [ref=e130]: "3"
+                  - generic [ref=e131]: alex0tico
+                  - generic [ref=e135]: "0"
+            - button "View Full Leaderboard →" [ref=e136] [cursor=pointer]
+          - complementary [ref=e137]:
+            - generic [ref=e138]:
+              - text: ✦
+              - img "TIRLY" [ref=e139]
+              - heading "Climb the ranks. Become legendary." [level=3] [ref=e140]: Climb the ranks.Become legendary.
+              - paragraph [ref=e141]: Compete in events and earn exclusive rewards.
+              - button "Explore Events →" [ref=e142] [cursor=pointer]
+              - text: ✦
+            - generic [ref=e143]:
+              - generic [ref=e147]:
+                - strong [ref=e148]: Sign in with Discord
+                - paragraph [ref=e149]: Sync your profile, check your history, and join events.
+              - button "Sign in with Discord" [ref=e151] [cursor=pointer]
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: Latest Event
+                - generic [ref=e158]: No events yet
+                - button "View Event →" [ref=e159] [cursor=pointer]
+              - generic [ref=e160]:
+                - generic [ref=e161]: Top Reward
+                - generic [ref=e167]: No rewards yet
+                - button "View Rewards →" [ref=e168] [cursor=pointer]
+        - generic [ref=e169]:
+          - generic [ref=e170]:
+            - heading "Upcoming events" [level=2] [ref=e171]
+            - paragraph [ref=e173]: No upcoming events yet.
+          - generic [ref=e174]:
+            - heading "Recent activity" [level=2] [ref=e175]
+            - paragraph [ref=e177]: No recent activity yet.
+      - generic [ref=e178]:
+        - generic [ref=e179]:
+          - img "TIRLY" [ref=e180]
+          - generic [ref=e181]: ×
+          - img "Tellus Cooperative" [ref=e182]
+        - navigation [ref=e183]:
+          - link "Tellus Cooperative" [ref=e184] [cursor=pointer]:
+            - /url: https://telluscoop.org
+          - link "Recursos" [ref=e185] [cursor=pointer]:
+            - /url: https://telluscoop.org/resources
+          - link "Hub" [ref=e186] [cursor=pointer]:
+            - /url: https://telluscoop.org/hub
+        - generic [ref=e187]:
+          - link "Discord" [ref=e188] [cursor=pointer]:
+            - /url: https://discord.gg/Fy2SgR3XRu
+          - link "X" [ref=e191] [cursor=pointer]:
+            - /url: https://x.com/TellusCoop
+          - link "Instagram" [ref=e194] [cursor=pointer]:
+            - /url: https://www.instagram.com/telluscoop/
+          - link "LinkedIn" [ref=e197] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/tellus-cooperative/
+          - link "YouTube" [ref=e200] [cursor=pointer]:
+            - /url: https://www.youtube.com/@telluscoop
+          - link "WhatsApp" [ref=e203] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/FsNIUPsmNCl2YJkQi5r4p4
+        - generic [ref=e207]: © 2026 Tellus Cooperative · TIRLY
+  - text: ▾ ▾ ▾ ▾ ▾

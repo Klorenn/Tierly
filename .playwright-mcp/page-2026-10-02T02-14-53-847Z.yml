@@ -1,0 +1,85 @@
+- main [ref=f14e2]:
+  - generic [ref=f14e3]:
+    - complementary [ref=f14e4]:
+      - generic [ref=f14e5]:
+        - img "TIRLY" [ref=f14e6]
+        - heading "TIRLY" [level=1] [ref=f14e7]
+      - navigation [ref=f14e8]:
+        - button "Leaderboard" [ref=f14e9] [cursor=pointer]
+        - button "Events" [ref=f14e17] [cursor=pointer]
+        - button "Rewards" [ref=f14e21] [cursor=pointer]
+        - button "Discover" [ref=f14e27] [cursor=pointer]
+        - button "Chess" [ref=f14e32] [cursor=pointer]
+        - button "Profile" [ref=f14e43] [cursor=pointer]
+        - button "Settings" [ref=f14e48] [cursor=pointer]
+      - generic [ref=f14e53]:
+        - paragraph [ref=f14e54]: Climb the ranks. Earn rewards.
+        - img "TIRLY" [ref=f14e55]
+    - generic [ref=f14e56]:
+      - generic [ref=f14e57]:
+        - generic [ref=f14e58]:
+          - generic [ref=f14e60]:
+            - generic [ref=f14e61]:
+              - generic [ref=f14e62]:
+                - heading "Top Players" [level=2] [ref=f14e63]
+                - generic [ref=f14e64]: Season resets on February 26, 2027
+              - generic [ref=f14e65]:
+                - button "View ranks" [ref=f14e66] [cursor=pointer]
+                - generic [ref=f14e70]:
+                  - button "Top 5" [ref=f14e71] [cursor=pointer]
+                  - button "All Players" [ref=f14e72] [cursor=pointer]
+                - searchbox "Search player by name" [ref=f14e73]
+            - generic "ranking" [ref=f14e74]
+            - button "View Full Leaderboard →" [ref=f14e75] [cursor=pointer]
+          - complementary [ref=f14e76]:
+            - generic [ref=f14e77]:
+              - text: ✦
+              - img "TIRLY" [ref=f14e78]
+              - heading "Climb the ranks. Become legendary." [level=3] [ref=f14e79]: Climb the ranks.Become legendary.
+              - paragraph [ref=f14e80]: Compete in events and earn exclusive rewards.
+              - button "Explore Events →" [ref=f14e81] [cursor=pointer]
+              - text: ✦
+            - generic [ref=f14e82]:
+              - generic [ref=f14e86]:
+                - strong [ref=f14e87]: Signed in as
+                - paragraph [ref=f14e88]: Sync your profile, check your history, and join events.
+              - button "View your profile" [ref=f14e90] [cursor=pointer]
+            - generic [ref=f14e91]:
+              - generic [ref=f14e92]:
+                - generic [ref=f14e93]: Latest Event
+                - generic [ref=f14e97]: No events yet
+                - button "View Event →" [ref=f14e98] [cursor=pointer]
+              - generic [ref=f14e99]:
+                - generic [ref=f14e100]: Top Reward
+                - generic [ref=f14e106]: No rewards yet
+                - button "View Rewards →" [ref=f14e107] [cursor=pointer]
+        - generic [ref=f14e108]:
+          - heading "Upcoming events" [level=2] [ref=f14e110]
+          - heading "Recent activity" [level=2] [ref=f14e112]
+      - generic [ref=f14e113]:
+        - generic [ref=f14e114]:
+          - img "TIRLY" [ref=f14e115]
+          - generic [ref=f14e116]: ×
+          - img "Tellus Cooperative" [ref=f14e117]
+        - navigation [ref=f14e118]:
+          - link "Tellus Cooperative" [ref=f14e119] [cursor=pointer]:
+            - /url: https://telluscoop.org
+          - link "Recursos" [ref=f14e120] [cursor=pointer]:
+            - /url: https://telluscoop.org/resources
+          - link "Hub" [ref=f14e121] [cursor=pointer]:
+            - /url: https://telluscoop.org/hub
+        - generic [ref=f14e122]:
+          - link "Discord" [ref=f14e123] [cursor=pointer]:
+            - /url: https://discord.gg/Fy2SgR3XRu
+          - link "X" [ref=f14e126] [cursor=pointer]:
+            - /url: https://x.com/TellusCoop
+          - link "Instagram" [ref=f14e129] [cursor=pointer]:
+            - /url: https://www.instagram.com/telluscoop/
+          - link "LinkedIn" [ref=f14e132] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/tellus-cooperative/
+          - link "YouTube" [ref=f14e135] [cursor=pointer]:
+            - /url: https://www.youtube.com/@telluscoop
+          - link "WhatsApp" [ref=f14e138] [cursor=pointer]:
+            - /url: https://chat.whatsapp.com/FsNIUPsmNCl2YJkQi5r4p4
+        - generic [ref=f14e142]: © 2026 Tellus Cooperative · TIRLY
+  - text: ▾ ▾ ▾ ▾ ▾

@@ -998,6 +998,49 @@
       .lb-disc-invite .lb-disc-btn { width: 100%; justify-content: center; }
     }
 
+    /* ── Live Presence (Quién está jugando ahora) ────────────────────────────── */
+    .lb-live-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .lb-live-head h2 { font-family: var(--serif); font-size: 24px; color: var(--ink); }
+    .lb-live-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--teal-bright); color: #fff; font-size: 12px; font-weight: 700; }
+    .lb-live-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: lb-live-pulse 1.5s ease-in-out infinite; }
+    @keyframes lb-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .lb-live-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+    .lb-live-stat { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: var(--card-shadow); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+    .lb-live-stat-icon { width: 32px; height: 32px; border-radius: 10px; background: var(--chip-bg); color: var(--teal-bright); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+    .lb-live-stat-icon svg { width: 16px; height: 16px; }
+    .lb-live-stat-value { font-family: var(--serif); font-size: 24px; font-weight: 600; line-height: 1.1; color: var(--ink); }
+    .lb-live-stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
+    .lb-live-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .lb-live-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: var(--card-shadow); padding: 18px; display: flex; flex-direction: column; gap: 12px; transition: border-color 160ms ease, transform 160ms ease; }
+    .lb-live-card:hover { border-color: color-mix(in srgb, var(--teal-bright) 40%, var(--card-border)); transform: translateY(-2px); }
+    .lb-live-card-header { display: flex; align-items: center; gap: 10px; }
+    .lb-live-game-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--chip-bg); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .lb-live-game-icon svg { width: 20px; height: 20px; color: var(--teal-bright); }
+    .lb-live-game-name { font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--ink); }
+    .lb-live-community { font-size: 12px; color: var(--ink-dim); }
+    .lb-live-players { display: flex; flex-direction: column; gap: 8px; }
+    .lb-live-player { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--chip-bg); border-radius: 10px; transition: background 160ms ease; }
+    .lb-live-player:hover { background: var(--hover-bg); }
+    .lb-live-player-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .lb-live-player-avatar-fallback { width: 36px; height: 36px; border-radius: 50%; background: var(--teal-bright); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .lb-live-player-info { flex: 1; min-width: 0; }
+    .lb-live-player-name { font-weight: 600; color: var(--ink); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-live-player-time { font-size: 11.5px; color: var(--ink-dim); }
+    .lb-live-empty { text-align: center; padding: 40px 20px; color: var(--ink-dim); }
+    .lb-live-empty svg { width: 64px; height: 64px; margin-bottom: 12px; opacity: 0.5; }
+    .lb-live-empty p { font-size: 14px; }
+    .lb-live-skeleton { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .lb-live-skeleton-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; padding: 18px; }
+    .lb-live-skeleton-row { height: 16px; border-radius: 8px; background: linear-gradient(90deg, var(--chip-bg) 25%, var(--hover-bg) 50%, var(--chip-bg) 75%); background-size: 200% 100%; animation: lb-disc-shimmer 1.4s ease-in-out infinite; margin-bottom: 10px; }
+    .lb-live-skeleton-row.short { width: 60%; }
+    .lb-live-skeleton-row.medium { width: 80%; }
+    .lb-live-skeleton-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(90deg, var(--chip-bg) 25%, var(--hover-bg) 50%, var(--chip-bg) 75%); background-size: 200% 100%; animation: lb-disc-shimmer 1.4s ease-in-out infinite; margin-bottom: 8px; }
+
+    @media (max-width: 720px) {
+      .lb-live-stats { grid-template-columns: 1fr; }
+      .lb-live-grid { grid-template-columns: 1fr; }
+    }
+
     /* ── Accesibilidad transversal ───────────────────────────────────────────
        Un solo anillo de foco para todo lo interactivo. Antes solo 7 reglas
        sueltas lo definian, asi que navegar con Tab dejaba controles sin
@@ -1129,6 +1172,11 @@
           <div id="lb-chess"></div>
         </section>
 
+        <section class="lb-view" data-view="live" hidden>
+          <h2 id="lb-live-title" class="lb-view-head"></h2>
+          <div id="lb-live"></div>
+        </section>
+
         <section class="lb-view" data-view="admin" data-admin-route hidden>
           <div id="tierly-admin"></div>
         </section>
@@ -1192,8 +1240,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-         <script type="module" src="/tierly/chess.js?v=20261002-02"></script>
-         <script type="module" src="/tierly/app.js?v=20261002-02"></script>
+<script type="module" src="/tierly/chess.js?v=20261002-03"></script>
+          <script type="module" src="/tierly/app.js?v=20261002-03"></script>
          <script type="module" src="/tierly/discover.js?v=20261002-02"></script>
          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-02"></script>
 </body>
