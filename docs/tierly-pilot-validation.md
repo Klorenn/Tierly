@@ -25,9 +25,9 @@ Usar un registro de evaluación **separado por comunidad**, con acceso limitado 
 
 | Comunidad | Evento 1 | Evento 2 | Método y período de línea base | Responsable | Estado/decisión |
 |---|---|---|---|---|---|
-| Piloto A — Tellus Cooperative (`871845192058146906`) | `7ea035dc…` 2026-10-11 20:00 Santiago | pendiente | pendiente | pendiente | exploratorio; ver contrato |
-| Piloto B | pendiente | pendiente | pendiente | pendiente | sin guild en DB |
-| Piloto C | pendiente | pendiente | pendiente | pendiente | sin guild en DB |
+| Piloto A — Tellus Cooperative (`871845192058146906`) | `7ea035dc…` 11 oct 20:00 Santiago | pendiente | pendiente | pendiente | exploratorio; sync 301 |
+| Piloto B — ChileDAO (`1323417632371900568`) | `778ffc6c…` 11 oct 20:00 Santiago | pendiente | pendiente | pendiente | exploratorio; sync 172 |
+| Piloto C | pendiente | pendiente | pendiente | pendiente | invitar bot |
 
 ## Dos eventos consecutivos por comunidad
 
