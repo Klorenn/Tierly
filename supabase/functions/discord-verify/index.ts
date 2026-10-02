@@ -251,7 +251,44 @@ Deno.serve(async (request) => {
       }
 
       const guild = await guildResponse.json();
-      if (guild.owner_id !== discordId) return json({ error: "La cuenta de Discord no es dueña del guild configurado" }, 403);
+
+      // Exigir ownership dejaba afuera a quien administra un guild que no creó, que
+      // es el caso normal en comunidades con staff. La autoridad se resuelve por
+      // permisos efectivos, igual que hace Discord para configurar apps.
+      // Los bits van en BigInt a propósito: el bitfield de Discord supera los 53 bits
+      // de Number y con Number se perderían los bits altos en silencio.
+      const ADMINISTRATOR = 1n << 3n;
+      const MANAGE_GUILD = 1n << 5n;
+      let authorized = guild.owner_id === discordId;
+
+      if (!authorized) {
+        const memberResponse = await fetch(
+          `https://discord.com/api/v10/guilds/${guildId}/members/${discordId}`,
+          { headers: { Authorization: `Bot ${botToken}` } },
+        );
+        if (memberResponse.status === 404) {
+          return json({ error: "La cuenta de Discord no es miembro del guild configurado" }, 403);
+        }
+        if (!memberResponse.ok) {
+          console.error("discord-verify: guild member lookup failed", { guildId, status: memberResponse.status });
+          return json({ error: "No se pudo validar los permisos en el guild" }, 502);
+        }
+        const member = await memberResponse.json();
+        const memberRoles: string[] = Array.isArray(member.roles) ? member.roles : [];
+        const guildRoles: Array<{ id: string; permissions: string }> = Array.isArray(guild.roles) ? guild.roles : [];
+
+        // @everyone lleva el id del guild y también aporta permisos.
+        const effective = guildRoles
+          .filter((role) => role.id === guildId || memberRoles.includes(role.id))
+          .reduce((total, role) => total | BigInt(role.permissions ?? "0"), 0n);
+
+        // ADMINISTRATOR implica el resto, así que se evalúa aparte.
+        authorized = (effective & ADMINISTRATOR) !== 0n || (effective & MANAGE_GUILD) !== 0n;
+      }
+
+      if (!authorized) {
+        return json({ error: "La cuenta de Discord no administra el guild configurado" }, 403);
+      }
 
       const { error: communityError } = await admin.from("communities").upsert({
         guild_id: guildId,
