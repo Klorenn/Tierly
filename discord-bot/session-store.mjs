@@ -56,6 +56,34 @@ export class SessionStore {
     }));
   }
 
+  /**
+   * Evento abierto de la comunidad, o `null`. El bot no filtra la ventana por su
+   * cuenta: la decide Postgres, que es el mismo reloj que valida la escritura.
+   */
+  async openEvent(guildId) {
+    return throwIfError(await this.supabase.rpc("tierly_bot_open_event", { p_guild_id: guildId }));
+  }
+
+  /**
+   * Anota la asistencia de alguien que todavia no reclamo su cuenta TIRLY.
+   *
+   * Solo se llama cuando la persona ejecuta el comando ella misma: es lo que
+   * convierte esto en consentimiento por accion y no en recoleccion pasiva.
+   * Devuelve el `gaming_players.id`, que es donde van a colgar sus estampas.
+   */
+  async recordAttendance({ guildId, eventId, discordUserId, displayName = null, avatarUrl = null }) {
+    if (!guildId || !eventId || !discordUserId) {
+      throw new TypeError("Se requieren guildId, eventId y discordUserId");
+    }
+    return throwIfError(await this.supabase.rpc("tierly_bot_record_attendance", {
+      p_guild_id: guildId,
+      p_event_id: eventId,
+      p_discord_id: discordUserId,
+      p_display_name: displayName,
+      p_avatar_url: avatarUrl,
+    }));
+  }
+
   async requestMemberDeletion(guildId, discordUserId) {
     return throwIfError(await this.supabase.rpc("tierly_request_member_deletion", {
       target_guild: guildId,

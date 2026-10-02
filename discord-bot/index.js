@@ -61,7 +61,8 @@ function sessionKey(userId, gameName) {
 
 async function handleTierlyCommand(message) {
   const parts = message.content.trim().toLowerCase().split(/\s+/);
-  if (parts[0] !== "!tierly" || parts[1] !== "presencia" && parts[1] !== "borrar") return false;
+  if (parts[0] !== "!tierly") return false;
+  if (!["presencia", "borrar", "voy"].includes(parts[1])) return false;
   if (!sessions) {
     await message.channel.send("El servicio de consentimiento no está disponible en este momento.");
     return true;
@@ -77,6 +78,8 @@ async function handleTierlyCommand(message) {
         if (key.startsWith(`${message.author.id}:`)) activeSessions.delete(key);
       }
       await message.channel.send("Consentimiento de presencia retirado. Las sesiones abiertas se cerraron y no se registrarán nuevas sesiones.");
+    } else if (parts[1] === "voy" && parts.length === 2) {
+      await handleAttendanceCommand(message);
     } else if (parts[1] === "borrar" && parts.length === 2) {
       await sessions.requestMemberDeletion(DISCORD_GUILD_ID, message.author.id);
       for (const [key, sessionId] of activeSessions) {
@@ -84,7 +87,7 @@ async function handleTierlyCommand(message) {
       }
       await message.channel.send("Se solicitó el borrado de tus datos de TIRLY y se cerraron tus sesiones.");
     } else {
-      await message.channel.send("Usa: `!tierly presencia si`, `!tierly presencia no` o `!tierly borrar`.");
+      await message.channel.send("Usa: `!tierly voy`, `!tierly presencia si`, `!tierly presencia no` o `!tierly borrar`.");
     }
   } catch (error) {
     await recordBotHealth("error", "consent_update");
@@ -92,6 +95,38 @@ async function handleTierlyCommand(message) {
     await message.channel.send("No se pudo actualizar el consentimiento. Inténtalo nuevamente más tarde.");
   }
   return true;
+}
+
+/**
+ * `!tierly voy` — anota la asistencia de quien lo ejecuta al evento abierto.
+ *
+ * Es el punto de entrada de alguien que no tiene idea de que es TIRLY: queda
+ * registrado sin cuenta, el administrador confirma, y la estampa espera colgada
+ * de su `discord_id`. Cuando reclama la cuenta con Discord, el upsert de
+ * `discord-verify` le pone el `auth_user_id` a esa misma fila y las estampas ya
+ * son suyas: no hay backfill que correr.
+ */
+async function handleAttendanceCommand(message) {
+  const guildId = message.guild.id;
+  const eventId = await sessions.openEvent(guildId);
+  if (!eventId) {
+    await message.channel.send("No hay ningún evento de TIRLY abierto en este momento.");
+    return;
+  }
+
+  const { displayName, avatarUrl } = memberIdentity(message.member);
+  await sessions.recordAttendance({
+    guildId,
+    eventId,
+    discordUserId: message.author.id,
+    displayName,
+    avatarUrl,
+  });
+
+  await message.channel.send(
+    `Listo, ${message.member}: quedaste anotado en el evento. ` +
+      `Reclamá tu cuenta en ${LEADERBOARD_URL} para quedarte con la estampa y ver tu historial.`,
+  );
 }
 
 function memberIdentity(member) {

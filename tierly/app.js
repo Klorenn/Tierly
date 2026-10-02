@@ -57,6 +57,10 @@ import { calculatePoints } from "./points.mjs";
       tierDescPlatinum: "Elite level: few players make it this far.",
       tierDescDiamond: "The highest rank. Reserved for the season's very best.",
       profileHistoryEmpty: "No matches played yet.",
+      profileStampsTitle: "Stamps across servers",
+      profileStampsEmpty: "No stamps yet. Attend an event and the organizer will confirm it.",
+      profileStampsUnclaimed: "Attended an event before signing in? Log in with the same Discord account and your stamps show up here.",
+      profileStampsTotal: "stamps",
       playerBackBtn: "← Back to leaderboard",
       playerNotFound: "This profile isn't available.",
       top5: "Top 5", all: "All Players", viewFull: "View Full Leaderboard", searchPlaceholder: "Search player…", searchLabel: "Search player by name",
@@ -223,6 +227,10 @@ import { calculatePoints } from "./points.mjs";
       tierDescPlatinum: "Nivel de élite: pocos jugadores llegan tan lejos.",
       tierDescDiamond: "El rango más alto. Reservado para los mejores de la temporada.",
       profileHistoryEmpty: "Todavía no has jugado ninguna partida.",
+      profileStampsTitle: "Estampas de todos los servers",
+      profileStampsEmpty: "Todavía no tenés estampas. Andá a un evento y el organizador la confirma.",
+      profileStampsUnclaimed: "¿Fuiste a un evento antes de tener cuenta? Entrá con la misma cuenta de Discord y tus estampas aparecen acá.",
+      profileStampsTotal: "estampas",
       playerBackBtn: "← Volver al ranking",
       playerNotFound: "Este perfil no está disponible.",
       top5: "Top 5", all: "Todos", viewFull: "Ver leaderboard completo", searchPlaceholder: "Buscar jugador…", searchLabel: "Buscar jugador por nombre",
@@ -1021,6 +1029,62 @@ import { calculatePoints } from "./points.mjs";
       </div>`).join("");
   }
 
+  // Estampas de TODAS las comunidades. La vista `tierly_my_stamps_view` ya filtra
+  // por `auth.uid()` del lado de Postgres, asi que aca no hay nada que scopear:
+  // pedir mas filas de las propias es imposible desde el cliente.
+  let stampRows = [];
+  let stampsState = "idle";
+
+  async function loadMyStamps() {
+    if (!currentSession) {
+      stampRows = [];
+      stampsState = "idle";
+      return;
+    }
+    stampsState = "loading";
+    const { data, error } = await supabase
+      .from("tierly_my_stamps_view")
+      .select("id, guild_id, community_name, event_name, event_starts_at, xp, stamps, reason, created_at")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    stampRows = error ? [] : data || [];
+    stampsState = error ? "error" : "ready";
+    renderProfileStamps();
+  }
+
+  function renderProfileStamps() {
+    const el = document.querySelector("#lb-profile-stamps");
+    if (!el) return;
+    if (!currentSession) {
+      el.innerHTML = `<p class="lb-profile-stats-empty">${t("profileStampsUnclaimed")}</p>`;
+      return;
+    }
+    if (stampsState === "loading") {
+      el.innerHTML = `<p class="lb-profile-stats-empty">${t("profileSyncing")}</p>`;
+      return;
+    }
+    // Las entradas compensatorias de una revocacion traen `stamps` negativo, asi
+    // que el total se SUMA: contar filas mostraria estampas que ya no existen.
+    const total = stampRows.reduce((sum, row) => sum + Number(row.stamps || 0), 0);
+    if (!total) {
+      el.innerHTML = `<p class="lb-profile-stats-empty">${t("profileStampsEmpty")}</p>`;
+      return;
+    }
+    el.innerHTML = `
+      <p class="lb-profile-stamps-total"><strong>${total}</strong> ${esc(t("profileStampsTotal"))}</p>
+      ${stampRows
+        .filter((row) => Number(row.stamps || 0) > 0)
+        .map((row) => `
+          <div class="lb-profile-history-row">
+            <span class="lb-rank-badge">${Number(row.stamps)}</span>
+            <span class="lb-profile-history-event">${esc(row.event_name || t("profileStampsTitle"))}
+              <span class="lb-profile-history-date">· ${esc(row.community_name || row.guild_id)}</span>
+            </span>
+            <span class="lb-profile-history-points">+${Number(row.xp || 0)} XP</span>
+          </div>`)
+        .join("")}`;
+  }
+
   function renderSideCards() {
     const el = document.querySelector("#lb-side");
     if (!el) return;
@@ -1402,6 +1466,8 @@ import { calculatePoints } from "./points.mjs";
     renderProfileSummary();
     renderProfileStats();
     renderProfileHistory();
+    renderProfileStamps();
+    loadMyStamps();
     loadCommunityEvents();
   }
 
@@ -1933,6 +1999,7 @@ import { calculatePoints } from "./points.mjs";
     setText("#lb-bracket-title", t("bracketTitle"));
     setText("#lb-rewards-title", t("rewardsTitle"));
     setText("#lb-profile-title", t("profileTitle"));
+    setText("#lb-profile-stamps-title", t("profileStampsTitle"));
     setText("#lb-profile-history-title", t("profileHistoryTitle"));
     setText("#lb-settings-title", t("settingsTitle"));
     setText("#lb-view-full", t("viewFull") + " →");
