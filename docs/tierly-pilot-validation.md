@@ -1,6 +1,7 @@
 # Validación del piloto Tierly
 
-**Estado:** procedimiento pendiente de ejecución. Ningún resultado o permiso de producción queda acreditado por este documento.
+**Estado:** procedimiento pendiente de ejecución. Ningún resultado o permiso de producción queda acreditado por este documento.  
+**Contrato operativo:** [tierly-pilot-contract.md](./tierly-pilot-contract.md) (kickoff 2026-10-02).
 
 **Objetivo:** comprobar el ciclo de evento de [Fase 1](../TIERLY_ROADMAP.md#fase-1--primer-ciclo-completo-de-jugar-juntos-p0) y medir repetición en tres comunidades, con dos eventos consecutivos por comunidad. La persona responsable acuerda las reglas y la muestra antes de comenzar. Las hipótesis de Fase 2 no son resultados.
 
@@ -8,8 +9,8 @@
 
 - [ ] Responsable del piloto, administrador de cada guild y canal de incidentes identificados. Cada comunidad acepta por escrito finalidad, datos mínimos, retención, borrado y quién verá la evidencia. Elegir participantes voluntarios; no copiar listas completas de miembros.
 - [ ] Estado de permisos de Discord documentado para cada uso. Si presence, estadísticas derivadas o portabilidad no tienen autorización suficiente, mantener esas funciones apagadas y validar solo inscripción, check-in explícito y confirmación del organizador. Una solicitud enviada no cuenta como aprobación.
-- [ ] Inventario de migraciones realmente aplicadas y permisos RLS revisado por quien administra Supabase. El SQL del repositorio es referencia histórica incompleta: no ejecutar `db reset`, `db push` ni aplicar una migración por seguir este runbook. Confirmar que la RPC del reporte existe antes de intentar leerla.
-- [ ] Nuevo host validado para login Discord, vinculación, ranking/perfil, administración autorizada y flujos críticos. Conservar URLs, Auth/CORS antiguos y Tellus durante coexistencia; seguir [despliegue y rollback](../README.md#deploy-and-domain-cutover). El bot debe estar operativo según [health, reinicio y rollback](../discord-bot/README.md#health-y-reinicio-checklist).
+- [x] Inventario de migraciones realmente aplicadas (2026-10-02): críticas en prod; sin local-only pendiente. No ejecutar `db reset`. RPC `tierly_pilot_report` confirmada en schema.
+- [x] Host `tirly.xyz` + bot operativos (2026-10-02): web sin Chess (`e025520`); bot con slash `event`; crons activos. Pendiente: validación humana de login/admin y `/tierly set` canales en Tellus. Conservar Auth/CORS Tellus.
 - [ ] Para cada evento, publicar reglas visibles de inscripción, check-in, confirmación, XP/stamp, zona horaria y cancelación. Documentar el flujo de corrección ante confirmación errónea: la RPC `tierly_revoke_event_confirmation` existe en código y está migrada en prod; **verificarla en vivo** antes de marcar el criterio como pasa. Explicar que el stamp acredita la fuente de evidencia, no habilidad, victoria ni duración exacta.
 
 Si alguna puerta falla, registrar bloqueo y responsable; no iniciar la medición de esa comunidad. **El piloto formal y la salida de Fase 1 siguen bloqueados** hasta verificar en vivo corrección/reversión auditada (RPC ya desplegada en schema). Una prueba exploratoria con voluntarios puede registrar hallazgos, pero no cuenta como aprobación de esos criterios ni justifica manipulación manual de producción.
@@ -24,9 +25,9 @@ Usar un registro de evaluación **separado por comunidad**, con acceso limitado 
 
 | Comunidad | Evento 1 | Evento 2 | Método y período de línea base | Responsable | Estado/decisión |
 |---|---|---|---|---|---|
-| Piloto A | pendiente | pendiente | pendiente | pendiente | pendiente |
-| Piloto B | pendiente | pendiente | pendiente | pendiente | pendiente |
-| Piloto C | pendiente | pendiente | pendiente | pendiente | pendiente |
+| Piloto A — Tellus Cooperative (`871845192058146906`) | `7ea035dc…` 2026-10-11 20:00 Santiago | pendiente | pendiente | pendiente | exploratorio; ver contrato |
+| Piloto B | pendiente | pendiente | pendiente | pendiente | sin guild en DB |
+| Piloto C | pendiente | pendiente | pendiente | pendiente | sin guild en DB |
 
 ## Dos eventos consecutivos por comunidad
 

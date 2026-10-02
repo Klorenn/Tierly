@@ -82,11 +82,10 @@ const TIERLY_COMMANDS = [
             type: 1,
             options: [
               { name: "name", description: "Nombre del evento", type: 3, required: true },
-              { name: "game", description: "Juego", type: 3, required: true },
-              { name: "starts_at", description: "Inicio ISO-8601 (UTC), ej. 2026-10-10T20:00:00Z", type: 3, required: true },
-              { name: "format", description: "Formato (elimination|heats)", type: 3, required: false },
-              { name: "max_players", description: "Cupo máximo", type: 4, required: false },
-              { name: "description", description: "Descripción", type: 3, required: false },
+              { name: "starts_at", description: "Inicio ISO-8601 (UTC), ej. 2026-10-10T23:00:00Z", type: 3, required: true },
+              { name: "timezone", description: "Zona IANA (default: comunidad)", type: 3, required: false },
+              { name: "location", description: "Lugar o canal", type: 3, required: false },
+              { name: "description", description: "Descripción / reglas", type: 3, required: false },
             ],
           },
           {
@@ -637,36 +636,19 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.deferReply({ ephemeral: true });
       try {
         const name = interaction.options.getString("name");
-        const game = interaction.options.getString("game");
-        const startsAt = interaction.options.getString("starts_at");
-        const format = interaction.options.getString("format") || "elimination";
-        const maxPlayers = interaction.options.getInteger("max_players");
+        const startsAtRaw = interaction.options.getString("starts_at");
+        const timezoneOpt = interaction.options.getString("timezone");
+        const location = interaction.options.getString("location");
         const description = interaction.options.getString("description");
 
-        // Verificar que el juego existe o crearlo
-        let gameId;
-        const { data: existingGame } = await supabase
-          .from("games")
-          .select("id")
-          .eq("canonical_name", game.toLowerCase())
-          .maybeSingle();
-
-        if (existingGame) {
-          gameId = existingGame.id;
-        } else {
-          const { data: newGame, error: gameError } = await supabase
-            .from("games")
-            .insert({ display_name: game, canonical_name: game.toLowerCase() })
-            .select("id")
-            .single();
-          if (gameError) throw gameError;
-          gameId = newGame.id;
+        const startsAt = new Date(startsAtRaw);
+        if (Number.isNaN(startsAt.getTime())) {
+          return interaction.editReply({ content: "starts_at inválido. Usá ISO-8601 UTC, ej. 2026-10-10T23:00:00Z", ephemeral: true });
         }
 
-        // Obtener community_id (guild_id)
         const { data: community } = await supabase
           .from("communities")
-          .select("id")
+          .select("guild_id, timezone")
           .eq("guild_id", DISCORD_GUILD_ID)
           .maybeSingle();
 
@@ -674,24 +656,43 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply({ content: "Comunidad no configurada. Usa /tierly set welcome-channel primero.", ephemeral: true });
         }
 
-        const { error } = await supabase
+        const timezone = (timezoneOpt || community.timezone || "America/Santiago").trim();
+        const eventDate = startsAt.toISOString().slice(0, 10);
+
+        const { data: org, error: orgError } = await supabase
+          .from("organizations")
+          .select("id")
+          .eq("slug", "tellus")
+          .maybeSingle();
+        if (orgError) throw orgError;
+        if (!org) {
+          return interaction.editReply({ content: "Organización tellus no encontrada en Supabase.", ephemeral: true });
+        }
+
+        const { data: event, error } = await supabase
           .from("gaming_events")
           .insert({
-            community_id: community.id,
-            name,
-            game_id: gameId,
-            starts_at: startsAt,
-            format,
-            max_players: maxPlayers,
-            description,
+            organization_id: org.id,
+            guild_id: DISCORD_GUILD_ID,
+            name: name.trim(),
+            event_date: eventDate,
+            starts_at: startsAt.toISOString(),
+            ends_at: null,
+            timezone,
+            location: location?.trim() || null,
+            description: description?.trim() || null,
             status: "scheduled",
           })
-          .select("id")
+          .select("id, starts_at")
           .single();
 
         if (error) throw error;
 
-        await interaction.editReply({ content: `✅ Evento creado: **${name}** (${game}) — <t:${Math.floor(new Date(startsAt).getTime()/1000)}:F>\n${LEADERBOARD_URL}/tierly/events`, ephemeral: true });
+        const ts = Math.floor(new Date(event.starts_at).getTime() / 1000);
+        await interaction.editReply({
+          content: `✅ Evento creado: **${name.trim()}** — <t:${ts}:F> (${timezone})\nid: \`${event.id}\`\n${LEADERBOARD_URL}`,
+          ephemeral: true,
+        });
       } catch (err) {
         console.error('Event create error:', err);
         await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
@@ -704,8 +705,8 @@ client.on("interactionCreate", async (interaction) => {
       try {
         const { data: events, error } = await supabase
           .from("gaming_events")
-          .select("id, name, game_id, starts_at, status, gaming_matches(status)")
-          .eq("community_id", (await supabase.from("communities").select("id").eq("guild_id", DISCORD_GUILD_ID).maybeSingle()).data?.id)
+          .select("id, name, starts_at, status, timezone")
+          .eq("guild_id", DISCORD_GUILD_ID)
           .eq("status", "scheduled")
           .order("starts_at", { ascending: true })
           .limit(10);
@@ -715,11 +716,11 @@ client.on("interactionCreate", async (interaction) => {
           return interaction.editReply({ content: "No hay eventos programados.", ephemeral: true });
         }
 
-        const lines = events.map(e => {
-          const gameName = e.game_id; // TODO: join con games
-          const status = e.status;
-          const time = `<t:${Math.floor(new Date(e.starts_at).getTime()/1000)}:F>`;
-          return `• **${e.name}** (${gameName}) — ${time} — ${status}\n  id: \`${e.id}\``;
+        const lines = events.map((e) => {
+          const time = e.starts_at
+            ? `<t:${Math.floor(new Date(e.starts_at).getTime() / 1000)}:F>`
+            : "sin fecha";
+          return `• **${e.name}** — ${time} (${e.timezone || "UTC"})\n  id: \`${e.id}\``;
         });
         await interaction.editReply({ content: `**Eventos programados:**\n${lines.join("\n")}`, ephemeral: true });
       } catch (err) {
@@ -740,7 +741,20 @@ client.on("interactionCreate", async (interaction) => {
           .maybeSingle();
 
         if (!membership) {
-          return interaction.editReply({ content: "No estás sincronizado. Usa /tierly sync primero.", ephemeral: true });
+          return interaction.editReply({ content: "No estás sincronizado. Pedile a un admin `/tierly sync` o usá `!bienvenida`.", ephemeral: true });
+        }
+
+        const { data: event, error: eventError } = await supabase
+          .from("gaming_events")
+          .select("id, guild_id, status")
+          .eq("id", eventId)
+          .maybeSingle();
+        if (eventError) throw eventError;
+        if (!event || event.guild_id !== DISCORD_GUILD_ID) {
+          return interaction.editReply({ content: "Evento no encontrado en este server.", ephemeral: true });
+        }
+        if (event.status !== "scheduled" && event.status !== "live") {
+          return interaction.editReply({ content: `El evento no acepta inscripciones (estado: ${event.status}).`, ephemeral: true });
         }
 
         const { error } = await supabase
@@ -748,6 +762,7 @@ client.on("interactionCreate", async (interaction) => {
           .upsert({
             event_id: eventId,
             player_id: membership.id,
+            unregistered_at: null,
           }, { onConflict: "event_id,player_id" });
 
         if (error) throw error;

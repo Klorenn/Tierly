@@ -196,6 +196,7 @@ Antes de cambiar dominio:
 
 - **Roadmap completo:** [TIERLY_ROADMAP.md](TIERLY_ROADMAP.md)
 - **Runbook piloto:** [docs/tierly-pilot-validation.md](docs/tierly-pilot-validation.md)
+- **Contrato kickoff piloto:** [docs/tierly-pilot-contract.md](docs/tierly-pilot-contract.md)
 - **RPC reporte piloto:** `public.tierly_pilot_report()` (migración `20260930230000_tierly_pilot_report.sql`)
 - **Bot docs:** [discord-bot/README.md](discord-bot/README.md)
 - **Auditoría histórica:** [docs/archive/2026-08-27-tierly-roadmap-audit.md](docs/archive/2026-08-27-tierly-roadmap-audit.md)

@@ -14,6 +14,15 @@ test("registra /tierly event como grupo con create, list y join", () => {
   assert.match(source, /name:\s*"event_id"/);
 });
 
+test("event create/list usan el schema real (guild_id), no community_id/game_id", () => {
+  // El insert del bot debe alinear con tierly_create_event / gaming_events.
+  assert.match(source, /from\("gaming_events"\)[\s\S]{0,400}?guild_id/);
+  assert.doesNotMatch(source, /community_id:\s*community\.id/);
+  assert.doesNotMatch(source, /game_id:\s*gameId/);
+  assert.match(source, /\.eq\("guild_id",\s*DISCORD_GUILD_ID\)/);
+  assert.match(source, /organizations[\s\S]{0,120}?tellus|slug:\s*["']tellus["']/);
+});
+
 test("el handler resuelve event vía getSubcommandGroup", () => {
   assert.match(source, /getSubcommandGroup\(/);
   assert.match(source, /\bgroup\s*===?\s*["']event["']/);
