@@ -20,7 +20,8 @@ test("event create/list usan el schema real (guild_id), no community_id/game_id"
   assert.doesNotMatch(source, /community_id:\s*community\.id/);
   assert.doesNotMatch(source, /game_id:\s*gameId/);
   assert.match(source, /\.eq\("guild_id",\s*DISCORD_GUILD_ID\)/);
-  assert.match(source, /organizations[\s\S]{0,120}?tellus|slug:\s*["']tellus["']/);
+  assert.match(source, /organization_id/);
+  assert.doesNotMatch(source, /from\("organizations"\)/);
 });
 
 test("el handler resuelve event vía getSubcommandGroup", () => {

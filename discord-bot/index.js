@@ -659,20 +659,27 @@ client.on("interactionCreate", async (interaction) => {
         const timezone = (timezoneOpt || community.timezone || "America/Santiago").trim();
         const eventDate = startsAt.toISOString().slice(0, 10);
 
-        const { data: org, error: orgError } = await supabase
-          .from("organizations")
-          .select("id")
-          .eq("slug", "tellus")
+        // organizations es prerequisito Tellus compartido (fuera del SQL del repo).
+        // Reusamos organization_id de un evento previo del mismo guild.
+        const { data: prior, error: priorError } = await supabase
+          .from("gaming_events")
+          .select("organization_id")
+          .eq("guild_id", DISCORD_GUILD_ID)
+          .not("organization_id", "is", null)
+          .limit(1)
           .maybeSingle();
-        if (orgError) throw orgError;
-        if (!org) {
-          return interaction.editReply({ content: "Organización tellus no encontrada en Supabase.", ephemeral: true });
+        if (priorError) throw priorError;
+        if (!prior?.organization_id) {
+          return interaction.editReply({
+            content: "No hay organization_id previo en este guild. Creá el primer evento desde el Admin web y después podés usar /tierly event create.",
+            ephemeral: true,
+          });
         }
 
         const { data: event, error } = await supabase
           .from("gaming_events")
           .insert({
-            organization_id: org.id,
+            organization_id: prior.organization_id,
             guild_id: DISCORD_GUILD_ID,
             name: name.trim(),
             event_date: eventDate,
