@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /supabase/
+Disallow: /discord-bot/
+Disallow: /tests/
+Disallow: /scripts/
+Disallow: /docs/
+Disallow: /ops/
+
+Sitemap: https://www.tirly.xyz/sitemap.xml

@@ -3,32 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TIRLY Gaming Leaderboard</title>
-  <meta name="description" content="Compete in events. Climb the ranks. Earn epic rewards across every TIRLY gaming event." />
+  <title>TIRLY — Gaming communities, live presence &amp; events</title>
+  <meta name="description" content="TIRLY shows what Discord gaming communities are playing, who’s live with public presence, and upcoming events you can join." />
   <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#0F8F78" />
   <link rel="canonical" href="https://www.tirly.xyz/" />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.tirly.xyz/" />
   <meta property="og:site_name" content="TIRLY" />
-  <meta property="og:title" content="TIRLY Gaming Leaderboard" />
-  <meta property="og:description" content="Compete in events. Climb the ranks. Earn epic rewards across every TIRLY gaming event." />
+  <meta property="og:title" content="TIRLY — Gaming communities, live presence &amp; events" />
+  <meta property="og:description" content="See what Discord gaming communities play, who’s live with opt-in presence, and join upcoming nights." />
   <meta property="og:image" content="https://www.tirly.xyz/tierly/OpenGraph.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1729" />
   <meta property="og:image:height" content="910" />
   <meta property="og:locale" content="en_US" />
-  <meta property="og:locale:alternate" content="es_LA" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@TellusCoop" />
   <meta name="twitter:creator" content="@TellusCoop" />
-  <meta name="twitter:title" content="TIRLY Gaming Leaderboard" />
-  <meta name="twitter:description" content="Compete in events. Climb the ranks. Earn epic rewards across every TIRLY gaming event." />
+  <meta name="twitter:title" content="TIRLY — Gaming communities, live presence &amp; events" />
+  <meta name="twitter:description" content="See what Discord gaming communities play, who’s live with opt-in presence, and join upcoming nights." />
   <meta name="twitter:image" content="https://www.tirly.xyz/tierly/OpenGraph.png" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://www.tirly.xyz/#organization",
+        "name": "TIRLY",
+        "url": "https://www.tirly.xyz/",
+        "logo": "https://www.tirly.xyz/tierly/tierly-logo.png",
+        "parentOrganization": {
+          "@type": "Organization",
+          "name": "Tellus Cooperative",
+          "url": "https://telluscoop.org"
+        },
+        "sameAs": [
+          "https://x.com/TellusCoop",
+          "https://www.instagram.com/telluscoop/",
+          "https://www.linkedin.com/company/tellus-cooperative/",
+          "https://www.youtube.com/@telluscoop"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.tirly.xyz/#website",
+        "url": "https://www.tirly.xyz/",
+        "name": "TIRLY",
+        "description": "Public presence, servers, and events for Discord gaming communities.",
+        "inLanguage": "en",
+        "publisher": { "@id": "https://www.tirly.xyz/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "TIRLY",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "url": "https://www.tirly.xyz/",
+        "description": "Discover what Discord gaming communities play, live public presence, and community events.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "publisher": { "@id": "https://www.tirly.xyz/#organization" }
+      }
+    ]
+  }
+  </script>
   <link rel="icon" type="image/png" href="/tierly/tierly-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-13" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-14" />
   <style>
     :root {
       --sand: #E7DCC8; --sand-soft: #F3EDE2; --teal: #3F8487; --teal-bright: #0F8F78; --teal-deep: #17665F; --teal-ink: #1A2E2F; --clay: #B84F24;
@@ -857,10 +905,10 @@
     /* ── Descubrimiento público ─────────────────────────────────────────────
        Reutiliza los tokens del sistema (--card, --teal-bright, --serif) para que
        la vista herede light/dark sin declarar colores propios. */
-    .lb-disc-head { margin-bottom: 22px; }
-    .lb-disc-kicker { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal-bright); margin-bottom: 6px; }
-    .lb-disc-head h2 { font-family: var(--serif); font-size: 30px; font-weight: 600; line-height: 1.2; color: var(--ink); }
-    .lb-disc-sub { margin-top: 8px; max-width: 62ch; font-size: 14px; line-height: 1.55; color: var(--ink-dim); }
+    .lb-disc-head { margin-bottom: 28px; max-width: 40rem; }
+    .lb-disc-kicker { display: none; }
+    .lb-disc-head h2 { font-family: var(--serif); font-size: clamp(2rem, 4vw, 2.75rem); font-weight: 600; line-height: 1.12; letter-spacing: -0.03em; color: var(--ink); text-wrap: balance; }
+    .lb-disc-sub { margin-top: 10px; max-width: 54ch; font-size: 15.5px; line-height: 1.55; color: var(--ink-dim); }
 
     .lb-disc-alert { margin-bottom: 18px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600; background: color-mix(in srgb, var(--clay) 12%, var(--card)); border: 1px solid color-mix(in srgb, var(--clay) 36%, var(--card-border)); color: var(--clay); }
     .lb-disc-note { font-size: 13px; color: var(--ink-dim); margin-bottom: 12px; }
@@ -1315,8 +1363,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-13"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-13"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-13"></script>
+<script type="module" src="/tierly/app.js?v=20261002-14"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-14"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-14"></script>
 </body>
 </html>

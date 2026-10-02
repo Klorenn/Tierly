@@ -52,5 +52,5 @@ test("discover abre popup al tocar un juego con servers y quién juega", () => {
   assert.match(discover, /tierly_public_game_communities_view/);
   assert.match(discover, /tierly_public_game_players_view/);
   assert.match(discover, /showModal\(/);
-  assert.match(discover, /En qué server|Servidores|Quién juega/i);
+  assert.match(discover, /Where it's played|Who's playing|Servers/i);
 });

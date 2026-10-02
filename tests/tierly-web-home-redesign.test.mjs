@@ -32,10 +32,10 @@ test("nav prioriza Home/Discover y no ofrece Rewards vacío", () => {
   assert.match(nav, /t\("navHome"\)/);
 });
 
-test("las tarjetas de comunidad exponen Unirse + Agregar bot", () => {
+test("las tarjetas de comunidad exponen Join + Add bot", () => {
   assert.match(discover, /invite_url/);
-  assert.match(discover, /Unirse|joinServer|ctaJoin/i);
-  assert.match(discover, /inviteUrl|inviteBot|Agregar bot|invite bot/i);
+  assert.match(discover, /Join|joinServer|ctaJoin/i);
+  assert.match(discover, /inviteUrl|inviteBot|Add bot/i);
   assert.match(discover, /community_invite|invite_url/);
 });
 

@@ -68,8 +68,8 @@ test("el módulo escapa todo lo que viene de la base", () => {
 });
 
 test("el módulo explica qué certifica el dato de presencia", () => {
-  assert.match(discover, /presencia/i);
-  assert.match(discover, /minutos/i);
+  assert.match(discover, /presence/i);
+  assert.match(discover, /min(?:utes|)/i);
 });
 
 test("el panel admin permite aparecer en el directorio vía RPC autorizada", () => {
