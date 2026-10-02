@@ -79,14 +79,14 @@
         <h3>${esc(top.game_name)}</h3>
         <p><strong>${duration(top.total_minutes)}</strong> · ${number(top.session_count)} sesiones · ${number(top.community_count)} comunidades</p>
         <p class="lb-games-hero-hint">Últimos 30 días en servers públicos — acá nace la próxima noche.</p>
-        <button type="button" class="lb-disc-btn lb-disc-btn-light" data-view="live">Ver en vivo</button>
+        <button type="button" class="lb-disc-btn lb-disc-btn-light" data-game-open="${esc(top.game_name)}">Ver servers</button>
       </div>
     </article>`;
 
     const rail = rest.length
       ? `<div class="lb-games-rail" role="list">${rest.slice(0, 7).map((game, index) => {
           const src = game.game_banner_url || game.banner_url || game.game_icon_url;
-          return `<article class="lb-games-rail-card" role="listitem">
+          return `<button type="button" class="lb-games-rail-card" role="listitem" data-game-open="${esc(game.game_name)}">
             <div class="lb-games-rail-media">
               ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="lb-game-banner-fallback">${initials(game.game_name)}</span>`}
               <span class="lb-games-rail-rank">${index + 2}</span>
@@ -95,11 +95,133 @@
               <h4>${esc(game.game_name)}</h4>
               <p>${duration(game.total_minutes)} · ${number(game.session_count)} ses.</p>
             </div>
-          </article>`;
+          </button>`;
         }).join("")}</div>`
       : "";
 
     return `${hero}${rail}`;
+  }
+
+  function gameModalServers(rows) {
+    if (!rows.length) {
+      return `<p class="lb-disc-empty">Ningún server público jugó esto en los últimos 30 días.</p>`;
+    }
+    return `<ul class="lb-game-modal-list">${rows.map((row) => {
+      const join = row.invite_url
+        ? `<a class="lb-disc-btn lb-disc-btn-ghost lb-game-modal-join" href="${esc(row.invite_url)}" target="_blank" rel="noopener noreferrer">Unirse</a>`
+        : "";
+      return `<li class="lb-game-modal-row">
+        ${crest(row.community_name, row.community_icon_url, "sm")}
+        <div class="lb-game-modal-row-copy">
+          <strong>${esc(row.community_name || "Comunidad")}</strong>
+          <span>${duration(row.total_minutes)} · ${number(row.session_count)} ses. · últ. ${relativeDay(row.last_played_day)}</span>
+        </div>
+        ${join}
+      </li>`;
+    }).join("")}</ul>`;
+  }
+
+  function gameModalPlayers(rows) {
+    if (!rows.length) {
+      return `<p class="lb-disc-empty">Nadie eligió mostrarse todavía para este juego. Presence ≠ ranking público.</p>`;
+    }
+    return `<ul class="lb-game-modal-list">${rows.map((row) => {
+      const avatar = row.player_avatar_url
+        ? `<img class="lb-game-modal-avatar" src="${esc(row.player_avatar_url)}" alt="" loading="lazy">`
+        : `<span class="lb-game-modal-avatar lb-game-modal-avatar-fallback" aria-hidden="true">${initials(row.player_name)}</span>`;
+      return `<li class="lb-game-modal-row">
+        ${avatar}
+        <div class="lb-game-modal-row-copy">
+          <strong>${esc(row.player_name)}</strong>
+          <span>${esc(row.community_name || "Comunidad")} · ${duration(row.total_minutes)} · ${number(row.session_count)} ses.</span>
+        </div>
+      </li>`;
+    }).join("")}</ul>`;
+  }
+
+  function gameModalLive(rows) {
+    if (!rows.length) return "";
+    return `<section class="lb-game-modal-section">
+      <h3>En vivo ahora</h3>
+      <ul class="lb-game-modal-list">${rows.map((row) => {
+        const join = row.invite_url
+          ? `<a class="lb-disc-btn lb-disc-btn-primary lb-game-modal-join" href="${esc(row.invite_url)}" target="_blank" rel="noopener noreferrer">Unirse</a>`
+          : "";
+        return `<li class="lb-game-modal-row">
+          ${crest(row.community_name, row.community_icon_url, "sm")}
+          <div class="lb-game-modal-row-copy">
+            <strong>${esc(row.community_name || "Comunidad")}</strong>
+            <span>${number(row.player_count)} jugando · ${durationLive(row.total_minutes)}</span>
+          </div>
+          ${join}
+        </li>`;
+      }).join("")}</ul>
+    </section>`;
+  }
+
+  async function openGameModal(gameName) {
+    const modal = document.querySelector("#lb-game-modal");
+    const body = document.querySelector("#lb-game-modal-body");
+    const title = document.querySelector("#lb-game-modal-title");
+    if (!modal || !body || !title || !gameName) return;
+
+    const game = state.games.find((row) => row.game_name === gameName) || { game_name: gameName };
+    const banner = game.game_banner_url || game.banner_url || game.game_icon_url;
+    title.textContent = game.game_name || gameName;
+    body.innerHTML = `<div class="lb-game-modal-loading" aria-busy="true">Cargando servers y jugadores…</div>`;
+    if (!modal.open) modal.showModal();
+
+    const liveNow = state.liveGames.filter((row) => row.game_name === gameName);
+    const [communitiesRes, playersRes] = await Promise.all([
+      supabase.from("tierly_public_game_communities_view")
+        .select("game_name, community_name, community_icon_url, invite_url, total_minutes, session_count, last_played_day")
+        .eq("game_name", gameName)
+        .order("total_minutes", { ascending: false })
+        .limit(24),
+      supabase.from("tierly_public_game_players_view")
+        .select("game_name, community_name, community_icon_url, player_name, player_avatar_url, total_minutes, session_count, last_session_at")
+        .eq("game_name", gameName)
+        .order("total_minutes", { ascending: false })
+        .limit(20),
+    ]);
+
+    if (title.textContent !== (game.game_name || gameName)) return;
+
+    const communities = communitiesRes.data || [];
+    const players = playersRes.data || [];
+    const fetchError = communitiesRes.error || playersRes.error;
+
+    body.innerHTML = `
+      ${banner ? `<div class="lb-game-modal-banner" style="--lb-hero-banner:url('${esc(banner)}')">
+        <img src="${esc(banner)}" alt="" loading="lazy">
+      </div>` : ""}
+      <p class="lb-game-modal-meta">
+        ${duration(game.total_minutes || 0)} · ${number(game.session_count || 0)} sesiones · ${number(game.community_count || communities.length)} servers · últimos 30 días
+      </p>
+      ${fetchError ? `<p class="lb-disc-alert">No pudimos cargar el detalle. Reintentá en un momento.</p>` : ""}
+      ${gameModalLive(liveNow)}
+      <section class="lb-game-modal-section">
+        <h3>En qué server se juega</h3>
+        <p class="lb-disc-note">Comunidades del directorio público con presencia en este juego.</p>
+        ${gameModalServers(communities)}
+      </section>
+      <section class="lb-game-modal-section">
+        <h3>Quién juega</h3>
+        <p class="lb-disc-note">Solo quienes aceptaron mostrarse, por comunidad. No mide skill.</p>
+        ${gameModalPlayers(players)}
+      </section>
+    `;
+    if (window.lucide?.createIcons) window.lucide.createIcons({ root: body });
+  }
+
+  function bindGameModal() {
+    const modal = document.querySelector("#lb-game-modal");
+    if (!modal || modal.dataset.bound === "1") return;
+    modal.dataset.bound = "1";
+    modal.querySelector("#lb-game-modal-close")?.addEventListener("click", () => modal.close());
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) modal.close();
+    });
   }
 
   function eventsGrid() {
@@ -190,11 +312,15 @@
     return `<div class="lb-game-banner-grid lb-live-banner-grid">${state.liveGames.map((game) => {
       const joinHref = game.invite_url;
       return `<article class="lb-game-card lb-live-tile">
-        ${gameBanner(game)}
+        <button type="button" class="lb-game-card-open" data-game-open="${esc(game.game_name)}" aria-label="Ver ${esc(game.game_name)}">
+          ${gameBanner(game)}
+        </button>
         <div class="lb-game-card-body">
           <p class="lb-live-meta"><span class="lb-live-badge">EN VIVO</span>
             <span>${number(game.player_count)} jugando · ${durationLive(game.total_minutes)}</span></p>
-          <h4>${esc(game.game_name)}</h4>
+          <button type="button" class="lb-game-card-title-btn" data-game-open="${esc(game.game_name)}">
+            <h4>${esc(game.game_name)}</h4>
+          </button>
           <p class="lb-disc-tile-meta">${crest(game.community_name, game.community_icon_url, "sm")}
             <span>${esc(game.community_name || "Comunidad")}</span></p>
           ${joinHref
@@ -277,6 +403,13 @@
     root.querySelectorAll("[data-view]").forEach((btn) => {
       btn.addEventListener("click", () => bridge.switchView?.(btn.dataset.view));
     });
+    root.querySelectorAll("[data-game-open]").forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.preventDefault();
+        openGameModal(btn.dataset.gameOpen);
+      });
+    });
+    bindGameModal();
     if (window.lucide?.createIcons) window.lucide.createIcons({ root });
   }
 

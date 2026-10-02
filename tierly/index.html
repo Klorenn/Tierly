@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-11" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-12" />
   <style>
     :root {
       --sand: #E7DCC8; --sand-soft: #F3EDE2; --teal: #3F8487; --teal-bright: #0F8F78; --teal-deep: #17665F; --teal-ink: #1A2E2F; --clay: #B84F24;
@@ -940,8 +940,10 @@
       scroll-snap-align: start; border-radius: var(--radius-md); overflow: hidden;
       border: 1px solid var(--card-border); background: var(--card); box-shadow: var(--card-shadow);
       transition: transform 160ms ease, border-color 160ms ease;
+      display: block; width: 100%; padding: 0; text-align: left; font: inherit; color: inherit; cursor: pointer;
     }
     .lb-games-rail-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--teal-bright) 40%, var(--card-border)); }
+    .lb-games-rail-card:focus-visible { outline: 3px solid var(--clay); outline-offset: 2px; }
     .lb-games-rail-media { position: relative; aspect-ratio: 16 / 9; background: var(--chip-bg); }
     .lb-games-rail-media img, .lb-games-rail-media .lb-game-banner-fallback {
       width: 100%; height: 100%; object-fit: cover; display: block;
@@ -1012,6 +1014,51 @@
     .lb-game-banner-fallback svg { width: 36px; height: 36px; }
     .lb-game-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
     .lb-game-card-body .lb-disc-btn { margin-top: auto; align-self: stretch; justify-content: center; }
+    .lb-game-card-open {
+      display: block; width: 100%; padding: 0; border: none; background: transparent; cursor: pointer; text-align: left;
+    }
+    .lb-game-card-title-btn {
+      display: block; width: 100%; padding: 0; border: none; background: transparent; cursor: pointer; text-align: left; font: inherit; color: inherit;
+    }
+    .lb-game-card-title-btn h4 { font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--ink); }
+
+    .lb-game-modal {
+      border: none; border-radius: 20px; padding: 0; width: min(560px, 94vw);
+      max-height: 88vh; overflow: hidden; background: var(--card); color: var(--ink);
+      box-shadow: 0 20px 60px rgba(15,35,30,0.28);
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;
+    }
+    .lb-game-modal::backdrop { background: rgba(15,35,30,0.5); }
+    .lb-game-modal-shell { display: flex; flex-direction: column; max-height: 88vh; }
+    .lb-game-modal-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 18px 20px 12px; border-bottom: 1px solid var(--card-border); flex-shrink: 0;
+    }
+    .lb-game-modal-head h2 { font-family: var(--serif); font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .lb-game-modal-body { padding: 0 20px 22px; overflow-y: auto; }
+    .lb-game-modal-loading { padding: 28px 4px; font-size: 14px; color: var(--ink-dim); }
+    .lb-game-modal-banner {
+      margin: 14px 0 12px; border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 7;
+      background: linear-gradient(135deg, #1a2e2f, #0f8f78 140%), var(--lb-hero-banner) center/cover;
+    }
+    .lb-game-modal-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lb-game-modal-meta { font-size: 13px; color: var(--ink-dim); margin-bottom: 16px; font-variant-numeric: tabular-nums; }
+    .lb-game-modal-section { margin-top: 18px; }
+    .lb-game-modal-section h3 { font-family: var(--serif); font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+    .lb-game-modal-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .lb-game-modal-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 1px solid var(--card-border); border-radius: 12px; background: var(--sand-soft);
+    }
+    .lb-game-modal-row-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .lb-game-modal-row-copy strong { font-size: 14px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-game-modal-row-copy span { font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
+    .lb-game-modal-join { width: auto; height: 34px; padding: 0 12px; font-size: 12.5px; flex-shrink: 0; }
+    .lb-game-modal-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .lb-game-modal-avatar-fallback {
+      display: inline-flex; align-items: center; justify-content: center; background: var(--teal-bright); color: #fff;
+      font-size: 11px; font-weight: 700;
+    }
     .lb-home-live .lb-live-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-dim); }
     .lb-disc-identity { display: inline-flex; align-items: center; gap: 8px; }
 
@@ -1227,6 +1274,15 @@
         </footer>
       </div>
     </div>
+    <dialog id="lb-game-modal" class="lb-game-modal">
+      <div class="lb-game-modal-shell">
+        <div class="lb-game-modal-head">
+          <h2 id="lb-game-modal-title">Juego</h2>
+          <button id="lb-game-modal-close" type="button" class="lb-ranks-modal-close-btn" aria-label="Cerrar">&times;</button>
+        </div>
+        <div id="lb-game-modal-body" class="lb-game-modal-body"></div>
+      </div>
+    </dialog>
     <dialog id="lb-ranks-modal" class="lb-ranks-modal">
       <div class="lb-ranks-modal-head">
         <h2 id="lb-ranks-modal-title"></h2>
@@ -1259,8 +1315,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-11"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-11"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-11"></script>
+<script type="module" src="/tierly/app.js?v=20261002-12"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-12"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-12"></script>
 </body>
 </html>
