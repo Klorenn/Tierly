@@ -28,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-06" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-07" />
   <style>
     :root {
       --sand: #ECE0CC; --sand-soft: #F8F1E4; --teal: #3F8487; --teal-bright: #159C83; --teal-deep: #1C746B; --teal-ink: #1F3536; --clay: #C75A2A;
@@ -851,10 +851,30 @@
     .lb-disc-tile h4 { font-family: var(--serif); font-size: 16px; font-weight: 600; color: var(--ink); margin-top: 8px; }
     .lb-disc-tile-meta { font-size: 12px; color: var(--ink-dim); font-variant-numeric: tabular-nums; }
 
-    .lb-disc-btn { height: 42px; padding: 0 18px; border-radius: 11px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-family: var(--sans); font-size: 14px; font-weight: 600; text-decoration: none; transition: background 160ms ease; }
+    .lb-disc-btn { height: 42px; padding: 0 18px; border-radius: 11px; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-family: var(--sans); font-size: 14px; font-weight: 600; text-decoration: none; transition: background 160ms ease, transform 160ms ease; }
     .lb-disc-btn svg { width: 17px; height: 17px; }
     .lb-disc-btn-primary { background: var(--teal-bright); color: #fff; }
     .lb-disc-btn-primary:hover { background: var(--teal-deep); }
+    .lb-disc-btn-ghost { background: transparent; color: var(--ink); border-color: var(--card-border); }
+    .lb-disc-btn-ghost:hover { background: var(--hover-bg); }
+    .lb-disc-btn-disabled { opacity: .45; cursor: not-allowed; background: var(--chip-bg); color: var(--ink-dim); }
+    .lb-disc-btn:active:not(.lb-disc-btn-disabled) { transform: scale(0.98); }
+
+    .lb-server-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .lb-server-tile { display: flex; flex-direction: column; }
+    .lb-server-cta .lb-disc-btn { flex: 1; justify-content: center; min-width: 120px; }
+
+    .lb-game-banner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .lb-game-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; overflow: hidden; box-shadow: var(--card-shadow); display: flex; flex-direction: column; transition: border-color 160ms ease, transform 160ms ease; }
+    .lb-game-card:hover { border-color: color-mix(in srgb, var(--teal-bright) 40%, var(--card-border)); transform: translateY(-2px); }
+    .lb-game-banner { position: relative; aspect-ratio: 460 / 215; background: var(--chip-bg) center/cover no-repeat; overflow: hidden; }
+    .lb-game-banner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lb-game-banner-fallback { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, color-mix(in srgb, var(--teal-bright) 35%, var(--sand)), var(--chip-bg)); color: #fff; font-family: var(--serif); font-size: 28px; font-weight: 600; }
+    .lb-game-banner-fallback svg { width: 36px; height: 36px; }
+    .lb-game-card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .lb-game-card-body .lb-disc-btn { margin-top: auto; align-self: stretch; justify-content: center; }
+    .lb-home-live .lb-live-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12px; color: var(--ink-dim); }
+    .lb-disc-identity { display: inline-flex; align-items: center; gap: 8px; }
 
     .lb-disc-skeleton { display: flex; flex-direction: column; gap: 10px; }
     .lb-disc-skeleton span { display: block; height: 52px; border-radius: 14px; background: linear-gradient(90deg, var(--chip-bg) 25%, var(--hover-bg) 50%, var(--chip-bg) 75%); background-size: 200% 100%; animation: lb-disc-shimmer 1.4s ease-in-out infinite; }
@@ -1100,8 +1120,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-06"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-06"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-06"></script>
+<script type="module" src="/tierly/app.js?v=20261002-07"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-07"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-07"></script>
 </body>
 </html>

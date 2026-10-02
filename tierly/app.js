@@ -130,8 +130,10 @@ import { calculatePoints } from "./points.mjs";
       discordVerifyError: "We couldn't check Discord right now. Try again in a moment.",
       profileSyncing: "Syncing your profile…",
       profileSyncRetry: "Retry",
-      navDiscover: "Discover",
+      navDiscover: "Home",
+      navHome: "Home",
       navLive: "Live",
+      joinServer: "Join",
       inviteBot: "Add Tierly to your server",
       inviteBotHint: "Tierly reads which games your members play — only after each one opts in — and turns that into events worth showing up to.",
       liveTitle: "Live Now",
@@ -251,8 +253,10 @@ import { calculatePoints } from "./points.mjs";
       discordVerifyError: "No pudimos comprobar Discord ahora. Inténtalo de nuevo en un momento.",
       profileSyncing: "Sincronizando tu perfil…",
       profileSyncRetry: "Reintentar",
-      navDiscover: "Descubrir",
+      navDiscover: "Inicio",
+      navHome: "Inicio",
       navLive: "En vivo",
+      joinServer: "Unirse",
       inviteBot: "Añadir Tierly a tu servidor",
       inviteBotHint: "Tierly ve qué juegan tus miembros — solo después de que cada uno acepta — y lo convierte en eventos a los que vale la pena ir.",
       liveTitle: "En vivo ahora",
@@ -1139,18 +1143,10 @@ import { calculatePoints } from "./points.mjs";
     const titleEl = document.querySelector("#lb-live-title");
     if (titleEl) titleEl.textContent = t("liveTitle");
 
-    if (livePresenceLoading) return; // skeleton already shown
+    if (livePresenceLoading) return;
 
-    // Group by game
-    const byGame = new Map();
-    for (const row of livePresenceRows) {
-      if (!byGame.has(row.game_name)) {
-        byGame.set(row.game_name, { game_name: row.game_name, players: [], community_name: row.community_name, community_icon_url: row.community_icon_url });
-      }
-      byGame.get(row.game_name).players.push(row);
-    }
-
-    if (!byGame.size) {
+    const rows = livePresenceRows || [];
+    if (!rows.length) {
       el.innerHTML = `
         <div class="lb-live-empty">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M16 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 8a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 16a2 2 0 100-4 2 2 0 000 4z"/></svg>
@@ -1160,10 +1156,9 @@ import { calculatePoints } from "./points.mjs";
       return;
     }
 
-    // Stats
-    const totalPlayers = livePresenceRows.length;
-    const totalGames = byGame.size;
-    const communities = new Set(livePresenceRows.map(r => r.community_name)).size;
+    const totalPlayers = rows.reduce((sum, row) => sum + Number(row.player_count || 0), 0);
+    const totalGames = new Set(rows.map((row) => row.game_name)).size;
+    const communities = new Set(rows.map((row) => row.community_name).filter(Boolean)).size;
 
     el.innerHTML = `
       <div class="lb-live-head">
@@ -1187,28 +1182,24 @@ import { calculatePoints } from "./points.mjs";
           <span class="lb-live-stat-label">${t("liveCommunities")}</span>
         </div>
       </div>
-      <div class="lb-live-grid">${Array.from(byGame.values()).map((game) => `
-        <article class="lb-live-card">
-          <div class="lb-live-card-header">
-            <span class="lb-live-game-icon" aria-hidden="true">${gameIconSvg(game.game_name)}</span>
-            <div>
-              <strong class="lb-live-game-name">${esc(game.game_name)}</strong>
-              <span class="lb-live-community">${esc(game.community_name)}</span>
-            </div>
+      <div class="lb-live-grid lb-game-banner-grid">${rows.map((row) => {
+        const banner = row.game_banner_url || row.game_icon_url;
+        const bannerHtml = banner
+          ? `<div class="lb-game-banner"><img src="${esc(banner)}" alt="" loading="lazy"></div>`
+          : `<div class="lb-game-banner lb-game-banner-fallback" aria-hidden="true"><span>${gameIconSvg(row.game_name)}</span></div>`;
+        const join = row.invite_url
+          ? `<a class="lb-disc-btn lb-disc-btn-primary" href="${esc(row.invite_url)}" target="_blank" rel="noopener noreferrer"><i data-lucide="users"></i><span>${t("joinServer")}</span></a>`
+          : "";
+        return `<article class="lb-live-card lb-game-card">
+          ${bannerHtml}
+          <div class="lb-game-card-body">
+            <strong class="lb-live-game-name">${esc(row.game_name)}</strong>
+            <span class="lb-live-community">${esc(row.community_name || "")}</span>
+            <p class="lb-disc-tile-meta">${Number(row.player_count || 0)} · ${formatMinutesPlaying(row.total_minutes)}</p>
+            ${join}
           </div>
-          <div class="lb-live-players">${game.players.map((p) => `
-            <div class="lb-live-player">
-              ${p.player_avatar_url
-                ? `<img src="${esc(p.player_avatar_url)}" alt="" class="lb-live-player-avatar" loading="lazy" decoding="async" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" />`
-                : ""}
-              <span class="lb-live-player-avatar-fallback" aria-hidden="true" style="${p.player_avatar_url ? 'display:none' : ''}">${initials(p.player_name)}</span>
-              <div class="lb-live-player-info">
-                <div class="lb-live-player-name">${esc(p.player_name)}</div>
-                <div class="lb-live-player-time">${t("livePlayingFor").replace("{minutes}", formatMinutesPlaying(p.minutes_playing))}</div>
-              </div>
-            </div>`).join("")}
-          </div>
-        </article>`).join("")}</div>`;
+        </article>`;
+      }).join("")}</div>`;
     window.lucide?.createIcons();
   }
 
@@ -1599,11 +1590,10 @@ import { calculatePoints } from "./points.mjs";
     const el = document.querySelector("#lb-nav");
     if (!el) return;
     el.innerHTML = `
-      <button class="lb-nav-item${activeView === "ranking" ? " is-active" : ""}" data-view="ranking"><i data-lucide="trophy"></i><span>${t("navRanking")}</span></button>
-      <button class="lb-nav-item${activeView === "bracket" ? " is-active" : ""}" data-view="bracket"><i data-lucide="calendar-days"></i><span>${t("navBracket")}</span></button>
-      <button class="lb-nav-item${activeView === "rewards" ? " is-active" : ""}" data-view="rewards"><i data-lucide="gift"></i><span>${t("navRewards")}</span></button>
+      <button class="lb-nav-item${activeView === "discover" ? " is-active" : ""}" data-view="discover"><i data-lucide="compass"></i><span>${t("navHome")}</span></button>
       <button class="lb-nav-item${activeView === "live" ? " is-active" : ""}" data-view="live"><i data-lucide="activity"></i><span>${t("navLive")}</span></button>
-      <button class="lb-nav-item${activeView === "discover" ? " is-active" : ""}" data-view="discover"><i data-lucide="compass"></i><span>${t("navDiscover")}</span></button>
+      <button class="lb-nav-item${activeView === "bracket" ? " is-active" : ""}" data-view="bracket"><i data-lucide="calendar-days"></i><span>${t("navBracket")}</span></button>
+      <button class="lb-nav-item${activeView === "ranking" ? " is-active" : ""}" data-view="ranking"><i data-lucide="trophy"></i><span>${t("navRanking")}</span></button>
       <button class="lb-nav-item${activeView === "profile" ? " is-active" : ""}" data-view="profile"><i data-lucide="user"></i><span>${t("navProfile")}</span></button>
       <button class="lb-nav-item${activeView === "settings" ? " is-active" : ""}" data-view="settings"><i data-lucide="settings"></i><span>${t("navSettings")}</span></button>
       ${isAdmin ? `<button class="lb-nav-item${activeView === "admin" ? " is-active" : ""}" data-view="admin"><i data-lucide="shield"></i><span>${t("navAdmin")}</span></button>` : ""}
@@ -2109,14 +2099,13 @@ import { calculatePoints } from "./points.mjs";
   renderRankSearch();
   renderSettingsView();
   renderFooter();
-  switchView("ranking");
+  switchView("discover");
 
   initAuth();
 
   const rankingPromise = loadRanking();
   const bracketPromise = loadCommunityEvents();
-  const rewardsPromise = loadRewards();
-  Promise.all([rankingPromise, bracketPromise, rewardsPromise]).then(() => {
+  Promise.all([rankingPromise, bracketPromise]).then(() => {
     renderStats();
     renderProfileStats();
     renderProfileHistory();

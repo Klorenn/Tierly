@@ -30,15 +30,18 @@ test("el botón de invitación apunta al OAuth de Discord con scope de bot", () 
 });
 
 test("la invitación se traduce en los dos idiomas", () => {
-  assert.match(app, /navDiscover: "Discover"/);
-  assert.match(app, /navDiscover: "Descubrir"/);
+  assert.match(app, /navHome: "Home"/);
+  assert.match(app, /navHome: "Inicio"/);
+  assert.match(app, /navDiscover: "Home"/);
+  assert.match(app, /navDiscover: "Inicio"/);
   assert.match(app, /inviteBot: "Add Tierly to your server"/);
   assert.match(app, /inviteBot: "Añadir Tierly a tu servidor"/);
 });
 
-test("la navegación incluye Descubrir y abre el módulo al entrar", () => {
-  assert.match(app, /data-view="discover"><i data-lucide="compass"><\/i><span>\$\{t\("navDiscover"\)\}/);
+test("la navegación incluye Home/Discover y abre el módulo al entrar", () => {
+  assert.match(app, /data-view="discover"><i data-lucide="compass"><\/i><span>\$\{t\("navHome"\)\}/);
   assert.match(app, /if \(view === "discover"\) window\.TierlyDiscover\?\.open\?\.\(\);/);
+  assert.match(app, /switchView\("discover"\);/);
 });
 
 test("el módulo de descubrimiento lee las tres vistas públicas", () => {
