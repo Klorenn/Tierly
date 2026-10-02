@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run admin:build",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/",

@@ -1,0 +1,647 @@
+/* ============================================================================
+   Sistema de diseño del Admin de TIRLY.
+
+   Prefijo `tla-` (TIRLY Admin) para convivir sin choques con las clases
+   `tierly-admin-*` de la app vanilla mientras dura la migración.
+
+   Sobre los colores: el brief fija una paleta que NO es exactamente la de
+   `:root` en `tierly/index.html` (ej. fondo #FBFAF6 vs --page-bg #FAF8F3).
+   Resolverlo pisando `:root` habría cambiado el resto del sitio; usar sólo las
+   variables globales habría ignorado el brief. Así que el Admin declara su
+   propia capa de tokens con los valores del brief, y la redefine bajo
+   `[data-theme="dark"]` para no perder el tema oscuro que ya existe.
+   ========================================================================== */
+
+.tla {
+  /* --- Color: paleta del brief ------------------------------------------- */
+  --tla-bg: #fbfaf6;
+  --tla-surface: #ffffff;
+  --tla-surface-alt: #f6f0e4;
+  --tla-ink: #173632;
+  --tla-ink-muted: #6d8581;
+  --tla-teal-deep: #173b38;
+  --tla-accent: #12a98a;
+  --tla-accent-soft: #dff3eb;
+  --tla-accent-ink: #0d7d65;
+  --tla-border: #e9e4da;
+  --tla-warn: #f39a38;
+  --tla-danger: #c0442a;
+  --tla-danger-soft: #fbeae5;
+
+  --tla-shadow-sm: 0 1px 2px rgba(23, 59, 56, 0.05);
+  --tla-shadow: 0 4px 20px rgba(23, 59, 56, 0.06);
+  --tla-shadow-lg: 0 12px 32px rgba(23, 59, 56, 0.1);
+
+  /* --- Escala de espaciado ----------------------------------------------- */
+  --tla-s1: 4px;
+  --tla-s2: 8px;
+  --tla-s3: 12px;
+  --tla-s4: 16px;
+  --tla-s5: 24px;
+  --tla-s6: 32px;
+  --tla-s7: 48px;
+
+  --tla-radius-sm: 8px;
+  --tla-radius: 14px;
+  --tla-radius-lg: 20px;
+  --tla-radius-pill: 999px;
+
+  /* --- Movimiento: el brief pide 150-220ms ------------------------------- */
+  --tla-motion-fast: 150ms;
+  --tla-motion: 180ms;
+  --tla-motion-slow: 220ms;
+  --tla-ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --tla-max: 1680px;
+
+  max-width: var(--tla-max);
+  margin-inline: auto;
+  padding: var(--tla-s6);
+  color: var(--tla-ink);
+  background: var(--tla-bg);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+:root[data-theme="dark"] .tla {
+  --tla-bg: #101816;
+  --tla-surface: #182220;
+  --tla-surface-alt: #24302c;
+  --tla-ink: #edf3f1;
+  --tla-ink-muted: #93aca6;
+  --tla-teal-deep: #edf3f1;
+  --tla-accent: #2bc3a2;
+  --tla-accent-soft: rgba(43, 195, 162, 0.14);
+  --tla-accent-ink: #7fdcc6;
+  --tla-border: rgba(255, 255, 255, 0.1);
+  --tla-danger: #e2705a;
+  --tla-danger-soft: rgba(226, 112, 90, 0.14);
+
+  --tla-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --tla-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+  --tla-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+   Tipografía
+   ========================================================================== */
+
+.tla h1,
+.tla h2,
+.tla h3 {
+  font-family: var(--serif);
+  color: var(--tla-teal-deep);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.tla h1 {
+  font-size: clamp(24px, 2.2vw, 32px);
+}
+
+.tla h2 {
+  font-size: clamp(19px, 1.5vw, 23px);
+}
+
+.tla h3 {
+  font-size: 16px;
+}
+
+.tla-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tla-ink-muted);
+}
+
+.tla-note {
+  margin: 0;
+  color: var(--tla-ink-muted);
+  font-size: 13px;
+}
+
+.tla-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================================
+   Foco. Un solo anillo para todo lo interactivo: el brief pide foco visible y
+   es lo primero que se pierde al rediseñar a mano control por control.
+   ========================================================================== */
+
+.tla :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--tla-accent);
+  outline-offset: 2px;
+  border-radius: var(--tla-radius-sm);
+}
+
+/* ============================================================================
+   Shell
+   ========================================================================== */
+
+.tla-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tla-s4);
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--tla-s5);
+}
+
+.tla-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tla-s3);
+  align-items: center;
+}
+
+.tla-tabs {
+  display: flex;
+  gap: var(--tla-s1);
+  padding: var(--tla-s1);
+  margin-bottom: var(--tla-s6);
+  overflow-x: auto;
+  background: var(--tla-surface-alt);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius-pill);
+  scrollbar-width: none;
+}
+
+.tla-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tla-tabs button {
+  flex: 0 0 auto;
+  padding: var(--tla-s2) var(--tla-s5);
+  font: inherit;
+  font-weight: 600;
+  color: var(--tla-ink-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--tla-radius-pill);
+  transition:
+    background var(--tla-motion) var(--tla-ease),
+    color var(--tla-motion) var(--tla-ease);
+}
+
+.tla-tabs button:hover {
+  color: var(--tla-ink);
+  background: rgba(18, 169, 138, 0.08);
+}
+
+.tla-tabs button[aria-selected="true"] {
+  color: var(--tla-teal-deep);
+  background: var(--tla-surface);
+  box-shadow: var(--tla-shadow-sm);
+}
+
+.tla-section {
+  display: grid;
+  gap: var(--tla-s5);
+}
+
+/* ============================================================================
+   Superficies
+   ========================================================================== */
+
+.tla-card {
+  padding: var(--tla-s5);
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius);
+  box-shadow: var(--tla-shadow-sm);
+}
+
+.tla-grid {
+  display: grid;
+  gap: var(--tla-s4);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.tla-stat {
+  display: grid;
+  gap: var(--tla-s1);
+  padding: var(--tla-s5);
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius);
+}
+
+.tla-stat strong {
+  font-family: var(--serif);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--tla-teal-deep);
+  /* Los números tabulares evitan que el ancho salte al refrescar. */
+  font-variant-numeric: tabular-nums;
+}
+
+.tla-stat span {
+  font-size: 13px;
+  color: var(--tla-ink-muted);
+}
+
+/* ============================================================================
+   Botones
+   ========================================================================== */
+
+.tla-btn {
+  display: inline-flex;
+  gap: var(--tla-s2);
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: var(--tla-s2) var(--tla-s4);
+  font: inherit;
+  font-weight: 600;
+  color: var(--tla-surface);
+  cursor: pointer;
+  background: var(--tla-accent);
+  border: 1px solid transparent;
+  border-radius: var(--tla-radius-sm);
+  transition:
+    background var(--tla-motion-fast) var(--tla-ease),
+    border-color var(--tla-motion-fast) var(--tla-ease),
+    transform var(--tla-motion-fast) var(--tla-ease);
+}
+
+.tla-btn:hover:not(:disabled) {
+  background: var(--tla-accent-ink);
+}
+
+.tla-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.tla-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tla-btn-ghost {
+  color: var(--tla-ink);
+  background: transparent;
+  border-color: var(--tla-border);
+}
+
+.tla-btn-ghost:hover:not(:disabled) {
+  background: var(--tla-accent-soft);
+  border-color: var(--tla-accent);
+}
+
+.tla-btn-danger {
+  color: var(--tla-danger);
+  background: transparent;
+  border-color: var(--tla-danger);
+}
+
+.tla-btn-danger:hover:not(:disabled) {
+  color: var(--tla-surface);
+  background: var(--tla-danger);
+}
+
+.tla-btn-sm {
+  min-height: 30px;
+  padding: var(--tla-s1) var(--tla-s3);
+  font-size: 12px;
+}
+
+/* ============================================================================
+   Formularios
+   ========================================================================== */
+
+.tla-form {
+  display: grid;
+  gap: var(--tla-s4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.tla-field {
+  display: grid;
+  gap: var(--tla-s1);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tla-ink-muted);
+}
+
+.tla-field :is(input, select, textarea) {
+  width: 100%;
+  padding: var(--tla-s2) var(--tla-s3);
+  font: inherit;
+  font-weight: 400;
+  color: var(--tla-ink);
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius-sm);
+  transition:
+    border-color var(--tla-motion-fast) var(--tla-ease),
+    box-shadow var(--tla-motion-fast) var(--tla-ease);
+}
+
+.tla-field :is(input, select, textarea):hover {
+  border-color: var(--tla-accent);
+}
+
+.tla-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.tla-field-wide {
+  grid-column: 1 / -1;
+}
+
+/* ============================================================================
+   Tablas
+   ========================================================================== */
+
+.tla-table-block {
+  display: grid;
+  gap: var(--tla-s3);
+}
+
+.tla-table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--tla-s3);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.tla-search {
+  flex: 1 1 200px;
+  max-width: 320px;
+}
+
+.tla-search input {
+  width: 100%;
+  min-height: 36px;
+  padding: var(--tla-s2) var(--tla-s3);
+  font: inherit;
+  color: var(--tla-ink);
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius-pill);
+}
+
+.tla-table-wrap {
+  overflow-x: auto;
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius);
+}
+
+.tla-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tla-table :is(th, td) {
+  padding: var(--tla-s3) var(--tla-s4);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--tla-border);
+}
+
+.tla-table th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tla-ink-muted);
+  background: var(--tla-surface-alt);
+  /* El header queda fijo al hacer scroll vertical en tablas largas. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tla-table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.tla-table tbody tr {
+  transition: background var(--tla-motion-fast) var(--tla-ease);
+}
+
+.tla-table tbody tr:hover {
+  background: var(--tla-accent-soft);
+}
+
+.tla-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/* ============================================================================
+   Chips, badges y estados
+   ========================================================================== */
+
+.tla-chip {
+  display: inline-flex;
+  gap: var(--tla-s2);
+  align-items: center;
+  max-width: 100%;
+  padding: var(--tla-s1) var(--tla-s3);
+  font-size: 12px;
+  background: var(--tla-surface-alt);
+  border-radius: var(--tla-radius-pill);
+}
+
+.tla-chip img {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.tla-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tla-game {
+  display: inline-flex;
+  gap: var(--tla-s2);
+  align-items: center;
+  font-weight: 600;
+}
+
+.tla-game-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--tla-accent-ink);
+  background: var(--tla-accent-soft);
+  border-radius: var(--tla-radius-sm);
+}
+
+.tla-game-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tla-badge {
+  display: inline-block;
+  padding: 2px var(--tla-s2);
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--tla-radius-pill);
+}
+
+.tla-badge[data-state="Confirmada"] {
+  color: var(--tla-accent-ink);
+  background: var(--tla-accent-soft);
+}
+
+.tla-badge[data-state="Revocada"] {
+  color: var(--tla-danger);
+  background: var(--tla-danger-soft);
+}
+
+.tla-badge[data-state="Check-in"] {
+  color: #8a5610;
+  background: rgba(243, 154, 56, 0.16);
+}
+
+.tla-badge[data-state="Registrado"],
+.tla-badge[data-state="Salió"] {
+  color: var(--tla-ink-muted);
+  background: var(--tla-surface-alt);
+}
+
+/* ============================================================================
+   Vacío, error, carga
+   ========================================================================== */
+
+.tla-empty {
+  padding: var(--tla-s7) var(--tla-s5);
+  margin: 0;
+  color: var(--tla-ink-muted);
+  text-align: center;
+  background: var(--tla-surface);
+  border: 1px dashed var(--tla-border);
+  border-radius: var(--tla-radius);
+}
+
+.tla-alert {
+  display: flex;
+  gap: var(--tla-s3);
+  align-items: flex-start;
+  padding: var(--tla-s3) var(--tla-s4);
+  color: var(--tla-danger);
+  background: var(--tla-danger-soft);
+  border: 1px solid currentcolor;
+  border-radius: var(--tla-radius-sm);
+}
+
+.tla-gate {
+  display: grid;
+  gap: var(--tla-s4);
+  justify-items: start;
+  max-width: 560px;
+  padding: var(--tla-s7);
+  margin-inline: auto;
+  text-align: left;
+  background: var(--tla-surface);
+  border: 1px solid var(--tla-border);
+  border-radius: var(--tla-radius-lg);
+  box-shadow: var(--tla-shadow);
+}
+
+/* Skeleton: `background-size` del 200% con la posición animada. El gradiente va
+   sobre el tamaño del propio bloque, así que no hay salto entre anchos. */
+.tla-skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--tla-surface-alt) 25%,
+    var(--tla-border) 37%,
+    var(--tla-surface-alt) 63%
+  );
+  background-size: 400% 100%;
+  border-radius: var(--tla-radius-sm);
+  animation: tla-shimmer 1.4s ease-in-out infinite;
+}
+
+.tla-skeleton-text {
+  height: 12px;
+}
+
+.tla-skeleton-row {
+  height: 44px;
+}
+
+@keyframes tla-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* ============================================================================
+   Accesibilidad: movimiento reducido. Va al final para ganar por orden a
+   cualquier transición declarada arriba.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .tla *,
+  .tla *::before,
+  .tla *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================================
+   Breakpoints. Mobile-first habría sido lo correcto de cero, pero el Admin es
+   una herramienta de escritorio: se parte desde la densidad alta y se degrada.
+   ========================================================================== */
+
+@media (width <= 1100px) {
+  .tla {
+    padding: var(--tla-s5);
+  }
+}
+
+@media (width <= 720px) {
+  .tla {
+    padding: var(--tla-s4);
+  }
+
+  .tla-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .tla-form {
+    grid-template-columns: 1fr;
+  }
+
+  .tla-table-tools {
+    justify-content: stretch;
+  }
+
+  /* El header sticky no sirve en pantallas cortas: tapa las filas. */
+  .tla-table th {
+    position: static;
+  }
+}

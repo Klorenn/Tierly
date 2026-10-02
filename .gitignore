@@ -7,3 +7,7 @@ node_modules/
 supabase/.temp/
 supabase/.branches/
 tierly/assets 38/
+
+# Salida del build de la isla Admin (Vite). La genera Vercel via buildCommand.
+tierly/admin-app/
+.atl/
