@@ -1215,7 +1215,7 @@ import { calculatePoints } from "./points.mjs";
           <h2>${t("liveTitle")}</h2>
           <p class="lb-disc-sub">${t("liveSubtitle")}</p>
         </div>
-        ${rows.length ? `<span class="lb-live-badge" aria-live="polite">${t("eventLive")}</span>` : ""}
+        ${rows.length ? `<span class="lb-live-badge is-live" aria-live="polite">${t("eventLive")}</span>` : ""}
       </div>
       <div class="lb-live-stats">
         <div class="lb-live-stat">

@@ -319,12 +319,19 @@
     render();
   }
 
-  window.TierlyDiscover = {
-    open() {
-      if (opened) return;
-      opened = true;
-      load();
-    },
-    reload: load,
-  };
+  function open() {
+    // Si el boot de app.js corrió antes de que este módulo existiera, open()
+    // se perdió: reintentamos cuando el módulo termina de cargar.
+    if (opened) {
+      if (!root.innerHTML.trim()) load();
+      return;
+    }
+    opened = true;
+    load();
+  }
+
+  window.TierlyDiscover = { open, reload: load };
+
+  const discoverView = document.querySelector("section.lb-view[data-view='discover']");
+  if (discoverView && !discoverView.hidden) open();
 })();

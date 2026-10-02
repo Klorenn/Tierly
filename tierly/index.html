@@ -28,15 +28,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-09" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-10" />
   <style>
     :root {
       --sand: #E7DCC8; --sand-soft: #F3EDE2; --teal: #3F8487; --teal-bright: #0F8F78; --teal-deep: #17665F; --teal-ink: #1A2E2F; --clay: #B84F24;
       --glow: #B84F24;
       --ink: #1A2E2F; --ink-dim: #5E7471;
-      --card: rgba(255,255,255,0.86); --card-border: rgba(26,46,47,0.1);
+      --card: #FFFFFF; --card-border: rgba(26,46,47,0.1);
       --hover-bg: rgba(31,53,54,0.05); --chip-bg: rgba(31,53,54,0.07); --toggle-shadow: rgba(15,35,30,0.08);
-      --card-shadow: 0 1px 0 rgba(26,46,47,0.04), 0 12px 28px rgba(15,35,30,0.06);
+      --card-shadow: 0 1px 0 rgba(26,46,47,0.04), 0 10px 24px rgba(15,35,30,0.05);
+      --content-max: 1120px;
       --page-bg: #F4F0E8;
       --serif: 'Fraunces', Georgia, serif; --sans: 'Source Sans 3', 'Segoe UI', sans-serif;
       --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;
@@ -101,7 +102,13 @@
       flex: 1; min-width: 0; padding: 28px 36px 48px; overflow-x: hidden;
       background: transparent;
       display: flex; flex-direction: column; min-height: 100dvh;
+      align-items: stretch;
     }
+    .lb-main > .lb-view,
+    .lb-main > #lb-admin-banner {
+      width: 100%; max-width: var(--content-max); margin-left: auto; margin-right: auto;
+    }
+    .lb-main > .lb-footer { width: 100%; max-width: none; margin-top: auto; }
     :root[data-theme="dark"] .lb-main { background: transparent; }
     :root[data-theme="dark"] body {
       background:
@@ -786,7 +793,7 @@
       display: flex; flex-direction: column; overflow: hidden;
       border: 1px solid var(--card-border); border-radius: var(--radius-lg);
       background: var(--card); box-shadow: var(--card-shadow);
-      backdrop-filter: blur(8px); transition: transform 180ms ease, border-color 180ms ease;
+      transition: transform 180ms ease, border-color 180ms ease;
     }
     .lb-event-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--teal-bright) 35%, var(--card-border)); }
     .lb-event-card-media { position: relative; aspect-ratio: 16 / 9; background: var(--chip-bg); overflow: hidden; }
@@ -853,14 +860,14 @@
     .lb-disc-invite h3 { font-family: var(--serif); font-size: 19px; font-weight: 600; color: var(--ink); }
     .lb-disc-invite p { margin-top: 6px; max-width: 54ch; font-size: 13px; line-height: 1.5; color: var(--ink-dim); }
 
-    .lb-disc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
-    .lb-disc-stat { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: var(--card-shadow); padding: 18px; display: flex; flex-direction: column; gap: 4px; }
-    .lb-disc-stat-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--chip-bg); color: var(--teal-bright); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 6px; }
-    .lb-disc-stat-icon svg { width: 18px; height: 18px; }
-    .lb-disc-stat-value { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
-    .lb-disc-stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
+    .lb-disc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .lb-disc-stat { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-md); padding: 12px 14px; display: flex; flex-direction: row; align-items: center; gap: 12px; }
+    .lb-disc-stat-icon { width: 32px; height: 32px; border-radius: 9px; background: var(--chip-bg); color: var(--teal-bright); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; margin-bottom: 0; }
+    .lb-disc-stat-icon svg { width: 16px; height: 16px; }
+    .lb-disc-stat-value { font-family: var(--serif); font-size: 22px; font-weight: 600; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; display: block; }
+    .lb-disc-stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); display: block; }
 
-    .lb-disc-card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); padding: 22px; margin-bottom: 18px; backdrop-filter: blur(10px); }
+    .lb-disc-card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); padding: 22px; margin-bottom: 18px; }
     .lb-disc-card-title { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.02em; }
     .lb-home-head h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); letter-spacing: -0.03em; text-wrap: balance; }
 
@@ -1010,7 +1017,7 @@
     .lb-live-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
     .lb-live-head h2 { font-family: var(--serif); font-size: 24px; color: var(--ink); }
     .lb-live-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: var(--teal-bright); color: #fff; font-size: 12px; font-weight: 700; }
-    .lb-live-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: lb-live-pulse 1.5s ease-in-out infinite; }
+    .lb-live-badge.is-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: lb-live-pulse 1.5s ease-in-out infinite; }
     @keyframes lb-live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
     .lb-live-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
     .lb-live-stat { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: var(--card-shadow); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
@@ -1240,8 +1247,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-09"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-09"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-09"></script>
+<script type="module" src="/tierly/app.js?v=20261002-10"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-10"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-10"></script>
 </body>
 </html>
