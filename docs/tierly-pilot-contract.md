@@ -23,7 +23,8 @@ Este documento es el **acuerdo operativo** del piloto. No acredita resultados.
 | Pedido de aceptación (✅ react) | ✅ posteado | Tellus `#anuncios-tierly` · ChileDAO `#general` |
 | Canales ChileDAO dedicados | ⚠️ | Bot sin Manage Channels; usa `#comienza-aquí` / `#general` hasta `/tierly set` |
 | Rotación token bot | ⚠️ Pendiente operador | Discord Developer Portal → reset token → `.env` VM → restart |
-| Ciclo E2E humano (join → check-in → confirm → revoke) | ⬜ | día del evento / ensayo previo |
+| Revocación auditada en vivo (RPC + ledger) | ✅ | Ensayo 2026-10-02: evento `455e39a4…` (cancelled); confirm ledger `#5` (+10/+1) → revoke `#6` (−10/−1, net 0); actor admin Tellus |
+| Ciclo E2E con voluntario Discord (slash join) | ⬜ | día del evento / ensayo humano; ops ya probaron confirm→revoke |
 | Piloto C (3ª comunidad) | ⬜ | invitar bot + set + sync |
 | Aceptación ✅ de admins | ⬜ | esperar reacciones |
 
@@ -97,7 +98,8 @@ Confirmación / check-in / revocación: Admin en https://www.tirly.xyz/
 - [ ] Admin ChileDAO reacciona ✅ al contrato  
 - [ ] ChileDAO: dar Manage Channels al bot **o** `/tierly set` a canales definitivos  
 - [ ] Rotar token bot + actualizar VM  
-- [ ] Ensayo o día 11 oct: voluntarios join → check-in → confirm Admin → probar revocación  
+- [x] Ensayo ops Tellus 2026-10-02: register+check-in → confirm → revoke (RPC); ledger net 0  
+- [ ] Día 11 oct: voluntarios Discord join → check-in → confirm Admin (Evento 1 real)  
 - [ ] Convocar Evento 2 por comunidad  
 - [ ] Elegir / invitar Piloto C  
 
@@ -105,4 +107,4 @@ Confirmación / check-in / revocación: Admin en https://www.tirly.xyz/
 
 ## 8. Criterio formal 3×2
 
-El exploratorio Tellus+ChileDAO **no** cierra Fase 1 solo. Falta 3ª comunidad + 2 eventos c/u + revocación verificada en vivo.
+El exploratorio Tellus+ChileDAO **no** cierra Fase 1 solo. Falta 3ª comunidad + 2 eventos c/u + aceptación escrita + ciclo humano del Evento 1. La revocación auditada ya está verificada en vivo (ensayo ops).

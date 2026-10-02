@@ -11,9 +11,10 @@
 - [ ] Estado de permisos de Discord documentado para cada uso. Si presence, estadísticas derivadas o portabilidad no tienen autorización suficiente, mantener esas funciones apagadas y validar solo inscripción, check-in explícito y confirmación del organizador. Una solicitud enviada no cuenta como aprobación.
 - [x] Inventario de migraciones realmente aplicadas (2026-10-02): críticas en prod; sin local-only pendiente. No ejecutar `db reset`. RPC `tierly_pilot_report` confirmada en schema.
 - [x] Host `tirly.xyz` + bot operativos (2026-10-02): web sin Chess (`e025520`); bot con slash `event`; crons activos. Pendiente: validación humana de login/admin y `/tierly set` canales en Tellus. Conservar Auth/CORS Tellus.
-- [ ] Para cada evento, publicar reglas visibles de inscripción, check-in, confirmación, XP/stamp, zona horaria y cancelación. Documentar el flujo de corrección ante confirmación errónea: la RPC `tierly_revoke_event_confirmation` existe en código y está migrada en prod; **verificarla en vivo** antes de marcar el criterio como pasa. Explicar que el stamp acredita la fuente de evidencia, no habilidad, victoria ni duración exacta.
+- [x] Corrección/reversión auditada verificada en vivo (2026-10-02, ensayo Tellus `455e39a4…`): `tierly_confirm_event_attendance` → ledger +10 XP / +1 stamp; `tierly_revoke_event_confirmation` con motivo → fila compensatoria −10/−1 (net 0). Evento de ensayo marcado `cancelled` (no es Evento 1 del piloto).
+- [ ] Para cada evento del piloto, publicar reglas visibles de inscripción, check-in, confirmación, XP/stamp, zona horaria y cancelación. Explicar que el stamp acredita la fuente de evidencia, no habilidad, victoria ni duración exacta.
 
-Si alguna puerta falla, registrar bloqueo y responsable; no iniciar la medición de esa comunidad. **El piloto formal y la salida de Fase 1 siguen bloqueados** hasta verificar en vivo corrección/reversión auditada (RPC ya desplegada en schema). Una prueba exploratoria con voluntarios puede registrar hallazgos, pero no cuenta como aprobación de esos criterios ni justifica manipulación manual de producción.
+Si alguna puerta falla, registrar bloqueo y responsable; no iniciar la medición de esa comunidad. **El piloto formal 3×2 sigue bloqueado** por aceptación escrita, ciclo humano del Evento 1 y 3ª comunidad; la revocación auditada ya no es el bloqueo. Una prueba exploratoria con voluntarios puede registrar hallazgos, pero no cuenta como aprobación de esos criterios ni justifica manipulación manual de producción.
 
 ## Línea base y registro
 
@@ -42,7 +43,7 @@ Usar un registro de evaluación **separado por comunidad**, con acceso limitado 
 Marcar cada criterio como **pasa / falla / no probado**, con fecha, entorno, versión, responsable y enlace a evidencia privada:
 
 - Dos eventos consecutivos completan crear → inscribir → check-in → confirmar → reconocer → volver a convocar, sin asistencia de Tierly.
-- Reintento/cierre repetido no duplica XP/stamps. **Corrección y reversión:** RPC `tierly_revoke_event_confirmation` en schema; no marcar “pasa” hasta verificación funcional en vivo con motivo, emisor y ajuste de XP/stamp. No suplir con SQL manual en producción.
+- Reintento/cierre repetido no duplica XP/stamps. **Corrección y reversión:** verificada en vivo 2026-10-02 (ensayo Tellus; motivo + emisor + ledger compensatorio net 0). No suplir con SQL manual en producción.
 - Retirar consentimiento o excluirse detiene el uso correspondiente; solicitud de borrado sigue el procedimiento y plazo acordados. La publicación nominal exige opt-in separado.
 - Bot desconectado/reconectado o datos incompletos se muestran como cobertura faltante; no se inventa duración ni asistencia. Health vuelve al umbral documentado.
 - Admin de guild A no puede leer ni modificar actividad privada de B. Dos homónimos no se fusionan; no aparece historial personal cruzado.
