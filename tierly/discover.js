@@ -65,20 +65,41 @@
     </div>`;
   }
 
-  function gamesGrid() {
+  function gamesSpotlight() {
     if (!state.games.length) {
       return `<p class="lb-disc-empty">Todavía no hay partidas registradas en comunidades públicas.</p>`;
     }
-    return `<div class="lb-game-banner-grid">${state.games.map((game, index) => `
-      <article class="lb-game-card">
-        ${gameBanner(game)}
-        <div class="lb-game-card-body">
-          <span class="lb-disc-pos lb-disc-pos-${Math.min(index + 1, 3)}">${index + 1}</span>
-          <h4>${esc(game.game_name)}</h4>
-          <p class="lb-disc-tile-meta"><span class="lb-disc-strong">${duration(game.total_minutes)}</span> · ${number(game.session_count)} sesiones</p>
-          <p class="lb-disc-tile-meta lb-disc-muted">${number(game.community_count)} comunidades · ${relativeDay(game.last_played_day)}</p>
-        </div>
-      </article>`).join("")}</div>`;
+    const [top, ...rest] = state.games;
+    const banner = top.game_banner_url || top.banner_url || top.game_icon_url;
+    const hero = `<article class="lb-games-hero"${banner ? ` style="--lb-hero-banner:url('${esc(banner)}')"` : ""}>
+      ${banner ? `<img class="lb-games-hero-img" src="${esc(banner)}" alt="" loading="eager">` : ""}
+      <div class="lb-games-hero-shade"></div>
+      <div class="lb-games-hero-copy">
+        <span class="lb-games-hero-badge">#1 · Más jugado</span>
+        <h3>${esc(top.game_name)}</h3>
+        <p><strong>${duration(top.total_minutes)}</strong> · ${number(top.session_count)} sesiones · ${number(top.community_count)} comunidades</p>
+        <p class="lb-games-hero-hint">Últimos 30 días en servers públicos — acá nace la próxima noche.</p>
+        <button type="button" class="lb-disc-btn lb-disc-btn-light" data-view="live">Ver en vivo</button>
+      </div>
+    </article>`;
+
+    const rail = rest.length
+      ? `<div class="lb-games-rail" role="list">${rest.slice(0, 7).map((game, index) => {
+          const src = game.game_banner_url || game.banner_url || game.game_icon_url;
+          return `<article class="lb-games-rail-card" role="listitem">
+            <div class="lb-games-rail-media">
+              ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="lb-game-banner-fallback">${initials(game.game_name)}</span>`}
+              <span class="lb-games-rail-rank">${index + 2}</span>
+            </div>
+            <div class="lb-games-rail-body">
+              <h4>${esc(game.game_name)}</h4>
+              <p>${duration(game.total_minutes)} · ${number(game.session_count)} ses.</p>
+            </div>
+          </article>`;
+        }).join("")}</div>`
+      : "";
+
+    return `${hero}${rail}`;
   }
 
   function eventsGrid() {
@@ -199,22 +220,24 @@
       <header class="lb-disc-head lb-home-head">
         <p class="lb-disc-kicker">Tierly</p>
         <h2>Jugá con tu comunidad</h2>
-        <p class="lb-disc-sub">Lo más jugado, eventos próximos y servers a un click. La presencia de Discord no certifica victoria ni duración exacta.</p>
+        <p class="lb-disc-sub">Lo más jugado manda. Eventos y servers abajo.</p>
       </header>
 
       ${state.error ? `<p class="lb-disc-alert">${esc(state.error)}</p>` : ""}
+
+      <section class="lb-games-spotlight" aria-labelledby="lb-games-spotlight-title">
+        <div class="lb-games-spotlight-head">
+          <h3 id="lb-games-spotlight-title">Juegos más jugados</h3>
+          <p>Presencia pública · 30 días · no mide skill</p>
+        </div>
+        ${gamesSpotlight()}
+      </section>
 
       <div class="lb-disc-stats">
         ${statCard("gamepad-2", number(state.games.length), "Juegos")}
         ${statCard("calendar-days", number(state.events.length), "Eventos")}
         ${statCard("server", number(state.communities.length), "Servers")}
       </div>
-
-      <section class="lb-disc-card">
-        <h3 class="lb-disc-card-title">Más jugados</h3>
-        <p class="lb-disc-note">Últimos 30 días en comunidades públicas — de acá salen las noches con sentido.</p>
-        ${gamesGrid()}
-      </section>
 
       <section class="lb-disc-card lb-home-live">
         <h3 class="lb-disc-card-title">Jugando ahora</h3>

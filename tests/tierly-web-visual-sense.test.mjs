@@ -26,8 +26,15 @@ test("live muestra juegos más jugados cuando no hay presencia en vivo", () => {
 test("discover prioriza juegos con banner y eventos próximos con sentido", () => {
   assert.match(discover, /game_banner_url/);
   assert.match(discover, /tierly_community_events_public_view/);
-  assert.match(discover, /Próximos eventos|Más jugados/);
+  assert.match(discover, /Juegos más jugados/);
+  assert.match(discover, /lb-games-spotlight|lb-games-hero/);
+  assert.match(discover, /Próximos eventos/);
   assert.match(discover, /Unirse/);
+  // Spotlight de juegos va antes que stats / live / eventos
+  const spotlightAt = discover.indexOf("lb-games-spotlight");
+  const liveAt = discover.indexOf("lb-home-live");
+  const eventsAt = discover.indexOf("Próximos eventos");
+  assert.ok(spotlightAt > 0 && spotlightAt < liveAt && spotlightAt < eventsAt);
 });
 
 test("shell visual usa tipografía de display no Inter-only y atmósfera de fondo", () => {
