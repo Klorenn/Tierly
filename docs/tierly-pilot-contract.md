@@ -18,7 +18,7 @@ Este documento es el **acuerdo operativo** del piloto. No acredita resultados.
 | Bot multi-guild + `/tierly event` | ✅ | Tellus + ChileDAO |
 | Host `tirly.xyz` sin Chess | ✅ | `app.js?v=20261002-06` |
 | Sync miembros | ✅ | Tellus 301 · ChileDAO 172 (2026-10-02) |
-| Evento 1 Tellus | ✅ | `7ea035dc-3371-4fa9-ae58-45f402d4af48` — 11 oct 20:00 Santiago |
+| Evento 1 Tellus | ✅ | `7ea035dc…` — **Noche Tellus — ROBLOX & Minecraft** · 11 oct 20:00 Santiago |
 | Evento 1 ChileDAO | ✅ | `778ffc6c-0438-44db-a605-d3afe02861a9` — 11 oct 20:00 Santiago |
 | Pedido de aceptación (✅ react) | ✅ posteado | Tellus `#anuncios-tierly` · ChileDAO `#general` |
 | Canales ChileDAO dedicados | ⚠️ | Bot sin Manage Channels; usa `#comienza-aquí` / `#general` hasta `/tierly set` |
