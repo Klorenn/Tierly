@@ -19,7 +19,7 @@ test("event create/list usan el schema real (guild_id), no community_id/game_id"
   assert.match(source, /from\("gaming_events"\)[\s\S]{0,400}?guild_id/);
   assert.doesNotMatch(source, /community_id:\s*community\.id/);
   assert.doesNotMatch(source, /game_id:\s*gameId/);
-  assert.match(source, /\.eq\("guild_id",\s*DISCORD_GUILD_ID\)/);
+  assert.match(source, /\.eq\("guild_id",\s*guildId\)/);
   assert.match(source, /organization_id/);
   assert.doesNotMatch(source, /from\("organizations"\)/);
 });

@@ -18,9 +18,11 @@ const {
 const DISCORD_BOT_TOKEN = DISCORD_BOT_TOKEN_ENV || DISCORD_TOKEN;
 const SUPABASE_URL = SUPABASE_URL_ENV || NEXT_PUBLIC_SUPABASE_URL;
 
-if (!DISCORD_BOT_TOKEN || !DISCORD_GUILD_ID) {
-  throw new Error("Faltan DISCORD_BOT_TOKEN o DISCORD_GUILD_ID en las variables de entorno");
+if (!DISCORD_BOT_TOKEN) {
+  throw new Error("Falta DISCORD_BOT_TOKEN en las variables de entorno");
 }
+// DISCORD_GUILD_ID queda como fallback opcional (canales .env legacy). El bot
+// opera en todos los guilds donde esté instalado.
 
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
   ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
@@ -130,19 +132,28 @@ const TIERLY_COMMANDS = [
   },
 ];
 
-async function registerCommands() {
+async function registerCommandsForGuild(guild) {
   try {
-    // Registrar solo en el guild para propagación instantánea
-    const guild = client.guilds.cache.get(DISCORD_GUILD_ID);
-    if (guild) {
-      await guild.commands.set(TIERLY_COMMANDS);
-      console.log("Slash commands registrados en guild");
-    } else {
-      await client.application.commands.set(TIERLY_COMMANDS);
-      console.log("Slash commands registrados globalmente");
-    }
+    await guild.commands.set(TIERLY_COMMANDS);
+    console.log(`Slash commands registrados en guild ${guild.name} (${guild.id})`);
   } catch (error) {
-    console.error("Error registrando slash commands:", error.message);
+    console.error(`Error registrando slash commands en ${guild.id}:`, error.message);
+  }
+}
+
+async function registerCommands() {
+  const guilds = [...client.guilds.cache.values()];
+  if (guilds.length === 0) {
+    try {
+      await client.application.commands.set(TIERLY_COMMANDS);
+      console.log("Slash commands registrados globalmente (sin guilds en caché)");
+    } catch (error) {
+      console.error("Error registrando slash commands globales:", error.message);
+    }
+    return;
+  }
+  for (const guild of guilds) {
+    await registerCommandsForGuild(guild);
   }
 }
 
@@ -171,8 +182,15 @@ async function recordBotHealth(action, errorCode = null) {
   if (result.error) console.error("No se pudo registrar el estado operativo de TIRLY.");
 }
 
-function sessionKey(userId, gameName) {
-  return `${userId}:${gameName}`;
+function sessionKey(guildId, userId, gameName) {
+  return `${guildId}:${userId}:${gameName}`;
+}
+
+function clearUserSessions(guildId, userId) {
+  const prefix = `${guildId}:${userId}:`;
+  for (const key of activeSessions.keys()) {
+    if (key.startsWith(prefix)) activeSessions.delete(key);
+  }
 }
 
 async function handleTierlyCommand(message) {
@@ -184,23 +202,20 @@ async function handleTierlyCommand(message) {
     return true;
   }
 
+  const guildId = message.guild.id;
   try {
     if (parts[1] === "presencia" && parts[2] === "si") {
-      await sessions.acceptMemberConsent(DISCORD_GUILD_ID, message.author.id, CONSENT_VERSION);
+      await sessions.acceptMemberConsent(guildId, message.author.id, CONSENT_VERSION);
       await message.channel.send("Consentimiento de presencia activado. TIRLY podrá registrar las sesiones de juego.");
     } else if (parts[1] === "presencia" && parts[2] === "no") {
-      await sessions.declineMemberConsent(DISCORD_GUILD_ID, message.author.id);
-      for (const [key, sessionId] of activeSessions) {
-        if (key.startsWith(`${message.author.id}:`)) activeSessions.delete(key);
-      }
+      await sessions.declineMemberConsent(guildId, message.author.id);
+      clearUserSessions(guildId, message.author.id);
       await message.channel.send("Consentimiento de presencia retirado. Las sesiones abiertas se cerraron y no se registrarán nuevas sesiones.");
     } else if (parts[1] === "voy" && parts.length === 2) {
       await handleAttendanceCommand(message);
     } else if (parts[1] === "borrar" && parts.length === 2) {
-      await sessions.requestMemberDeletion(DISCORD_GUILD_ID, message.author.id);
-      for (const [key, sessionId] of activeSessions) {
-        if (key.startsWith(`${message.author.id}:`)) activeSessions.delete(key);
-      }
+      await sessions.requestMemberDeletion(guildId, message.author.id);
+      clearUserSessions(guildId, message.author.id);
       await message.channel.send("Se solicitó el borrado de tus datos de TIRLY y se cerraron tus sesiones.");
     } else {
       await message.channel.send("Usa: `!tierly voy`, `!tierly presencia si`, `!tierly presencia no` o `!tierly borrar`.");
@@ -259,7 +274,7 @@ function memberIdentity(member) {
 async function handlePresenceUpdate(oldPresence, newPresence) {
   if (!sessions) return;
   const guildId = newPresence?.guild?.id || oldPresence?.guild?.id;
-  if (guildId !== DISCORD_GUILD_ID) return;
+  if (!guildId) return;
   if (newPresence?.member?.user?.bot) return;
   const settings = await sessions.getCommunitySettings(guildId);
   if (settings?.presence_enabled === false) return;
@@ -273,13 +288,13 @@ async function handlePresenceUpdate(oldPresence, newPresence) {
       const gameId = await sessions.resolveGame(gameName);
       const identity = memberIdentity(newPresence.member);
       const session = await sessions.openSession({
-        guildId: DISCORD_GUILD_ID,
+        guildId,
         communityName: newPresence.guild?.name,
         discordUserId: userId,
         gameId,
         ...identity,
       });
-      if (session?.id) activeSessions.set(sessionKey(userId, gameName), session.id);
+      if (session?.id) activeSessions.set(sessionKey(guildId, userId, gameName), session.id);
     } catch (error) {
       await recordBotHealth("error", "presence_open");
       console.error("No se pudo abrir la sesion de presence.");
@@ -287,7 +302,7 @@ async function handlePresenceUpdate(oldPresence, newPresence) {
   }
   for (const gameName of stopped) {
     try {
-      const key = sessionKey(userId, gameName);
+      const key = sessionKey(guildId, userId, gameName);
       const sessionId = activeSessions.get(key);
       if (!sessionId) continue;
       await sessions.closeSession(sessionId, undefined, "normal");
@@ -300,7 +315,8 @@ async function handlePresenceUpdate(oldPresence, newPresence) {
 }
 
 async function reconcilePresence(guild) {
-  const settings = await sessions.getCommunitySettings(DISCORD_GUILD_ID);
+  const guildId = guild.id;
+  const settings = await sessions.getCommunitySettings(guildId);
   if (settings?.presence_enabled === false) return;
   for (const member of guild.members.cache.values()) {
     if (member.user?.bot) continue;
@@ -308,12 +324,12 @@ async function reconcilePresence(guild) {
       const gameId = await sessions.resolveGame(gameName);
       const identity = memberIdentity(member);
       const session = await sessions.openSession({
-        guildId: DISCORD_GUILD_ID,
+        guildId,
         discordUserId: member.id,
         gameId,
         ...identity,
       });
-      if (session?.id) activeSessions.set(sessionKey(member.id, gameName), session.id);
+      if (session?.id) activeSessions.set(sessionKey(guildId, member.id, gameName), session.id);
     }
   }
 }
@@ -328,26 +344,28 @@ async function runPresenceHeartbeat() {
       console.error("No se pudo actualizar un heartbeat.");
     }
   }
-  try {
-    const settings = await sessions.getCommunitySettings(DISCORD_GUILD_ID);
-    const staleHours = Number(settings?.stale_session_hours) || 12;
-    await sessions.closeStaleSessions({
-      guildId: DISCORD_GUILD_ID,
-      before: new Date(Date.now() - staleHours * 60 * 60 * 1000).toISOString(),
-      endedAt: heartbeatAt,
-    });
-  } catch (error) {
-    await recordBotHealth("error", "stale_sessions");
-    console.error("No se pudo cerrar sesiones obsoletas.");
+  for (const guild of client.guilds.cache.values()) {
+    try {
+      const settings = await sessions.getCommunitySettings(guild.id);
+      const staleHours = Number(settings?.stale_session_hours) || 12;
+      await sessions.closeStaleSessions({
+        guildId: guild.id,
+        before: new Date(Date.now() - staleHours * 60 * 60 * 1000).toISOString(),
+        endedAt: heartbeatAt,
+      });
+    } catch (error) {
+      await recordBotHealth("error", "stale_sessions");
+      console.error("No se pudo cerrar sesiones obsoletas.");
+    }
   }
 }
 
 async function getWelcomeChannel(guild) {
   const { data } = await supabase.from("communities")
     .select("welcome_channel_id")
-    .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+    .eq("guild_id", guild.id).maybeSingle();
 
-  const channelId = data?.welcome_channel_id || WELCOME_CHANNEL_ID;
+  const channelId = data?.welcome_channel_id || (guild.id === DISCORD_GUILD_ID ? WELCOME_CHANNEL_ID : null);
   if (channelId) {
     const configured = await guild.channels.fetch(channelId).catch(() => null);
     if (configured) return configured;
@@ -366,9 +384,9 @@ async function getWelcomeChannel(guild) {
 async function getAnnounceChannel(guild) {
   const { data } = await supabase.from("communities")
     .select("announce_channel_id")
-    .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+    .eq("guild_id", guild.id).maybeSingle();
 
-  const channelId = data?.announce_channel_id || ANNOUNCE_CHANNEL_ID;
+  const channelId = data?.announce_channel_id || (guild.id === DISCORD_GUILD_ID ? ANNOUNCE_CHANNEL_ID : null);
   if (channelId) {
     const configured = await guild.channels.fetch(channelId).catch(() => null);
     if (configured) return configured;
@@ -387,10 +405,11 @@ async function getAnnounceChannel(guild) {
 // Anuncia eventos nuevos y subidas de rango una sola vez cada uno. Corre cada
 // POLL_INTERVAL_MS porque el bot no tiene forma de enterarse en tiempo real de
 // cambios hechos desde el panel admin (no hay webhook/trigger hacia acá).
-async function announceNewEvents(channel) {
+async function announceNewEvents(channel, guildId) {
   const { data: events, error: eventsError } = await supabase
     .from("gaming_events")
     .select("id, name, event_date")
+    .eq("guild_id", guildId)
     .order("event_date", { ascending: false })
     .limit(50);
   if (eventsError || !events) return;
@@ -459,17 +478,17 @@ async function announceRankUps(channel) {
 async function runNotificationPoll(guild) {
   if (!supabase) return;
   const channel = await getAnnounceChannel(guild);
-  await deliverEventReminders(channel);
-  await announceNewEvents(channel);
+  await deliverEventReminders(channel, guild.id);
+  await announceNewEvents(channel, guild.id);
   await announceRankUps(channel);
 }
 
-async function deliverEventReminders(channel) {
+async function deliverEventReminders(channel, guildId) {
   const now = new Date().toISOString();
   const { data: reminders, error } = await supabase
     .from("tierly_event_notifications")
     .select("id, event_id, reminder_minutes, scheduled_for, gaming_events(name, starts_at, timezone)")
-    .eq("guild_id", DISCORD_GUILD_ID)
+    .eq("guild_id", guildId)
     .eq("status", "pending")
     .lte("scheduled_for", now)
     .order("scheduled_for", { ascending: true })
@@ -541,36 +560,49 @@ client.once("ready", async () => {
     status: "online",
   });
 
-  const guild = await client.guilds.fetch(DISCORD_GUILD_ID).catch(() => null);
-  if (!guild) {
-    console.error(`ERROR: Bot no está en el guild ${DISCORD_GUILD_ID}. Revisa DISCORD_GUILD_ID en .env y que el bot esté en el server.`);
-    return;
+  const guilds = [...client.guilds.cache.values()];
+  console.log(`Guilds conectados: ${guilds.map((g) => `${g.name}(${g.id})`).join(", ") || "(ninguno)"}`);
+
+  async function bootstrapGuild(guild) {
+    if (sessions) {
+      await sessions.ensureCommunity({ guildId: guild.id, name: guild.name })
+        .catch((err) => console.error("Fallo el bootstrap de la comunidad:", err.message));
+      await sessions.reconcileOpenSessions({ guildId: guild.id, reason: "crash" })
+        .catch((err) => console.error("Fallo la reconciliacion inicial:", err.message));
+      await reconcilePresence(guild)
+        .catch((err) => console.error("Fallo la reconciliacion de presence:", err.message));
+    }
+    if (supabase) {
+      await runNotificationPoll(guild).catch((err) => console.error("Fallo el poll de notificaciones:", err.message));
+    }
   }
-  console.log(`Guild encontrado: ${guild.name} (${guild.id})`);
-  
-  const channel = await getWelcomeChannel(guild);
-  await channel
-    .send(`🐈‍⬛ **TIRLY está en línea.** Ya puedo verificar membresías para el leaderboard → ${LEADERBOARD_URL}`)
-    .catch((err) => console.error("No se pudo postear saludo de arranque:", err.message));
+
+  for (const guild of guilds) {
+    await bootstrapGuild(guild);
+  }
 
   if (supabase) {
-    await runNotificationPoll(guild).catch((err) => console.error("Fallo el poll de notificaciones:", err.message));
     setInterval(() => {
-      runNotificationPoll(guild).catch((err) => console.error("Fallo el poll de notificaciones:", err.message));
+      for (const guild of client.guilds.cache.values()) {
+        runNotificationPoll(guild).catch((err) => console.error("Fallo el poll de notificaciones:", err.message));
+      }
     }, POLL_INTERVAL_MS);
   }
 
   if (sessions) {
-    await sessions.ensureCommunity({ guildId: DISCORD_GUILD_ID, name: guild.name })
-      .catch((err) => console.error("Fallo el bootstrap de la comunidad:", err.message));
-    await sessions.reconcileOpenSessions({ guildId: DISCORD_GUILD_ID, reason: "crash" })
-      .catch((err) => console.error("Fallo la reconciliacion inicial:", err.message));
-    await reconcilePresence(guild)
-      .catch((err) => console.error("Fallo la reconciliacion de presence:", err.message));
     setInterval(() => {
       recordBotHealth("heartbeat").catch(() => {});
       runPresenceHeartbeat().catch((err) => console.error("Fallo el heartbeat de presence:", err.message));
     }, HEARTBEAT_INTERVAL_MS);
+  }
+});
+
+client.on("guildCreate", async (guild) => {
+  console.log(`Bot agregado a guild: ${guild.name} (${guild.id})`);
+  await registerCommandsForGuild(guild);
+  if (sessions) {
+    await sessions.ensureCommunity({ guildId: guild.id, name: guild.name })
+      .catch((err) => console.error("Fallo ensureCommunity en guildCreate:", err.message));
   }
 });
 
@@ -583,7 +615,6 @@ client.on("presenceUpdate", (oldPresence, newPresence) => {
 });
 
 client.on("guildMemberAdd", async (member) => {
-  if (member.guild.id !== DISCORD_GUILD_ID) return;
   const channel = await getWelcomeChannel(member.guild);
   await channel
     .send(`🐈‍⬛ ¡Bienvenido/a, ${member}! Sumate al leaderboard gaming de TIRLY → ${LEADERBOARD_URL}`)
@@ -595,7 +626,7 @@ client.on("guildMemberAdd", async (member) => {
 // arrancara — guildMemberAdd no dispara retroactivamente para esos casos.
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  if (message.guild?.id !== DISCORD_GUILD_ID) return;
+  if (!message.guild) return;
   if (await handleTierlyCommand(message)) return;
   if (message.content.trim().toLowerCase() !== "!bienvenida") return;
 
@@ -607,24 +638,21 @@ client.on("messageCreate", async (message) => {
 
 console.log('>>> Registering interactionCreate handler');
 client.on("interactionCreate", async (interaction) => {
-  console.log('>>> INTERACTION RECEIVED:', interaction.id, interaction.commandName, interaction.isChatInputCommand());
-  if (!interaction.isChatInputCommand()) {
-    console.log('>>> Not a chat input command, type:', interaction.type);
-    return;
-  }
-  console.log('>>> Command:', interaction.commandName, 'guild:', interaction.guildId, 'expected:', DISCORD_GUILD_ID);
-  if (interaction.commandName !== "tierly") {
-    console.log('>>> Not a tierly command, skipping');
-    return;
-  }
-  console.log('>>> Tierly command, guild:', interaction.guildId, 'expected:', DISCORD_GUILD_ID);
-  if (interaction.guildId !== DISCORD_GUILD_ID) {
-    return interaction.reply({ content: "Este comando solo funciona en el server configurado.", ephemeral: true });
+  if (!interaction.isChatInputCommand()) return;
+  if (interaction.commandName !== "tierly") return;
+  if (!interaction.guildId) {
+    return interaction.reply({ content: "Los comandos de TIRLY solo funcionan dentro de un servidor.", ephemeral: true });
   }
 
+  const guildId = interaction.guildId;
   const member = interaction.member;
   const group = interaction.options.getSubcommandGroup(false);
   const sub = interaction.options.getSubcommand(false);
+
+  if (sessions) {
+    await sessions.ensureCommunity({ guildId, name: interaction.guild?.name || guildId })
+      .catch(() => {});
+  }
 
   if (group === "event") {
     const eventSub = sub;
@@ -649,7 +677,7 @@ client.on("interactionCreate", async (interaction) => {
         const { data: community } = await supabase
           .from("communities")
           .select("guild_id, timezone")
-          .eq("guild_id", DISCORD_GUILD_ID)
+          .eq("guild_id", guildId)
           .maybeSingle();
 
         if (!community) {
@@ -664,7 +692,7 @@ client.on("interactionCreate", async (interaction) => {
         const { data: prior, error: priorError } = await supabase
           .from("gaming_events")
           .select("organization_id")
-          .eq("guild_id", DISCORD_GUILD_ID)
+          .eq("guild_id", guildId)
           .not("organization_id", "is", null)
           .limit(1)
           .maybeSingle();
@@ -680,7 +708,7 @@ client.on("interactionCreate", async (interaction) => {
           .from("gaming_events")
           .insert({
             organization_id: prior.organization_id,
-            guild_id: DISCORD_GUILD_ID,
+            guild_id: guildId,
             name: name.trim(),
             event_date: eventDate,
             starts_at: startsAt.toISOString(),
@@ -713,7 +741,7 @@ client.on("interactionCreate", async (interaction) => {
         const { data: events, error } = await supabase
           .from("gaming_events")
           .select("id, name, starts_at, status, timezone")
-          .eq("guild_id", DISCORD_GUILD_ID)
+          .eq("guild_id", guildId)
           .eq("status", "scheduled")
           .order("starts_at", { ascending: true })
           .limit(10);
@@ -757,7 +785,7 @@ client.on("interactionCreate", async (interaction) => {
           .eq("id", eventId)
           .maybeSingle();
         if (eventError) throw eventError;
-        if (!event || event.guild_id !== DISCORD_GUILD_ID) {
+        if (!event || event.guild_id !== guildId) {
           return interaction.editReply({ content: "Evento no encontrado en este server.", ephemeral: true });
         }
         if (event.status !== "scheduled" && event.status !== "live") {
@@ -792,7 +820,8 @@ client.on("interactionCreate", async (interaction) => {
     const announceChannel = interaction.options.getChannel("announce-channel");
 
     const { error } = await supabase.from("communities").upsert({
-      guild_id: DISCORD_GUILD_ID,
+      guild_id: guildId,
+      name: interaction.guild?.name || null,
       welcome_channel_id: welcomeChannel?.id || null,
       announce_channel_id: announceChannel?.id || null,
     }, { onConflict: "guild_id" });
@@ -815,7 +844,7 @@ client.on("interactionCreate", async (interaction) => {
     try {
       const { data, error } = await supabase.from("communities")
         .select("welcome_channel_id, announce_channel_id")
-        .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+        .eq("guild_id", guildId).maybeSingle();
 
       if (error) {
         return interaction.reply({ content: "No se pudo leer la configuración.", ephemeral: true });

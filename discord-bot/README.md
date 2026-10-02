@@ -36,7 +36,7 @@ capturas ni documentación.
 |---|---|---|
 | `DISCORD_BOT_TOKEN` | sí* | Token del bot en Discord Developer Portal → Bot → Token |
 | `DISCORD_TOKEN` | sí* | Alias legado aceptado por el proceso; preferir `DISCORD_BOT_TOKEN` |
-| `DISCORD_GUILD_ID` | sí | ID del servidor de Tellus |
+| `DISCORD_GUILD_ID` | no* | Fallback legacy para canales `.env` si ese guild no tiene config en DB. El bot opera en **todos** los servers donde esté instalado. |
 | `WELCOME_CHANNEL_ID` | no | Canal de bienvenida existente; si falta, usa o crea `bienvenida-tierly` |
 | `ANNOUNCE_CHANNEL_ID` | no | Canal de anuncios existente; si falta, usa o crea `anuncios-tierly` |
 | `SUPABASE_URL` | no** | URL de Supabase; preferirla sobre `NEXT_PUBLIC_SUPABASE_URL` |
