@@ -84,9 +84,9 @@
     </article>`;
 
     const rail = rest.length
-      ? `<div class="lb-games-rail" role="list">${rest.slice(0, 7).map((game, index) => {
+      ? `<div class="lb-games-rail">${rest.slice(0, 7).map((game, index) => {
           const src = game.game_banner_url || game.banner_url || game.game_icon_url;
-          return `<button type="button" class="lb-games-rail-card" role="listitem" data-game-open="${esc(game.game_name)}">
+          return `<button type="button" class="lb-games-rail-card" data-game-open="${esc(game.game_name)}" aria-label="${esc(game.game_name)}">
             <div class="lb-games-rail-media">
               ${src ? `<img src="${esc(src)}" alt="" loading="lazy">` : `<span class="lb-game-banner-fallback">${initials(game.game_name)}</span>`}
               <span class="lb-games-rail-rank">${index + 2}</span>
