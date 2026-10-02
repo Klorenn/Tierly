@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import type { TierlyBridge } from "./lib/bridge";
 import { useAdminData } from "./lib/useAdminData";
 import { type AdminView, VIEW_LABELS } from "./lib/types";
+import { CommunityCrest } from "./components/CommunityCrest";
 import { Gate } from "./components/Gate";
 import { CommunitySelector, DirectoryToggle, Tabs } from "./components/Shell";
 import { EventsSection } from "./sections/EventsSection";
@@ -83,9 +84,12 @@ export function App({ bridge }: AppProps) {
   return (
     <div className="tla">
       <header className="tla-head">
-        <div>
-          <p className="tla-kicker">Panel de comunidad</p>
-          <h1>{community?.name ?? "Administración"}</h1>
+        <div className="tla-identity">
+          {community && <CommunityCrest community={community} size="lg" />}
+          <div>
+            <p className="tla-kicker">Panel de comunidad</p>
+            <h1>{community?.name ?? "Administración"}</h1>
+          </div>
         </div>
         <div className="tla-head-actions">
           <CommunitySelector

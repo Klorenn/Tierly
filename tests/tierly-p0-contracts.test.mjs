@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { adminSource } from "./helpers/admin-source.mjs";
 
 const readMigration = (name) => readFileSync(
   new URL(`../supabase/migrations/${name}`, import.meta.url),
@@ -52,9 +53,10 @@ test("P0: los eventos usan la zona de la comunidad y validan IANA", () => {
 });
 
 test("P1: el administrador convierte desde la zona local y muestra la zona del evento", () => {
-  const admin = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
+  const admin = adminSource;
   assert.match(admin, /localDateTimeToUtc/);
-  assert.match(admin, /p_timezone: values\.timezone/);
+  assert.match(admin, /p_timezone: timezone/);
+  assert.match(admin, /const timezone = values\["timezone"\]/);
   assert.match(admin, /timeZone: timezone/);
   assert.doesNotMatch(admin, /p_timezone: "America\/Santiago"/);
 });

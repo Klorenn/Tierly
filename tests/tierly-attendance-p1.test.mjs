@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { adminSource } from "./helpers/admin-source.mjs";
 
 const sql = readFileSync(new URL("../supabase/migrations/20260930125958_tierly_harden_event_attendance_p1.sql", import.meta.url), "utf8");
-const adminJs = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
+const adminJs = adminSource;
 
 test("el check-in exige estado válido y ventana completa", () => {
   assert.match(sql, /status in \('scheduled', 'live'\)/i);
@@ -25,5 +26,11 @@ test("las RPCs P1 conservan el acceso autenticado", () => {
 });
 
 test("la UI no ofrece salir después del check-in o confirmación", () => {
-  assert.match(adminJs, /canLeave = mine && !mine\.unregistered_at && !mine\.checked_in_at && !mine\.confirmed_at/);
+  assert.match(
+    adminJs,
+    /canLeave = Boolean\(mine && !mine\.unregistered_at && !mine\.checked_in_at && !mine\.confirmed_at\)/,
+  );
+  // El boton solo aparece cuando `canLeave`, no deshabilitado: una accion que la
+  // RPC va a rechazar igual no deberia estar en pantalla.
+  assert.match(adminJs, /canLeave \? "Salir" : "Registrarme"/);
 });

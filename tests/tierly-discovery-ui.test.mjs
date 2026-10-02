@@ -1,12 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { adminSource } from "./helpers/admin-source.mjs";
 
 const read = (name) => readFileSync(new URL(`../tierly/${name}`, import.meta.url), "utf8");
 const page = read("index.html");
 const app = read("app.js");
 const discover = read("discover.js");
-const admin = read("admin.js");
+const admin = adminSource;
 
 test("la página monta la vista de descubrimiento y carga su script", () => {
   assert.match(page, /<section class="lb-view" data-view="discover" hidden>/);
@@ -15,7 +16,7 @@ test("la página monta la vista de descubrimiento y carga su script", () => {
 });
 
 test("todos los módulos comparten la misma versión de caché", () => {
-  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|admin|discover)\.js\?v=([^"']+)/g)].map((m) => m[1]);
+  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|discover|admin-app\/admin)\.js\?v=([^"']+)/g)].map((m) => m[1]);
   assert.equal(versions.length, 4);
   assert.equal(new Set(versions).size, 1);
 });

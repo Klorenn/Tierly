@@ -1,24 +1,32 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { adminSource } from "./helpers/admin-source.mjs";
 
-const admin = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
+const admin = adminSource;
 const app = readFileSync(new URL("../tierly/app.js", import.meta.url), "utf8");
 const html = readFileSync(new URL("../tierly/index.html", import.meta.url), "utf8");
+const read = (path) => readFileSync(new URL(`../admin/${path}`, import.meta.url), "utf8");
 
-test("el panel admin se carga como módulo separado y comparte TierlyBridge", () => {
-  assert.match(html, /\/tierly\/admin\.js\?v=\d{8}-\d+/);
+test("el panel admin se carga como isla separada y comparte TierlyBridge", () => {
+  assert.match(html, /\/tierly\/admin-app\/admin\.js\?v=\d{8}-\d+/);
+  assert.match(html, /\/tierly\/admin-app\/admin\.css\?v=\d{8}-\d+/);
   assert.match(admin, /window\.TierlyBridge/);
   assert.match(app, /window\.TierlyBridge/);
 });
 
-test("el panel admin reconoce la ruta y ofrece las cuatro vistas", () => {
-  assert.match(admin, /\/tierly\/admin/);
+test("el panel admin reconoce la ruta y ofrece las cinco vistas", () => {
+  // La ruta la resuelve `app.js`; la isla solo expone `TierlyAdmin` para abrirla.
+  assert.match(app, /\/tierly\/admin/);
+  assert.match(app, /window\.TierlyAdmin\?\.open/);
+  assert.match(admin, /window\.TierlyAdmin/);
   assert.match(admin, /\/tierly\?admin=1/);
   assert.match(html, /data-view="admin"[^>]*data-admin-route/);
-  for (const view of ["games", "players", "trends", "suggestions"]) {
-    assert.match(admin, new RegExp(`\"${view}\"`));
-  }
+  assert.match(
+    admin,
+    /ADMIN_VIEWS = \["events", "games", "players", "trends", "suggestions"\] as const/,
+  );
 });
 
 test("el panel resuelve al jugador por la sesión y conserva discord_user_id fuera del HTML", () => {
@@ -26,22 +34,22 @@ test("el panel resuelve al jugador por la sesión y conserva discord_user_id fue
     assert.match(admin, new RegExp(`from\\(["']${table}["']\\)`));
   }
   assert.match(admin, /from\(["']gaming_players["']\)/);
-  assert.match(admin, /eq\(["']auth_user_id["'], state\.session\.user\.id\)/);
+  assert.match(admin, /eq\(["']auth_user_id["'], current\.user\.id\)/);
   assert.doesNotMatch(admin, /from\(["']play_sessions["']\)/);
   assert.doesNotMatch(admin, /discord_user_id/);
   assert.match(admin, /display_name/);
   assert.match(admin, /avatar_url/);
 });
 
-test("el panel selecciona una comunidad autorizada y no serializa sus IDs en HTML", () => {
+test("el panel selecciona una comunidad autorizada y nunca arma HTML a mano", () => {
   assert.match(admin, /from\(["']community_admins["']\)\.select\(["']guild_id, role["']\)/);
-  assert.match(admin, /state\.selectedCommunity/);
-  assert.match(admin, /id="tierly-admin-community"/);
-  assert.match(admin, /state\.communities\[Number\(event\.target\.value\)\]/);
-  assert.match(admin, /\.eq\(["']guild_id["'], selectedGuildId\)/g);
-  assert.doesNotMatch(admin, /<option value="\$\{esc\(community\.guild_id\)\}/);
-  assert.match(admin, /showOnboarding/);
-  assert.match(admin, /No hay comunidades administradas/);
+  assert.match(admin, /selectCommunity/);
+  assert.match(admin, /\.eq\(["']guild_id["'], guildId\)/);
+  // React escapa por construcción: el riesgo del panel vanilla era interpolar
+  // guild_ids en `innerHTML`. Eso no debe volver ni para un caso.
+  assert.doesNotMatch(admin, /innerHTML/);
+  assert.match(admin, /needsOnboarding/);
+  assert.match(admin, /no administra ninguna comunidad todavía/);
 });
 
 test("la migración mantiene RLS y evita filtrar identidades hacia la página pública", () => {
@@ -52,23 +60,29 @@ test("la migración mantiene RLS y evita filtrar identidades hacia la página p�
   assert.doesNotMatch(admin, /discord_user_id/);
 });
 
-test("cada juego del panel usa un icono Lucide determinista y controlado", () => {
-  assert.match(admin, /function gameIcon\(game\)/);
-  assert.match(admin, /canonical_name.*display_name/);
-  assert.match(admin, /data-lucide=\"\$\{gameIcon\(game\)\}\"/);
+test("cada juego usa un icono Lucide determinista y local, nunca una imagen remota", () => {
+  assert.match(admin, /export function gameIconName\(/);
+  assert.match(admin, /canonical_name.*display_name/s);
+  assert.match(admin, /placeholder\.dataset\["lucide"\] = name/);
   assert.match(admin, /createIcons\(\)/);
-  assert.match(admin, /gameIconNames/);
-  assert.match(html, /tierly-admin-game-icon/);
-  assert.doesNotMatch(admin, /icon_url|image_url/);
+  assert.match(admin, /FALLBACK_ICONS\[hash % FALLBACK_ICONS\.length\]/);
+  assert.match(admin, /className="tla-game-icon"/);
+  // El icono del juego NO puede venir de una URL: seria un fetch a un host
+  // arbitrario por cada fila de la tabla. El crest de la comunidad si usa
+  // `icon_url`, pero con host allowlisteado y en su propio componente.
+  for (const path of ["lib/games.ts", "components/GameLabel.tsx", "components/Icon.tsx"]) {
+    assert.doesNotMatch(read(path), /icon_url|image_url/, `${path} no debe cargar imagenes remotas`);
+  }
+  assert.match(read("components/CommunityCrest.tsx"), /ALLOWED_ICON_HOST = "cdn\.discordapp\.com"/);
 });
 
 test("muestra presencia actual agrupada por juego y conserva histórico", () => {
   assert.match(admin, /Jugando ahora/);
   assert.match(admin, /is_active/);
   assert.match(admin, /started_at/);
-  assert.match(admin, /presenceGroups/);
-  assert.match(admin, /tierly-admin-history/);
-  assert.match(admin, /tierly_admin_game_players.*select\(.*is_active.*started_at/s);
+  assert.match(admin, /function PresenceGroups\(/);
+  assert.match(admin, /Histórico/);
+  assert.match(admin, /tierly_admin_game_players[\s\S]*?select\([\s\S]*?is_active[\s\S]*?started_at/);
 });
 
 test("la migración de presencia conserva el invocador y no expone discord_user_id", () => {
@@ -91,9 +105,9 @@ test("las acciones de eventos usan RPC y recargan la UI con errores accesibles",
   for (const rpc of ["tierly_register_event", "tierly_unregister_event", "tierly_check_in_event", "tierly_confirm_event_attendance"]) {
     assert.match(admin, new RegExp(rpc));
   }
-  assert.match(admin, /state\.message = result\.error\?\.message/);
+  assert.match(admin, /admin\.setMessage\(error\?\.message \?\? ""\)/);
   assert.match(admin, /role="alert"/);
-  assert.match(admin, /await load\(\)/);
+  assert.match(admin, /await admin\.reload\(\)/);
   assert.match(admin, /tierly_xp_ledger/);
   assert.match(admin, /confirmed_at/);
 });
@@ -105,35 +119,20 @@ test("la navegación pública conserva ranking, chess y racer sin admin antiguo"
   assert.doesNotMatch(admin, /smash|brackets/i);
 });
 
-test("los dos módulos usan versiones de cache busting coherentes", () => {
-  const versions = [...html.matchAll(/src="\/tierly\/(?:app|chess|admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
+test("los módulos usan versiones de cache busting coherentes", () => {
+  const versions = [...html.matchAll(/src="\/tierly\/(?:app|chess|admin-app\/admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
   assert.ok(versions.length >= 3);
   assert.equal(new Set(versions).size, 1);
 });
 
-// renderTable se perdio en una edicion y el panel entero moria con
-// "renderTable is not defined" en runtime: ningun assert.match lo habria
-// detectado, asi que este test verifica el grafo de llamadas completo.
-test("toda funcion que admin.js invoca esta declarada en el archivo", () => {
-  const codigo = admin.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
-  const declaradas = new Set();
-  for (const match of codigo.matchAll(/(?:function|const|let|var|class)\s+([A-Za-z_$][\w$]*)/g)) declaradas.add(match[1]);
-  // Parametros y destructuring: el nombre puede llegar desde la firma.
-  for (const match of codigo.matchAll(/(?:\(|,)\s*([A-Za-z_$][\w$]*)\s*(?:,|\)|=>|=[^=])/g)) declaradas.add(match[1]);
-  const globales = new Set([
-    "if", "for", "while", "switch", "catch", "return", "typeof", "await", "new", "function", "else", "do",
-    "String", "Number", "Boolean", "Array", "Object", "Map", "Set", "Date", "JSON", "Math", "Intl", "URL",
-    "RegExp", "Error", "Promise", "parseInt", "parseFloat", "isNaN", "fetch", "setTimeout", "clearTimeout",
-    "setInterval", "clearInterval", "queueMicrotask", "encodeURIComponent", "decodeURIComponent", "require",
-    "Blob", "FormData", "URLSearchParams",
-    // Texto dentro de template literals que el regex lee como llamada:
-    // "var(--teal)" en CSS inline y "Asistentes (3)" en un <summary>.
-    "var", "Asistentes",
-  ]);
-  const faltantes = new Set();
-  for (const match of codigo.matchAll(/(?<![.\w$])([A-Za-z_$][\w$]*)\s*\(/g)) {
-    const nombre = match[1];
-    if (!globales.has(nombre) && !declaradas.has(nombre)) faltantes.add(nombre);
-  }
-  assert.deepEqual([...faltantes], [], `funciones invocadas pero no declaradas: ${[...faltantes].join(", ")}`);
+// El panel vanilla murio una vez con "renderTable is not defined" y ningun
+// assert.match lo habria detectado; ese agujero lo cubria un test que recorria
+// el grafo de llamadas con regex. En TypeScript el compilador da la misma
+// garantia y mucho mas fuerte, pero solo si corre dentro de la suite: si queda
+// como paso manual de CI, no protege nada.
+test("el typecheck de la isla es parte de la suite", () => {
+  execFileSync("npx", ["tsc", "--noEmit"], {
+    cwd: new URL("..", import.meta.url),
+    stdio: "pipe",
+  });
 });

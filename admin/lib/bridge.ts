@@ -28,3 +28,10 @@ declare global {
 export function getBridge(): TierlyBridge | null {
   return window.TierlyBridge ?? null;
 }
+
+/**
+ * Evento con el que `app.js` le pide a la isla que recargue. No se expone un
+ * `reload()` directo en `window` porque la funcion vive dentro de un hook de
+ * React: el listener es lo que sobrevive a los remontajes.
+ */
+export const ADMIN_OPEN_EVENT = "tirly:admin-open";

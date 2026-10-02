@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
-import type { TierlyBridge } from "./bridge";
+import { ADMIN_OPEN_EVENT, type TierlyBridge } from "./bridge";
 import type {
   Attendance,
   AttendanceRow,
@@ -104,7 +104,7 @@ export function useAdminData(bridge: TierlyBridge): AdminState {
 
       const communitiesResult = await supabase
         .from("communities")
-        .select("guild_id, name, timezone, presence_enabled, public_directory")
+        .select("guild_id, name, timezone, icon_url, presence_enabled, public_directory")
         .in("guild_id", guildIds);
       const communities = (communitiesResult.data ?? []) as Community[];
 

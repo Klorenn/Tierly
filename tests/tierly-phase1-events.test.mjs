@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { adminSource } from "./helpers/admin-source.mjs";
 
 const sql = readFileSync(new URL("../supabase/migrations/20260930035043_tierly_phase1_events_attendance_xp.sql", import.meta.url), "utf8");
 const createSql = readFileSync(new URL("../supabase/migrations/20260930043107_tierly_create_community_event.sql", import.meta.url), "utf8");
-const adminJs = readFileSync(new URL("../tierly/admin.js", import.meta.url), "utf8");
+const adminJs = adminSource;
 
 test("vincula eventos con comunidades y añade horario", () => {
   assert.match(sql, /gaming_events[\s\S]*guild_id text references public\.communities/i);

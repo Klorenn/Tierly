@@ -8,6 +8,8 @@ export interface Community {
   guild_id: string;
   name: string;
   timezone: string | null;
+  /** Icono del servidor de Discord. Lo escribe `discord-verify` al reclamar. */
+  icon_url: string | null;
   presence_enabled: boolean;
   public_directory: boolean;
 }

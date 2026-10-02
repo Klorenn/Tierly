@@ -25,6 +25,6 @@ test("la franja de administrador depende de community_admins y no aparece para n
 });
 
 test("chess y racer conservan scripts con la misma versión de caché", () => {
-  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
+  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|admin-app\/admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
   assert.equal(new Set(versions).size, 1);
 });
