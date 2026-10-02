@@ -13,6 +13,19 @@ Proceso Node separado de la web y de las Supabase Edge Functions. Corre 24/7 via
 - Entrega recordatorios de eventos generados por Supabase. La migración `20260930201000_tierly_event_reminders.sql` crea la tabla `tierly_event_notifications` (el nombre del archivo es histórico) con el registro idempotente por guild/evento y el job `tierly-generar-recordatorios`; el bot solo reclama filas `pending` de su guild y las marca como `sent` de forma condicional.
 - Registra únicamente conexión, heartbeat, errores normalizados y contadores técnicos en `tierly_bot_health`; no guarda IDs, nombres, mensajes de error ni secretos.
 
+### Slash commands (`/tierly`)
+
+| Comando | Quién | Para qué |
+|---|---|---|
+| `set` / `config` | Admin (`set`) | Canales de bienvenida y anuncios |
+| `sync` | Admin | Sincroniza miembros → `gaming_players` |
+| `event create` | Admin | Crea evento comunitario |
+| `event list` | Todos | Lista eventos `scheduled` + id |
+| `event join` | Todos | Inscripción por `event_id` |
+| `profile` / `leaderboard` / `live` / `help` | Todos | Perfil, top 10, presencia live, ayuda |
+
+También: `!tierly voy` (asistencia sin cuenta reclamada), `!tierly presencia si|no`, `!tierly borrar`.
+
 ## Variables de entorno
 
 El proceso carga `discord-bot/.env` mediante `node --env-file=.env`. Ese archivo es

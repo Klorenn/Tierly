@@ -16,8 +16,8 @@ test("la página monta la vista de descubrimiento y carga su script", () => {
 });
 
 test("todos los módulos comparten la misma versión de caché", () => {
-  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|discover|admin-app\/admin)\.js\?v=([^"']+)/g)].map((m) => m[1]);
-  assert.equal(versions.length, 4);
+  const versions = [...page.matchAll(/src="\/tierly\/(?:app|discover|admin-app\/admin)\.js\?v=([^"']+)/g)].map((m) => m[1]);
+  assert.equal(versions.length, 3);
   assert.equal(new Set(versions).size, 1);
 });
 

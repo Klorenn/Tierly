@@ -141,3 +141,33 @@ $$;
 
 revoke all on function public.tierly_set_public_directory(text, boolean) from public, anon;
 grant execute on function public.tierly_set_public_directory(text, boolean) to authenticated, service_role;
+
+-- ── Qué se está jugando AHORA (live) ─────────────────────────────────────────────────
+-- Solo comunidades públicas con presence_enabled y miembros que aceptaron mostrarse.
+-- Agrupa por juego, cuenta jugadores activos, minutos y comunidades.
+create or replace view public.tierly_public_live_presence_view as
+select g.display_name                      as game_name,
+       g.icon_url                           as game_icon_url,
+       count(distinct s.discord_user_id)    as player_count,
+       sum(extract(epoch from (now() - s.started_at)) / 60)::bigint as total_minutes,
+       count(distinct s.guild_id)           as community_count,
+       c.invite_url                         as invite_url
+from public.play_sessions s
+join public.games g on g.id = s.game_id
+join public.communities c on c.guild_id = s.guild_id
+join public.observed_members m
+  on m.guild_id = s.guild_id
+ and m.discord_user_id = s.discord_user_id
+where s.ended_at is null
+  and c.public_directory is true
+  and c.presence_enabled is true
+  and m.consent_status = 'accepted'
+  and m.identity_visible is true
+  and m.deletion_requested_at is null
+  and s.last_heartbeat_at >= now() - interval '10 minutes'
+group by g.display_name, g.icon_url, c.invite_url
+having count(distinct s.discord_user_id) > 0;
+
+grant select on public.tierly_public_live_presence_view to anon, authenticated;
+
+grant execute on function public.tierly_set_public_directory(text, boolean) to authenticated, service_role;

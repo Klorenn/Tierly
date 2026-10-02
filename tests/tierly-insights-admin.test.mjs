@@ -112,16 +112,15 @@ test("las acciones de eventos usan RPC y recargan la UI con errores accesibles",
   assert.match(admin, /confirmed_at/);
 });
 
-test("la navegación pública conserva ranking, chess y racer sin admin antiguo", () => {
+test("la navegación pública conserva ranking y racer sin admin antiguo", () => {
   assert.match(html, /data-view="ranking"/);
-  assert.match(html, /data-view="chess"/);
   assert.doesNotMatch(app, /tierly_(create_smash_tournament|confirm_match|award_reward)/);
   assert.doesNotMatch(admin, /smash|brackets/i);
 });
 
 test("los módulos usan versiones de cache busting coherentes", () => {
-  const versions = [...html.matchAll(/src="\/tierly\/(?:app|chess|admin-app\/admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
-  assert.ok(versions.length >= 3);
+  const versions = [...html.matchAll(/src="\/tierly\/(?:app|admin-app\/admin)\.js\?v=([^"']+)/g)].map((match) => match[1]);
+  assert.ok(versions.length >= 2);
   assert.equal(new Set(versions).size, 1);
 });
 

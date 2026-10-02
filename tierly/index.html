@@ -28,10 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/chessground@9.2.1/assets/chessground.base.css" />
-  <link rel="stylesheet" href="https://unpkg.com/chessground@9.2.1/assets/chessground.brown.css" />
-  <link rel="stylesheet" href="https://unpkg.com/chessground@9.2.1/assets/chessground.cburnett.css" />
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-02" />
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-06" />
   <style>
     :root {
       --sand: #ECE0CC; --sand-soft: #F8F1E4; --teal: #3F8487; --teal-bright: #159C83; --teal-deep: #1C746B; --teal-ink: #1F3536; --clay: #C75A2A;
@@ -752,129 +749,6 @@
       .tierly-admin-attendance-state { color:var(--ink-dim); font-size:12px; margin-left:auto; }
        @media (max-width:640px) { .tierly-admin-head { flex-direction:column; } .tierly-admin-head-actions { width:100%; } .tierly-admin-community-picker, .tierly-admin-community-picker select, #tierly-admin-refresh { width:100%; } .tierly-admin-event-form form { grid-template-columns:1fr; } .tierly-admin-event-form label:nth-last-child(2), .tierly-admin-event-form button { grid-column:auto; } }
 
-    .lb-chess-lobby-shell { width: 100%; max-width: 1080px; margin: 0 auto; }
-    #lb-chess-title { width: 100%; max-width: 1080px; margin: 0 auto 18px; }
-    .lb-chess-lobby-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      margin-bottom: 18px; padding: 0 2px 16px; border-bottom: 1px solid var(--card-border);
-    }
-    .lb-chess-lobby-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr); gap: 24px; align-items: start; }
-    .lb-chess-lobby-main { min-width: 0; }
-    .lb-chess-grid { display: grid; gap: 16px; }
-    .lb-chess-card {
-      background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
-      padding: 20px 22px; box-shadow: var(--card-shadow);
-    }
-    .lb-chess-card h3 { margin: 0 0 12px; }
-    .lb-chess-lobby-activity {
-      background: var(--card); border: 1px solid var(--card-border); border-radius: 18px;
-      padding: 20px 22px; box-shadow: var(--card-shadow); min-height: 100%;
-    }
-    .lb-chess-difficulty { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-    .lb-chess-chip {
-      background: var(--sand-soft); border: 1px solid var(--card-border); color: var(--ink-dim);
-      border-radius: 999px; padding: 8px 14px; font-family: var(--sans); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background 140ms ease, color 140ms ease;
-    }
-    .lb-chess-chip:hover { color: var(--ink); }
-    .lb-chess-chip.is-active { background: var(--teal-bright); border-color: transparent; color: #fff; }
-    .lb-chess-challenge { display: flex; gap: 8px; flex-wrap: wrap; }
-    .lb-chess-input {
-      flex: 1; min-width: 200px; background: var(--sand-soft); border: 1px solid var(--card-border);
-      border-radius: 999px; padding: 9px 14px; font-family: var(--sans); font-size: 13.5px; color: var(--ink);
-    }
-    .lb-chess-input:focus { outline: none; border-color: var(--glow); }
-    .lb-chess-btn {
-      background: var(--sand-soft); border: 1px solid var(--card-border); color: var(--ink);
-      border-radius: 999px; padding: 9px 18px; font-family: var(--sans); font-size: 13px; font-weight: 600;
-      cursor: pointer; transition: background 140ms ease;
-    }
-    .lb-chess-btn:hover { background: var(--sand); }
-    .lb-chess-btn-primary { background: var(--teal-bright); border-color: transparent; color: #fff; }
-    .lb-chess-btn-primary:hover { background: var(--teal-bright); filter: brightness(1.05); }
-    .lb-chess-btn-danger { background: var(--clay); border-color: transparent; color: #fff; }
-    .lb-chess-btn-danger:hover { background: var(--clay); filter: brightness(1.05); }
-    .lb-chess-btn-small { padding: 6px 12px; font-size: 12px; }
-    .lb-chess-mygames-title { font-family: var(--serif); font-size: 16px; color: var(--ink); margin: 0 0 10px; }
-    .lb-chess-mygames { display: flex; flex-direction: column; }
-    .lb-chess-game-row {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0;
-      border-bottom: 1px solid var(--card-border);
-    }
-    .lb-chess-game-row:last-child { border-bottom: none; }
-    .lb-chess-game-info { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink); }
-    .lb-chess-tag {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-dim);
-      background: var(--chip-bg); padding: 3px 9px; border-radius: 999px; font-weight: 600;
-    }
-    .lb-chess-empty, .lb-chess-status, .lb-chess-error, .lb-chess-finished { font-size: 13.5px; color: var(--ink-dim); }
-    .lb-chess-error { color: #B05A1E; }
-    .lb-chess-earned { font-weight: 600; color: var(--teal-bright); }
-    .lb-chess-rating { font-size: 12.5px; color: var(--ink-dim); font-family: var(--mono); }
-    .lb-chess-lobby-rating { font-size: 13px; color: var(--ink-dim); }
-    .lb-chess-lobby-rating strong { color: var(--ink); font-family: var(--mono); font-size: 15px; }
-    .lb-chess-scores { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 14px; margin: 10px 0 8px; }
-    .lb-chess-scores-row { display: contents; }
-    .lb-chess-scores-row > span { font-size: 12.5px; color: var(--ink); padding: 3px 8px; border-radius: 6px; background: var(--chip-bg); }
-    .lb-chess-scores-head > span { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10.5px; color: var(--ink-dim); background: transparent; }
-    .lb-chess-scores-note { font-size: 12px; font-style: italic; }
-    .lb-chess-layout { display: flex; flex-direction: column; gap: 18px; }
-    .lb-chess-board-wrap { display: flex; justify-content: center; }
-    #lb-chess-board { width: 100%; max-width: 520px; aspect-ratio: 1 / 1; margin: 0 auto; }
-    @media (min-width: 1200px) {
-      .lb-chess-layout { flex-direction: row; align-items: flex-start; justify-content: center; gap: 28px; }
-      .lb-chess-board-wrap { flex: 0 0 clamp(420px, 42vw, 560px); }
-      .lb-chess-panel { flex: 0 0 260px; display: flex; flex-direction: column; gap: 14px; }
-    }
-    .lb-chess-tutorial {
-      border: none; border-radius: 18px; background: var(--card); color: var(--ink);
-      padding: 22px 24px; max-width: 560px; width: min(90vw, 560px); box-shadow: var(--card-shadow);
-    }
-    .lb-chess-tutorial::backdrop { background: rgba(15,35,30,0.45); }
-    .lb-chess-tutorial-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
-    .lb-chess-tutorial-head h2 { font-family: var(--serif); font-size: 22px; color: var(--ink); margin: 0; }
-    .lb-chess-tutorial-title-wrap { display: flex; align-items: center; gap: 12px; }
-    .lb-chess-tutorial-cat { width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; }
-    .lb-chess-modal-close {
-      background: transparent; border: none; color: var(--ink-dim); font-size: 22px; cursor: pointer;
-      line-height: 1; padding: 4px 8px; border-radius: 8px;
-    }
-    .lb-chess-modal-close:hover { background: var(--hover-bg); }
-    .lb-chess-tutorial-body { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-    .lb-chess-tutorial-section h3 { font-family: var(--serif); font-size: 15px; color: var(--ink); margin: 0 0 4px; }
-    .lb-chess-tutorial-section p { font-size: 13.5px; color: var(--ink-dim); line-height: 1.55; margin: 0; }
-    .lb-chess-coach {
-      display: flex; align-items: center; gap: 12px;
-      background: var(--chip-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 12px 14px;
-      transition: border-color 200ms ease, background 200ms ease;
-    }
-    .lb-chess-coach.is-my-turn { border-color: var(--teal-bright); background: rgba(21,156,131,0.08); }
-    .lb-chess-coach-cat {
-      width: 48px; height: 48px; object-fit: contain; flex-shrink: 0;
-      animation: lbCoachIdle 2.6s ease-in-out infinite;
-      transform-origin: 50% 90%;
-    }
-    .lb-chess-coach.is-my-turn .lb-chess-coach-cat { animation: lbCoachBounce 0.9s ease-in-out infinite; }
-    .lb-chess-coach-cat.pop { animation: lbCoachPop 0.5s ease; }
-    @keyframes lbCoachIdle {
-      0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(-3px) rotate(2deg); }
-    }
-    @keyframes lbCoachBounce {
-      0%, 100% { transform: translateY(0) scale(1); }
-      40% { transform: translateY(-6px) scale(1.06); }
-    }
-    @keyframes lbCoachPop {
-      0% { transform: scale(0.85) rotate(-4deg); }
-      55% { transform: scale(1.14) rotate(3deg); }
-      100% { transform: scale(1) rotate(0deg); }
-    }
-    .lb-chess-coach-body { min-width: 0; }
-    .lb-chess-coach strong {
-      display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
-      color: var(--ink-dim); margin-bottom: 4px;
-    }
-    .lb-chess-coach p { margin: 0; font-size: 13.5px; color: var(--ink); line-height: 1.5; }
     .lb-rank-tabs button, .lb-ranks-info-btn, .lb-settings-lang button { min-height: 44px; }
     .lb-bracket-board { display: flex; gap: 18px; overflow-x: auto; padding: 22px 4px 12px; margin-top: 20px; }
     .lb-bracket-round { display: flex; flex: 1 0 190px; min-width: 190px; flex-direction: column; justify-content: space-around; gap: 18px; }
@@ -904,9 +778,6 @@
       .lb-stats { grid-template-columns: repeat(2, 1fr); }
       .lb-secondary-grid { flex-direction: column; }
     }
-    @media (max-width: 860px) {
-      .lb-chess-lobby-body { grid-template-columns: 1fr; }
-    }
     @media (max-width: 720px) {
       .lb-shell { flex-direction: column; }
       .lb-sidebar { width: 100%; padding: 16px; position: relative; height: auto; overflow-y: visible; }
@@ -924,9 +795,6 @@
       .lb-nav-item { width: auto; white-space: nowrap; }
       .lb-main { padding: 28px 20px 32px; }
       .lb-stats { grid-template-columns: 1fr 1fr; }
-      .lb-chess-lobby-head { align-items: flex-start; }
-      .lb-chess-challenge { flex-direction: column; }
-      .lb-chess-input, .lb-chess-challenge .lb-chess-btn { width: 100%; }
     }
 
 
@@ -1035,6 +903,13 @@
     .lb-live-skeleton-row.short { width: 60%; }
     .lb-live-skeleton-row.medium { width: 80%; }
     .lb-live-skeleton-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(90deg, var(--chip-bg) 25%, var(--hover-bg) 50%, var(--chip-bg) 75%); background-size: 200% 100%; animation: lb-disc-shimmer 1.4s ease-in-out infinite; margin-bottom: 8px; }
+
+    /* ── Live Games in Discover ─────────────────────────────────────────────── */
+    .lb-live-tile { position: relative; }
+    .lb-live-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: var(--clay); color: #fff; margin-right: 8px; vertical-align: middle; }
+    .lb-live-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; font-size: 12px; color: var(--ink-dim); }
+    .lb-live-tile .lb-disc-btn { margin-top: auto; width: 100%; justify-content: center; }
+    .lb-live-tile .lb-disc-btn svg { width: 16px; height: 16px; }
 
     @media (max-width: 720px) {
       .lb-live-stats { grid-template-columns: 1fr; }
@@ -1167,11 +1042,6 @@
           <div id="tierly-discover"></div>
         </section>
 
-        <section class="lb-view" data-view="chess" hidden>
-          <h2 id="lb-chess-title" class="lb-view-head">Chess</h2>
-          <div id="lb-chess"></div>
-        </section>
-
         <section class="lb-view" data-view="live" hidden>
           <h2 id="lb-live-title" class="lb-view-head"></h2>
           <div id="lb-live"></div>
@@ -1226,23 +1096,12 @@
       </div>
     </dialog>
 
-    <dialog id="lb-chess-tutorial" class="lb-chess-tutorial">
-      <div class="lb-chess-tutorial-head">
-        <div class="lb-chess-tutorial-title-wrap">
-          <img src="/tierly/streak/negro.png" alt="" width="640" height="640" loading="lazy" decoding="async" class="lb-chess-tutorial-cat" id="lb-chess-tutorial-cat" />
-          <h2 id="lb-chess-tutorial-title">How to play</h2>
-        </div>
-        <button id="lb-chess-tutorial-close" type="button" class="lb-chess-modal-close" aria-label="close">&times;</button>
-      </div>
-      <div id="lb-chess-tutorial-body" class="lb-chess-tutorial-body"></div>
-      <button id="lb-chess-tutorial-gotit" type="button" class="lb-chess-btn lb-chess-btn-primary">Got it</button>
-    </dialog>
+    
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/chess.js?v=20261002-03"></script>
-          <script type="module" src="/tierly/app.js?v=20261002-03"></script>
-         <script type="module" src="/tierly/discover.js?v=20261002-02"></script>
-         <script type="module" src="/tierly/admin-app/admin.js?v=20261002-02"></script>
+<script type="module" src="/tierly/app.js?v=20261002-06"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-06"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-06"></script>
 </body>
 </html>

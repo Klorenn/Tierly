@@ -15,11 +15,12 @@ test("el directorio público es opt-in por comunidad y arranca apagado", () => {
   assert.match(sql, /add column if not exists public_directory boolean not null default false/);
 });
 
-test("las tres vistas públicas se leen como anon y authenticated", () => {
+test("las cuatro vistas públicas se leen como anon y authenticated", () => {
   for (const view of [
     "tierly_public_communities_view",
     "tierly_public_top_games_view",
     "tierly_public_top_players_view",
+    "tierly_public_live_presence_view",
   ]) {
     assert.match(sql, new RegExp(`create or replace view public\\.${view}`), view);
     assert.match(sql, new RegExp(`grant select on public\\.${view} to anon, authenticated`), view);
@@ -31,6 +32,7 @@ test("ninguna vista pública entra a comunidades que no pidieron aparecer", () =
     "tierly_public_communities_view",
     "tierly_public_top_games_view",
     "tierly_public_top_players_view",
+    "tierly_public_live_presence_view",
   ]) {
     assert.match(projection(view), /public_directory is true/, view);
   }
@@ -41,6 +43,7 @@ test("ninguna vista pública expone guild_id ni discord_user_id", () => {
     "tierly_public_communities_view",
     "tierly_public_top_games_view",
     "tierly_public_top_players_view",
+    "tierly_public_live_presence_view",
   ]) {
     const body = projection(view);
     assert.notEqual(body, "", view);

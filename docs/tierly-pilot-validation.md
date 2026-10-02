@@ -10,9 +10,9 @@
 - [ ] Estado de permisos de Discord documentado para cada uso. Si presence, estadísticas derivadas o portabilidad no tienen autorización suficiente, mantener esas funciones apagadas y validar solo inscripción, check-in explícito y confirmación del organizador. Una solicitud enviada no cuenta como aprobación.
 - [ ] Inventario de migraciones realmente aplicadas y permisos RLS revisado por quien administra Supabase. El SQL del repositorio es referencia histórica incompleta: no ejecutar `db reset`, `db push` ni aplicar una migración por seguir este runbook. Confirmar que la RPC del reporte existe antes de intentar leerla.
 - [ ] Nuevo host validado para login Discord, vinculación, ranking/perfil, administración autorizada y flujos críticos. Conservar URLs, Auth/CORS antiguos y Tellus durante coexistencia; seguir [despliegue y rollback](../README.md#deploy-and-domain-cutover). El bot debe estar operativo según [health, reinicio y rollback](../discord-bot/README.md#health-y-reinicio-checklist).
-- [ ] Para cada evento, publicar reglas visibles de inscripción, check-in, confirmación, XP/stamp, zona horaria y cancelación. Documentar cómo se detendrá el piloto ante una confirmación errónea: hoy no existe corrección/reversión auditada en el producto. Explicar que el stamp acredita la fuente de evidencia, no habilidad, victoria ni duración exacta.
+- [ ] Para cada evento, publicar reglas visibles de inscripción, check-in, confirmación, XP/stamp, zona horaria y cancelación. Documentar el flujo de corrección ante confirmación errónea: la RPC `tierly_revoke_event_confirmation` existe en código y está migrada en prod; **verificarla en vivo** antes de marcar el criterio como pasa. Explicar que el stamp acredita la fuente de evidencia, no habilidad, victoria ni duración exacta.
 
-Si alguna puerta falla, registrar bloqueo y responsable; no iniciar la medición de esa comunidad. **El piloto formal y la salida de Fase 1 siguen bloqueados** hasta implementar y verificar corrección/reversión auditada. Una prueba exploratoria con voluntarios puede registrar hallazgos, pero no cuenta como aprobación de esos criterios ni justifica manipulación manual de producción.
+Si alguna puerta falla, registrar bloqueo y responsable; no iniciar la medición de esa comunidad. **El piloto formal y la salida de Fase 1 siguen bloqueados** hasta verificar en vivo corrección/reversión auditada (RPC ya desplegada en schema). Una prueba exploratoria con voluntarios puede registrar hallazgos, pero no cuenta como aprobación de esos criterios ni justifica manipulación manual de producción.
 
 ## Línea base y registro
 
@@ -41,7 +41,7 @@ Usar un registro de evaluación **separado por comunidad**, con acceso limitado 
 Marcar cada criterio como **pasa / falla / no probado**, con fecha, entorno, versión, responsable y enlace a evidencia privada:
 
 - Dos eventos consecutivos completan crear → inscribir → check-in → confirmar → reconocer → volver a convocar, sin asistencia de Tierly.
-- Reintento/cierre repetido no duplica XP/stamps. **Corrección y reversión: bloqueadas por implementación pendiente**; no marcarlas como “pasa” ni suplirlas con SQL manual en producción. Para cerrar Fase 1 se necesita una operación autorizada que registre motivo, emisor, cambio y ajuste de XP/stamp, seguida de verificación funcional.
+- Reintento/cierre repetido no duplica XP/stamps. **Corrección y reversión:** RPC `tierly_revoke_event_confirmation` en schema; no marcar “pasa” hasta verificación funcional en vivo con motivo, emisor y ajuste de XP/stamp. No suplir con SQL manual en producción.
 - Retirar consentimiento o excluirse detiene el uso correspondiente; solicitud de borrado sigue el procedimiento y plazo acordados. La publicación nominal exige opt-in separado.
 - Bot desconectado/reconectado o datos incompletos se muestran como cobertura faltante; no se inventa duración ni asistencia. Health vuelve al umbral documentado.
 - Admin de guild A no puede leer ni modificar actividad privada de B. Dos homónimos no se fusionan; no aparece historial personal cruzado.

@@ -17,8 +17,8 @@
   const number = (value) => new Intl.NumberFormat("es-CL").format(Number(value || 0));
   const initials = (name) => esc(String(name || "?").trim().slice(0, 2).toUpperCase());
 
-  const LIMITS = { games: 12, players: 15, communities: 24 };
-  const state = { games: [], players: [], communities: [], loading: true, error: "" };
+  const LIMITS = { games: 12, players: 15, communities: 24, liveGames: 12 };
+  const state = { games: [], players: [], communities: [], liveGames: [], loading: true, error: "" };
   let opened = false;
 
   // Minutos a lenguaje humano. El dato base son minutos de presencia, así que no se
@@ -29,6 +29,14 @@
     const hours = Math.floor(total / 60);
     const rest = total % 60;
     return rest === 0 ? `${number(hours)} h` : `${number(hours)} h ${rest} min`;
+  }
+
+  function durationLive(minutes) {
+    const total = Number(minutes || 0);
+    if (total < 60) return `${number(total)} min`;
+    const hours = Math.floor(total / 60);
+    const rest = total % 60;
+    return rest === 0 ? `${number(hours)}h` : `${number(hours)}h ${rest}m`;
   }
 
   function relativeDay(value) {
@@ -105,6 +113,29 @@
     </article>`).join("")}</div>`;
   }
 
+  function liveGamesGrid() {
+    if (!state.liveGames.length) {
+      return `<p class="lb-disc-empty">Nadie está jugando ahora mismo.</p>`;
+    }
+    return `<div class="lb-disc-grid">${state.liveGames.map((game, index) => `
+      <article class="lb-disc-tile lb-live-tile">
+        ${crest(game.game_name, game.game_icon_url, "md")}
+        <h4>${esc(game.game_name)}</h4>
+        <p class="lb-disc-tile-meta lb-live-meta">
+          <span class="lb-live-badge">🔴 EN VIVO</span>
+          <span>${number(game.player_count)} jugando</span>
+          <span>${durationLive(game.total_minutes)}</span>
+        </p>
+        <p class="lb-disc-tile-meta lb-disc-muted">${number(game.community_count)} comunidades</p>
+        <a class="lb-disc-btn lb-disc-btn-primary lb-join-btn" 
+           href="${esc(game.invite_url)}" 
+           target="_blank" rel="noopener noreferrer"
+           data-game="${esc(game.game_name)}">
+          <i data-lucide="users"></i><span>Unirse</span>
+        </a>
+      </article>`).join("")}</div>`;
+  }
+
   function render() {
     if (state.loading) {
       root.innerHTML = `<div class="lb-disc-skeleton" aria-busy="true"><span></span><span></span><span></span></div>`;
@@ -153,19 +184,23 @@
       </section>
 
       <section class="lb-disc-card">
+        <h3 class="lb-disc-card-title">🔴 Jugando ahora</h3>
+        <p class="lb-disc-note">Jugadores activos en este momento. Haz clic en \"Unirse\" para entrar al servidor de Discord.</p>
+        ${liveGamesGrid()}
+      </section>
+
+      <section class="lb-disc-card">
         <h3 class="lb-disc-card-title">Servidores con Tierly</h3>
         ${communitiesGrid()}
       </section>
     `;
-    window.lucide?.createIcons?.();
-  }
 
   async function load() {
     state.loading = true;
     state.error = "";
     render();
 
-    const [games, players, communities] = await Promise.all([
+    const [games, players, communities, liveGames] = await Promise.all([
       supabase.from("tierly_public_top_games_view")
         .select("game_name, total_minutes, session_count, community_count, last_played_day")
         .order("total_minutes", { ascending: false })
@@ -178,12 +213,17 @@
         .select("community_name, community_icon_url, timezone, consenting_member_count, games_tracked")
         .order("consenting_member_count", { ascending: false })
         .limit(LIMITS.communities),
+      supabase.from("tierly_public_live_presence_view")
+        .select("game_name, game_icon_url, player_count, total_minutes, community_count, invite_url")
+        .order("player_count", { ascending: false })
+        .limit(LIMITS.liveGames),
     ]);
 
     state.games = games.data || [];
     state.players = players.data || [];
     state.communities = communities.data || [];
-    const failure = [games.error, players.error, communities.error].find(Boolean);
+    state.liveGames = liveGames.data || [];
+    const failure = [games.error, players.error, communities.error, liveGames.error].find(Boolean);
     if (failure) state.error = "No pudimos cargar el descubrimiento. Reintentá en un momento.";
     state.loading = false;
     render();

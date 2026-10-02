@@ -1,151 +1,192 @@
 # Tierly — roadmap de producto
 
-Propuesta al 28 de septiembre de 2026. Define decisiones y entregables; no promete fechas ni describe funciones futuras como implementadas.
+Propuesta al 2 de octubre de 2026. Define decisiones y entregables; no promete fechas ni describe funciones futuras como implementadas.
 
 **Mirá qué juega tu comunidad. Dale motivos para jugar juntos.**
 
-Tierly ayuda a organizadores de Discord a convocar eventos de gaming, reconocer participación y volver a reunir a sus jugadores. La visión incluye XP y stamps persistentes entre comunidades, condicionados a permisos de plataforma y privacidad. Descubrimiento, credenciales y smart accounts vienen después de demostrar el ciclo básico.
+Tierly es la capa de identidad e incentivos gaming para comunidades de Discord. Ayuda a servidores a entender qué juegan sus miembros, lanzar eventos alrededor de esa actividad y recompensar participación con XP, stamps y logros que siguen a los jugadores entre comunidades.
+
+La visión: **tu vida gaming en Discord, en un solo perfil**.
+
+---
 
 ## Punto de partida
 
 - Extracción standalone publicada (`c1e4044`); frontend, administración legacy, bot e integraciones conservados.
-- Supabase de producción compartido y datos existentes retenidos: no hubo migración ni reset de base de datos.
+- Supabase de producción compartido (`rhzanxzoqmbxptvxgnfj`) y datos existentes retenidos: no hubo migración ni reset de base de datos.
 - Servidor local y configuración del repo preparados; despliegue Vercel y corte de Auth/CORS/dominio pendientes de verificación en vivo.
 - Tellus mantiene el frontend actual hasta validar el nuevo host y su rollback.
 - La suite Node incluye assertions estáticas/de código y simulaciones; no prueba por sí sola OAuth, permisos, bot o participación reales.
 - La [auditoría histórica del 27 de agosto](docs/archive/2026-08-27-tierly-roadmap-audit.md) conserva hallazgos de esa fecha. Su vigencia requiere auditoría; no se asumen bugs pendientes actuales.
 
-Este roadmap prioriza el producto comunitario. No expande ajedrez/racer ni elimina Passport u otras integraciones sin justificación y transición revisada.
+**Estado de implementación al 2 de octubre de 2026:**
+- ✅ Fase 0 (base operable) y Fase 1 (ciclo completo eventos) implementadas en repo y cubiertas por tests locales
+- ✅ Descubrimiento público con opt-in por comunidad (adelanto Fase 4)
+- ✅ Bot Discord operativo con slash commands (`/tierly set|config|sync|event|profile|leaderboard|live|help`)
+- ✅ Vista Live/En vivo (who's playing now) con Supabase Realtime
+- ✅ Chess/ajedrez retirado de la superficie de producto (módulo y edge function fuera del árbol activo)
+- ⚠️ Drift histórico: migraciones chess/racer (`2026082912*`–`150000`) siguen en el historial remoto pero los archivos locales fueron retirados — no hacer `db reset` ni re-push a ciegas
+- ⚠️ Bot desplegado en VM GCP: requiere redeploy para slash `event` + gate admin corregido; validación en vivo pendiente
+- ⚠️ Smart contracts, credenciales portables y Tierly.com (Fase 3+) fuera de alcance actual
 
-**Estado de implementación al 1 de octubre de 2026:** La base técnica de Fase 0 y el ciclo de Fase 1 están en el repositorio y cubiertos por pruebas locales, incluida la corrección/reversión auditada de confirmaciones y recompensas erróneas. También está construido un primer descubrimiento público con opt-in por comunidad y un CTA de invitación con Application ID configurado, adelantando parte de Fase 4. Eso no acredita despliegue, permisos de Discord, vistas/RPC aplicadas en producción ni piloto real. La validación en vivo, la confirmación externa de usos de datos y los pilotos siguen pendientes; smart contracts y credenciales portables quedan fuera de este alcance.
+---
 
 ## Orden de ejecución
 
-**Permisos de datos → ciclo de evento → repetición → inteligencia útil → descubrimiento → credenciales opcionales.**
+**Permisos de datos → ciclo de evento → repetición → identidad persistente → descubrimiento → credenciales verificables.**
 
 El opt-in del jugador y la autorización del administrador no sustituyen la autorización de Discord. Un dashboard aislado tampoco demuestra el valor de jugar juntos.
 
-## Fase 0 — viabilidad y base operable (P0)
+---
 
-**Dependencia:** ninguna. **Entregable:** alcance permitido documentado y una entrega reversible.
+## V0 — Inteligencia Discord (Fase 0) — *COMPLETADO EN CÓDIGO*
 
-Discord prohíbe perfilar identidades/relaciones con datos de API y comercializar esos datos; exige usarlos para la funcionalidad necesaria declarada/aprobada. No asumimos autorizado el grafo personal persistente entre servidores ni analytics comerciales. Agregar datos no elimina esas restricciones. [Developer Policy](https://support-dev.discord.com/hc/en-us/articles/8563934450327-Discord-Developer-Policy).
+**Objetivo:** Probar que comunidades encuentran útil la inteligencia gaming.
 
-Presence Update requiere `GUILD_PRESENCES`. El anuncio del 10 de junio de 2026 exige revisión al alcanzar 10.000 usuarios totales y renovación anual del acceso privilegiado. Verificar el estado concreto de la app en el portal. [Gateway](https://docs.discord.com/developers/events/gateway-events#presence-update), [requisitos de acceso](https://discord.com/blog/updated-requirements-to-how-apps-access-data-in-servers).
+| Item | Estado |
+|------|--------|
+| Bot observa actividad permitida (presence/voice) | ✅ Implementado |
+| Dashboard admin: juegos activos, jugadores únicos, tendencias | ✅ Implementado |
+| Eventos sugeridos basados en overlap de juegos | ✅ Implementado |
+| Consentimiento explícito (presence, identity, deletion) | ✅ Implementado |
+| Privacidad: aggregate community intel vs personal progression opt-in | ✅ Implementado |
+| CORS/Auth origins para `tirly.xyz` | ✅ Desplegado |
+| Bot persistente (systemd, healthcheck) | ✅ Desplegado en VM |
 
-- [x] Mapear cada dato: origen, finalidad, campos, visibilidad, retención, borrado y responsable. *(schema V0, privacidad y documentación operativa)*
-- [ ] Pedir confirmación/revisión documentada a Discord para presencia, estadísticas comunitarias, perfil persistente cruzado y oferta comercial. Registrar respuesta y restricciones; solicitud enviada no equivale a aprobación.
-- [ ] Validar alternativa con juegos autodeclarados, check-in explícito y confirmación del organizador, sin observación oculta ni perfilado prohibido. Revisar también su tratamiento de identidad/datos.
-- [ ] Mantener presencia y portabilidad apagadas sin autorización suficiente; avanzar solo con el alcance mínimo validado.
-- [ ] Entrevistar organizadores y jugadores sobre convocatoria, abandono y reconocimiento; registrar cómo resuelven hoy un problema concreto.
-- [x] Auditar el modelo actual de leaderboard/comunidad antes de diseñar migración multi-community. Inventariar datos y dependencias compartidas; no asumir que ya existe aislamiento por guild.
-- [x] Auditar `discord_id` asociado a ID interno estable, nunca emparejar por display name; verificar roles y autorización por guild en servidor.
-- [ ] Preparar host con redirects Auth, CORS exacto, URLs canónicas y enlaces del bot coherentes, preservando orígenes Tellus durante coexistencia.
-- [x] Definir operación Gateway del bot como proceso persistente: reinicio, reconexión, secretos, monitoreo y responsable. La web estática no lo reemplaza. *(systemd, healthcheck y rollback documentados)*
+**Bloqueadores operacionales (requieren dashboards):**
+- [ ] Aplicar migraciones pendientes en prod (`20260826*`, `20261001030000`)
+- [ ] Configurar secrets Edge Functions (DISCORD_BOT_TOKEN, DISCORD_GUILD_ID, STELLAR_PASSPORT_API_KEY, WELCOME_CHANNEL_ID, SUPABASE_SERVICE_ROLE_KEY)
+- [ ] Configurar Auth redirect URLs en Supabase (`https://www.tirly.xyz/tierly`)
+- [ ] Validar bot en vivo: slash commands, presence, welcome/announce channels
+- [ ] Verificar cron jobs pg_cron (`tierly-rollup-diario`, `tierly-cerrar-sesiones-viejas`, `tierly-sugerencias`, `tierly-generar-recordatorios`)
 
-**Salida:** matriz de usos permitidos/bloqueados, alternativa revisada, comunidades interesadas y flujos verificados en nuevo host: login, ranking/perfil, vinculación, administración autorizada e integraciones críticas existentes. Rollback: devolver dominio al despliegue Tellus conservando datos/orígenes; no resetear Supabase.
+---
 
-## Fase 1 — primer ciclo completo de jugar juntos (P0)
+## V1 — Eventos Comunitarios (Fase 1) — *CÓDIGO LISTO, PENDIENTE VALIDACIÓN EN VIVO*
 
-**Dependencia:** Fase 0 y tratamiento mínimo de datos validado. **Entregable:** organizador capaz de repetir un evento sin asistencia de Tierly.
+**Objetivo:** Organizador capaz de repetir un evento sin asistencia de Tierly.
 
-**Flujo:** crear evento → inscripción voluntaria/perfil mínimo → check-in (presencia solo si está permitida) → cierre y confirmación → XP/stamp acotado → convocar otro evento.
+**Flujo:** crear evento → inscripción voluntaria → check-in (presencia/check-in explícito) → cierre + confirmación organizador → XP/stamp → convocar siguiente.
 
-- [x] Crear eventos por comunidad: juego, horario/zona, capacidad, instrucciones, organizador y reglas visibles antes de inscribirse. *(capacidad avanzada queda para el piloto)*
-- [x] Manejar borrador, publicado, cancelado y cerrado; almacenar instante UTC y mostrar zona elegida, incluyendo cambios estacionales.
-- [x] Permitir inscripción, salida y check-in explícitos; perfil privado por defecto, publicación con opt-in separado.
-- [x] Separar consentimientos de evento/comunidad, observación opcional, notificaciones y publicación. Un permiso local no habilita uso entre servidores.
-- [x] Confirmación del organizador y otorgamiento idempotente de XP/stamp.
-- [x] Corrección o revocación auditada de una confirmación errónea, con motivo, emisor y ajuste del reconocimiento. *(`tierly_revoke_event_confirmation`; migración sin aplicar y verificación live pendiente)*
-- [x] Reversión auditada de XP/stamp ante errores: el ledger queda append-only y la reversión inserta una fila compensatoria que apunta al otorgamiento original. *(migración sin aplicar y verificación live pendiente)*
-- [ ] Separar XP de evento/global permitido de reputación local: asistencia no certifica confianza, habilidad ni estatus en otra comunidad.
-- [ ] Historial offchain solo dentro del alcance autorizado. Agregación personal entre servidores bloqueada hasta aprobación.
-- [x] Recordatorios en canales autorizados; mensajes personales únicamente consentidos y necesarios.
-- [x] Resolver cierre repetido, cancelación, retirada de consentimiento, expulsión de guild y desconexión del bot.
-- [x] Exclusión y borrado verificables; quitar la app detiene recolección y aplica retención definida. *(verificación live pendiente)*
-- [x] Si la auditoría exige cambiar el modelo, migrar a guild scope con pruebas de aislamiento, revisión de datos compartidos y rollback antes de habilitar más comunidades.
+| Feature | Estado |
+|---------|--------|
+| CRUD eventos (juego, horario/zona, capacidad, reglas, Luma, banner) | ✅ |
+| Estados: borrador/publicado/cancelado/cerrado + UTC + timezone | ✅ |
+| Inscripción, salida, check-in explícitos; perfil privado por defecto | ✅ |
+| Consentimientos separados (evento/comunidad/observación/publicación) | ✅ |
+| Confirmación organizador + XP/stamp idempotente | ✅ |
+| Revocación auditada + reversión XP/stamp (ledger append-only) | ✅ Código listo, migración pendiente prod |
+| Recordatorios automáticos (bot) | ✅ Código listo |
+| Exclusión/borrado verificables | ✅ Código listo |
+| Aislamiento multi-guild (admin guild A no ve guild B) | ✅ Código listo |
 
-**Criterios de salida:**
+**Criterios de salida (requieren piloto real):**
+- [ ] 2 eventos consecutivos completan ciclo y permiten convocar siguiente
+- [ ] Revocación/reversión no duplica XP/stamps; trazabilidad completa
+- [ ] Retirar consentimiento detiene uso y permite borrado
+- [ ] Reconexión muestra datos faltantes sin inventar duración
+- [ ] Admin guild A no lee/modifica actividad privada guild B
+- [ ] Nombres iguales no mezclan identidades (stable `discord_id` + `player_id`)
 
-Registrar la evidencia y decisión de cada comunidad según el [runbook de validación del piloto](docs/tierly-pilot-validation.md). Los checks siguientes siguen abiertos hasta observarlos en vivo.
+---
 
-- [ ] Dos eventos consecutivos completan el ciclo y permiten convocar el siguiente.
-- [ ] Reintentar/cerrar dos veces no duplica XP/stamps; corrección y reversión auditadas dejan trazabilidad. La implementación existe; falta observarla en vivo, incluido reconfirmar después de revocar.
-- [ ] Retirar consentimiento/excluirse detiene el uso correspondiente y permite el borrado definido.
-- [ ] Reconexión y datos faltantes se muestran sin inventar duración/actividad.
-- [ ] Un administrador no puede leer ni modificar actividad privada de otra guild.
-- [ ] Nombres iguales no mezclan identidades; horarios y cancelaciones funcionan.
-- [ ] Ningún premio valioso depende solo de presencia; jugadores entienden qué certifica el stamp.
+## V2 — Identidad Tierly Persistente (Fase 2) — *DISEÑO LISTO, PARCIALMENTE IMPLEMENTADO*
 
-## Evidencia del reconocimiento
+**Objetivo:** Participación persiste fuera de un servidor individual. Perfil pertenece al jugador, no al servidor.
+
+| Feature | Estado |
+|---------|--------|
+| Perfil Tierly (XP, Levels, Stamps, Streaks, Game Levels) | ✅ UI + RPCs |
+| Stamps verificables (evento, emisor, evidencia, expiración, revocación) | ✅ Código + RPC `tierly_revoke_event_confirmation` |
+| Game Levels (XP por juego individual) | ✅ UI parcial |
+| Community Reputation (contribución por servidor) | 🔄 Diseñado, pendiente |
+| Social Achievements (Party Starter, Community Hopper, Ride or Die, Early Adopter) | 🔄 Diseñado, pendiente |
+| Smart account wallet (embedded, invisible al usuario) | ⏳ Fase 3 |
+| Cross-server profile aggregation (opt-in) | ⏳ Requiere aprobación Discord |
+
+**Gap crítico:** Separar XP global de reputación local. Asistencia no certifica confianza/habilidad en otra comunidad. Historial offchain solo dentro de alcance autorizado.
+
+---
+
+## V3 — Tierly Network / Discovery (Fase 3) — *ADELANTO TÉCNICO IMPLEMENTADO*
+
+**Objetivo:** Tierly.com como capa de descubrimiento. Jugadores encuentran eventos/comunidades relevantes ahora.
+
+| Feature | Estado |
+|---------|--------|
+| Vistas públicas `tierly_public_*` (comunidades, top juegos, top players) | ✅ Implementado + deployed |
+| Opt-in por comunidad (`public_directory`) + consentimiento nominal | ✅ Implementado |
+| Filtros: juego, zona, idioma, nivel, cupos | ✅ UI en `discover.js` |
+| Invite bot CTA con Application ID | ✅ Implementado |
+| Moderación, reporte, retirada | ⏳ Pendiente |
+| Personalización: "Juegas Minecraft → 8 comunidades tienen eventos este finde" | ⏳ Pendiente |
+| "14 personas con las que jugaste se unieron a este evento" | ⏳ Pendiente |
+
+**Dependencia:** Suficientes eventos reales, recurrencia, permisos de publicación.
+
+---
+
+## V4 — Credenciales Verificables / Gaming Reputation Protocol (Fase 4+) — *FUERA DE ALCANCE ACTUAL*
+
+**Objetivo:** Resolver problemas que el perfil convencional no resuelve. Blockchain como capa de integridad, no producto.
+
+| Feature | Estado |
+|---------|--------|
+| Stamps firmados offchain (emisor, evidencia, alcance, expiración, revocación) | 🔄 Diseñado |
+| Smart accounts (recuperación, costos, compatibilidad borrado/revocación) | ⏳ |
+| Game-account integrations (Steam, Xbox, PlayStation, APIs oficiales) | ⏳ |
+| Publisher/Developer API (eventos oficiales, acquisition campaigns) | ⏳ |
+| Community-created achievements | ⏳ |
+| Third-party Tierly integrations | ⏳ |
+
+**Principio:** Mantener identidad/telemetría personal fuera de cadena. La cadena prueba emisor/integridad, no verdad de partida.
+
+---
+
+## Matriz de reconocimiento (fuente → qué permite afirmar)
 
 | Nivel | Permite afirmar | No demuestra |
-|---|---|---|
+|-------|----------------|--------------|
 | Autodeclaración | El participante declaró interés | Que jugó o ganó |
-| Presencia permitida | Discord reportó actividad en una ventana | Partida compartida, duración exacta, kills o victoria |
-| Check-in | El participante confirmó asistencia | Resultado competitivo ni asistencia íntegra |
-| Validación del organizador | Un emisor confirmó participación | Verdad independiente del emisor |
-| API oficial de juego, futura | Hechos autorizados/documentados por esa API | Hechos fuera de su alcance |
+| Presencia Discord | Discord reportó actividad en ventana | Partida compartida, duración exacta, kills/victoria |
+| Check-in explícito | Participante confirmó asistencia | Resultado competitivo ni asistencia íntegra |
+| Validación organizador | Emisor confirmó participación | Verdad independiente del emisor |
+| API oficial juego (futura) | Hechos autorizados por esa API | Hechos fuera de su alcance |
 
-Cada registro de reconocimiento debe permitir identificar fuente, emisor, evento y momento. La corrección/revocación auditada está implementada: el ledger es append-only y cada reversión registra motivo, emisor e instante, sin borrar el otorgamiento original. Invisible, desconexión y huecos son datos faltantes. Presencia simultánea nunca se etiqueta como “jugaron juntos”.
+Cada registro identifica: fuente, emisor, evento, instante. Ledger append-only. Presencia simultánea ≠ "jugaron juntos".
 
-## Fase 2 — piloto, repetición y utilidad (P1)
+---
 
-**Dependencia:** ciclo completo funcional. **Entregable:** evidencia de recurrencia y ahorro de trabajo.
+## Modelo de privacidad (dos niveles)
 
-El [runbook del piloto](docs/tierly-pilot-validation.md) fija puertas de entrada, captura de línea base y evidencia para dos eventos consecutivos en cada comunidad. El reporte técnico disponible es global y agregado; las métricas por comunidad requieren registro consentido del piloto y no se infieren de esa RPC.
+| Nivel | Qué ve el server owner | Qué ve Tierly |
+|-------|------------------------|---------------|
+| **Inteligencia comunitaria anónima** (pre-join) | "34 miembros jugaron Fortnite esta semana" | Agregados, sin PII |
+| **Progresión personal explícita** (post-join) | Activity del usuario en eventos del server | Perfil completo opt-in, activity durante eventos |
 
-- [ ] Medir línea base previa: eventos, inscritos, asistencia confirmada, retorno y minutos de administración con el método anterior.
-- [ ] Pilotear con 3 comunidades y al menos 2 eventos por comunidad, ajustando tamaño a capacidad. Es hipótesis de diseño, no tracción medida.
-- [ ] Añadir duplicación, plantillas, historial y recordatorios según problemas observados.
-- [ ] Revisar multicuenta, check-in sin asistencia, inflación de puntos, apelaciones y límites de rewards.
-- [ ] Probar portabilidad XP/stamps solo si se aprobó; si sigue bloqueada, mantener reconocimiento local sin inferencias cruzadas.
-- [ ] Hacer entrevistas de pago y propuestas concretas de piloto pago de herramientas de organización; revisar monetización aplicable. No vender datos de Discord.
+**Regla:** Community analytics = agregado. Personal progression = opt-in.
 
-**Hipótesis de salida a acordar antes de medir:** 2 de 3 organizadores convocan segundo evento por iniciativa propia; 30% de asistentes confirmados vuelve al siguiente evento comparable; reducción del 25% del tiempo administrativo mediano. Registrar muestra, denominadores y abandono. No son resultados actuales.
+---
 
-Métrica principal: **organizadores que repiten eventos con participantes que vuelven**. Complementos: participación conjunta validada por check-in/organizador, tiempo ahorrado y voluntad de pago mediante aceptación/pago. Registros, horas detectadas y mensajes son auxiliares.
+## Modelo de negocio (alineado a visión)
 
-**Decisión:** sin repetición, corregir convocatoria/experiencia antes de inteligencia. Con retorno sin pago, revisar comprador/oferta; no asumir un precio de USD 20–100.
+| Tier | Target | Incluye |
+|------|--------|---------|
+| **Tierly Free** | Comunidades pequeñas/medianas | Bot, analytics básicos, eventos básicos, leaderboard básico |
+| **Tierly Pro** ($20–100+/mes según tamaño) | Comunidades serias | Analytics avanzados, recomendaciones automáticas, reglas XP custom, stamps custom, campañas programadas, retention analytics, branding custom, leaderboards avanzados, export/API |
+| **Tierly for Games** | Studios/Publishers | Eventos oficiales, player acquisition, community analytics, game launches, sponsored quests, cross-community campaigns, verified achievements |
 
-## Fase 3 — intereses y recomendaciones útiles (P1, condicional)
+---
 
-**Dependencia:** piloto recurrente y usos aprobados. **Entregable:** decisiones mejores para organizar eventos.
+## Próximas 5 prioridades ejecutables (orden estricto)
 
-- [ ] Empezar con preferencias autodeclaradas y participación en el alcance permitido.
-- [ ] Solo si se autoriza, sumar conteos de actividad necesarios; declarar cobertura, retraso y exclusiones.
-- [ ] Definir umbrales de agregación, ventanas y supresión de grupos pequeños; revisar reidentificación. Sin drill-down personal prohibido.
-- [ ] Sugerir juego/horario explicando evidencia; el organizador decide.
-- [ ] Comparar asistencia validada, retorno y trabajo ahorrado contra base comparable.
+1. **Expediente Discord y mapa de datos.** Producto + técnico. Bloqueo: confirmación externa para presence, perfil cruzado, analytics; usos apagados mientras tanto.
+2. **Aplicar migraciones y validar host.** Técnico. Bloqueos: migraciones pendientes prod, dominio final, Vercel/Auth/CORS, bot operativo. Mantener Tellus/rollback hasta validación en vivo.
+3. **Contrato de piloto con 3 comunidades.** Producto. Entregable: reglas, evidencia, privacidad, línea base; bloqueo: alcance mínimo datos validado.
+4. **Cerrar y validar ciclo punta a punta en vivo.** Técnico + producto. Verificar inscripción, check-in, confirmación, XP/stamp, revocación, reconfirmación, privacidad, aislamiento, idempotencia.
+5. **Ejecutar y evaluar piloto (3 comunidades, 2 eventos c/u).** Producto. Seguir [runbook](docs/tierly-pilot-validation.md). Medir retorno y trabajo admin antes de ampliar descubrimiento, analytics o credenciales.
 
-**Salida:** sugerencias utilizadas y mejora observable. Analytics sin efecto en eventos no habilita expansión. No hace falta elegir IA/proveedor para probar la hipótesis.
-
-## Fase 4 — descubrimiento de comunidades y eventos (P2)
-
-**Dependencia:** suficientes eventos reales, recurrencia y permisos de publicación/intercambio. **Entregable:** encontrar eventos relevantes con cupos.
-
-**Adelanto técnico:** la vista pública de comunidades, juegos y jugadores, con opt-in por comunidad y consentimiento nominal separado, está implementada localmente ([diseño y límites](docs/superpowers/specs/2026-10-01-tierly-public-discovery-design.md)). No equivale a validar la dependencia de esta fase: faltan despliegue comprobado, oferta real, moderación y evidencia de inscripción/asistencia originada por descubrimiento.
-
-- [ ] Definir densidad mínima por juego/horario/idioma; no abrir catálogos vacíos.
-- [ ] Publicar eventos/comunidades autorizados por organizador; respetar membresía y servidores privados.
-- [ ] Compartir perfil/stamps mediante opt-in y alcance aprobado; no inferir membresías/relaciones cruzadas.
-- [ ] Filtrar por juego, zona, idioma, nivel declarado y cupos; empezar sin grafo personal.
-- [ ] Moderación, reporte y retirada; medir inscripción y asistencia posteriores al descubrimiento.
-
-**Salida:** descubrimiento produce participación confirmada/retorno sin exponer comunidades privadas. Si falta oferta, captar organizadores y repetir eventos.
-
-## Fase 5 — credenciales y smart accounts opcionales (P3)
-
-**Dependencia:** demanda de verificación externa y permisos compatibles. **Entregable:** resolver un problema que el perfil convencional no resuelva.
-
-- [ ] Identificar receptor, caso de uso y beneficio antes de elegir cadena, wallet o librería.
-- [ ] Probar stamps firmados offchain con emisor, evidencia, alcance, expiración, corrección y revocación.
-- [ ] Explicar: firma prueba emisor/integridad, no verdad de partida o resultado.
-- [ ] Evaluar recuperación, costos, soporte y compatibilidad con borrado/revocación antes de smart accounts.
-- [ ] Mantener identidad/telemetría personal fuera de cadena; hashes vinculables no sustituyen privacidad.
-- [ ] Evaluar APIs de juegos una por una: permisos independientes, cobertura, límites y viabilidad. Nunca inferir kills/victorias desde Discord.
-
-**Salida:** receptor/usuario demuestran necesidad, costo aceptable y comprensión de evidencia. Si alcanza perfil/stamp offchain, postergar wallet/cadena.
+---
 
 ## Disciplina de entrega
 
@@ -154,10 +195,18 @@ Métrica principal: **organizadores que repiten eventos con participantes que vu
 - Preservar datos/integraciones; futuras migraciones requieren dependencias revisadas, estrategia reversible y entorno aislado.
 - Registrar responsable, bloqueo y evidencia por fase. Fechas solo con capacidad y aprobaciones acordadas.
 
-## Próximas cinco prioridades ejecutables
+---
 
-1. **Expediente Discord y mapa de datos.** Producto + técnico. Bloqueo: confirmación externa para presencia, perfil cruzado y analytics; usos apagados mientras tanto.
-2. **Auditar baseline y verificar nuevo host.** Técnico. Bloqueos: dominio final, accesos Vercel/Auth/CORS y bot operativo. Mantener Tellus/rollback hasta validación en vivo.
-3. **Contrato del primer evento con pilotos.** Producto. Entregable: reglas, evidencia, privacidad y línea base; bloqueo: alcance mínimo de datos validado.
-4. **Cerrar y validar el ciclo de punta a punta.** Técnico + producto. La corrección/reversión auditada ya está implementada; falta aplicar las migraciones pendientes y verificar inscripción, check-in, confirmación, XP/stamp, revocación, reconfirmación, privacidad, aislamiento e idempotencia con identidades autorizadas antes del piloto.
-5. **Ejecutar y evaluar el piloto.** Producto. Seguir el [runbook](docs/tierly-pilot-validation.md) con tres comunidades y dos eventos consecutivos por cada una; medir retorno y trabajo administrativo antes de ampliar descubrimiento, analytics o credenciales.
+## Referencias técnicas clave
+
+| Archivo | Qué contiene |
+|---------|--------------|
+| `tierly/app.js` | App principal: leaderboard, eventos, perfil, live, discover, admin |
+| `tierly/discover.js` | Descubrimiento público: comunidades, top juegos, top players |
+| `discord-bot/index.js` | Bot Gateway: presence, eventos (`/tierly event *`), slash commands, sync |
+| `supabase/functions/discord-verify/` | OAuth Discord, perfil, Passport, admin claims |
+| `supabase/functions/passport-profile/` | Stellar Passport builders search + profile |
+| `supabase/migrations/` | Schema, vistas públicas, RPCs auditados |
+| `docs/tierly-pilot-validation.md` | Runbook de validación de piloto |
+
+(End of file)

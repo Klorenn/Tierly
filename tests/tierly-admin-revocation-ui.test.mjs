@@ -59,8 +59,8 @@ test("no llama a la RPC con motivo vacío", () => {
 
 test("todos los módulos comparten la misma versión de caché", () => {
   const page = readFileSync(new URL("../tierly/index.html", import.meta.url), "utf8");
-  const versions = [...page.matchAll(/src="\/tierly\/(?:app|chess|discover|admin-app\/admin)\.js\?v=([^"']+)/g)].map((m) => m[1]);
-  assert.equal(versions.length, 4);
+  const versions = [...page.matchAll(/src="\/tierly\/(?:app|discover|admin-app\/admin)\.js\?v=([^"']+)/g)].map((m) => m[1]);
+  assert.equal(versions.length, 3);
   assert.equal(new Set(versions).size, 1, `versiones desalineadas: ${versions.join(", ")}`);
 });
 

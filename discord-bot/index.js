@@ -34,6 +34,123 @@ const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
 const CONSENT_VERSION = "1";
 const BOT_CONNECTED_AT = new Date().toISOString();
 
+// ─── Slash commands ──────────────────────────────────────────────────────
+const TIERLY_COMMANDS = [
+  {
+    name: "tierly",
+    description: "Comandos de TIRLY",
+    options: [
+      {
+        name: "set",
+        description: "Configurar canales",
+        type: 1, // SUB_COMMAND
+        options: [
+          {
+            name: "welcome-channel",
+            description: "Canal de bienvenida",
+            type: 7, // CHANNEL
+            channel_types: [0], // GUILD_TEXT
+            required: true,
+          },
+          {
+            name: "announce-channel",
+            description: "Canal de anuncios",
+            type: 7,
+            channel_types: [0],
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "config",
+        description: "Ver configuración actual",
+        type: 1,
+      },
+      {
+        name: "sync",
+        description: "Sincronizar miembros del server (admin)",
+        type: 1,
+      },
+      {
+        name: "event",
+        description: "Gestionar eventos comunitarios",
+        type: 2, // SUB_COMMAND_GROUP
+        options: [
+          {
+            name: "create",
+            description: "Crear evento (admin)",
+            type: 1,
+            options: [
+              { name: "name", description: "Nombre del evento", type: 3, required: true },
+              { name: "game", description: "Juego", type: 3, required: true },
+              { name: "starts_at", description: "Inicio ISO-8601 (UTC), ej. 2026-10-10T20:00:00Z", type: 3, required: true },
+              { name: "format", description: "Formato (elimination|heats)", type: 3, required: false },
+              { name: "max_players", description: "Cupo máximo", type: 4, required: false },
+              { name: "description", description: "Descripción", type: 3, required: false },
+            ],
+          },
+          {
+            name: "list",
+            description: "Listar eventos programados",
+            type: 1,
+          },
+          {
+            name: "join",
+            description: "Inscribirse a un evento",
+            type: 1,
+            options: [
+              { name: "event_id", description: "ID del evento", type: 3, required: true },
+            ],
+          },
+        ],
+      },
+      {
+        name: "profile",
+        description: "Ver tu perfil (XP, tier, stamps, racha)",
+        type: 1,
+        options: [
+          { name: "user", description: "Usuario a consultar (opcional)", type: 6, required: false },
+        ],
+      },
+      {
+        name: "leaderboard",
+        description: "Ver top 10 del server",
+        type: 1,
+      },
+      {
+        name: "live",
+        description: "Ver quién está jugando ahora",
+        type: 1,
+      },
+      {
+        name: "help",
+        description: "Mostrar ayuda de comandos",
+        type: 1,
+      },
+    ],
+  },
+];
+
+async function registerCommands() {
+  try {
+    // Registrar solo en el guild para propagación instantánea
+    const guild = client.guilds.cache.get(DISCORD_GUILD_ID);
+    if (guild) {
+      await guild.commands.set(TIERLY_COMMANDS);
+      console.log("Slash commands registrados en guild");
+    } else {
+      await client.application.commands.set(TIERLY_COMMANDS);
+      console.log("Slash commands registrados globalmente");
+    }
+  } catch (error) {
+    console.error("Error registrando slash commands:", error.message);
+  }
+}
+
+function isAdminMember(member) {
+  return member.permissions.has("Administrator") || member.permissions.has("ManageGuild");
+}
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -227,8 +344,13 @@ async function runPresenceHeartbeat() {
 }
 
 async function getWelcomeChannel(guild) {
-  if (WELCOME_CHANNEL_ID) {
-    const configured = await guild.channels.fetch(WELCOME_CHANNEL_ID).catch(() => null);
+  const { data } = await supabase.from("communities")
+    .select("welcome_channel_id")
+    .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+
+  const channelId = data?.welcome_channel_id || WELCOME_CHANNEL_ID;
+  if (channelId) {
+    const configured = await guild.channels.fetch(channelId).catch(() => null);
     if (configured) return configured;
   }
   const existing = guild.channels.cache.find(
@@ -243,8 +365,13 @@ async function getWelcomeChannel(guild) {
 }
 
 async function getAnnounceChannel(guild) {
-  if (ANNOUNCE_CHANNEL_ID) {
-    const configured = await guild.channels.fetch(ANNOUNCE_CHANNEL_ID).catch(() => null);
+  const { data } = await supabase.from("communities")
+    .select("announce_channel_id")
+    .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+
+  const channelId = data?.announce_channel_id || ANNOUNCE_CHANNEL_ID;
+  if (channelId) {
+    const configured = await guild.channels.fetch(channelId).catch(() => null);
     if (configured) return configured;
   }
   const existing = guild.channels.cache.find(
@@ -388,13 +515,40 @@ async function syncMembership(member) {
 
 client.once("ready", async () => {
   console.log(`TIRLY conectado como ${client.user.tag}`);
+  
+  // Debug: listen to all raw gateway events
+  client.ws.on('INTERACTION_CREATE', (data) => {
+    console.log('>>> RAW INTERACTION_CREATE:', JSON.stringify(data).slice(0, 200));
+  });
+  
+  // Debug: listen to all gateway events
+  client.ws.on('any', (eventName, data) => {
+    if (eventName.includes('INTERACTION')) {
+      console.log('>>> RAW EVENT:', eventName);
+    }
+  });
+  
+  // Debug: log all gateway events
+  client.ws.on('debug', (info) => {
+    if (info.includes('INTERACTION')) {
+      console.log('>>> DEBUG:', info);
+    }
+  });
+  
   await recordBotHealth("connected");
+  await registerCommands();
   client.user.setPresence({
     activities: [{ name: "el ranking gaming de TIRLY", type: ActivityType.Watching }],
     status: "online",
   });
 
-  const guild = await client.guilds.fetch(DISCORD_GUILD_ID);
+  const guild = await client.guilds.fetch(DISCORD_GUILD_ID).catch(() => null);
+  if (!guild) {
+    console.error(`ERROR: Bot no está en el guild ${DISCORD_GUILD_ID}. Revisa DISCORD_GUILD_ID en .env y que el bot esté en el server.`);
+    return;
+  }
+  console.log(`Guild encontrado: ${guild.name} (${guild.id})`);
+  
   const channel = await getWelcomeChannel(guild);
   await channel
     .send(`🐈‍⬛ **TIRLY está en línea.** Ya puedo verificar membresías para el leaderboard → ${LEADERBOARD_URL}`)
@@ -450,6 +604,396 @@ client.on("messageCreate", async (message) => {
     .send(`🐈‍⬛ ¡Bienvenido/a, ${message.member}! Sumate al leaderboard gaming de TIRLY → ${LEADERBOARD_URL}`)
     .catch((err) => console.error("No se pudo postear bienvenida:", err.message));
   await syncMembership(message.member);
+});
+
+console.log('>>> Registering interactionCreate handler');
+client.on("interactionCreate", async (interaction) => {
+  console.log('>>> INTERACTION RECEIVED:', interaction.id, interaction.commandName, interaction.isChatInputCommand());
+  if (!interaction.isChatInputCommand()) {
+    console.log('>>> Not a chat input command, type:', interaction.type);
+    return;
+  }
+  console.log('>>> Command:', interaction.commandName, 'guild:', interaction.guildId, 'expected:', DISCORD_GUILD_ID);
+  if (interaction.commandName !== "tierly") {
+    console.log('>>> Not a tierly command, skipping');
+    return;
+  }
+  console.log('>>> Tierly command, guild:', interaction.guildId, 'expected:', DISCORD_GUILD_ID);
+  if (interaction.guildId !== DISCORD_GUILD_ID) {
+    return interaction.reply({ content: "Este comando solo funciona en el server configurado.", ephemeral: true });
+  }
+
+  const member = interaction.member;
+  const group = interaction.options.getSubcommandGroup(false);
+  const sub = interaction.options.getSubcommand(false);
+
+  if (group === "event") {
+    const eventSub = sub;
+
+    if (eventSub === "create") {
+      if (!isAdminMember(member)) {
+        return interaction.reply({ content: "Solo administradores pueden crear eventos.", ephemeral: true });
+      }
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const name = interaction.options.getString("name");
+        const game = interaction.options.getString("game");
+        const startsAt = interaction.options.getString("starts_at");
+        const format = interaction.options.getString("format") || "elimination";
+        const maxPlayers = interaction.options.getInteger("max_players");
+        const description = interaction.options.getString("description");
+
+        // Verificar que el juego existe o crearlo
+        let gameId;
+        const { data: existingGame } = await supabase
+          .from("games")
+          .select("id")
+          .eq("canonical_name", game.toLowerCase())
+          .maybeSingle();
+
+        if (existingGame) {
+          gameId = existingGame.id;
+        } else {
+          const { data: newGame, error: gameError } = await supabase
+            .from("games")
+            .insert({ display_name: game, canonical_name: game.toLowerCase() })
+            .select("id")
+            .single();
+          if (gameError) throw gameError;
+          gameId = newGame.id;
+        }
+
+        // Obtener community_id (guild_id)
+        const { data: community } = await supabase
+          .from("communities")
+          .select("id")
+          .eq("guild_id", DISCORD_GUILD_ID)
+          .maybeSingle();
+
+        if (!community) {
+          return interaction.editReply({ content: "Comunidad no configurada. Usa /tierly set welcome-channel primero.", ephemeral: true });
+        }
+
+        const { error } = await supabase
+          .from("gaming_events")
+          .insert({
+            community_id: community.id,
+            name,
+            game_id: gameId,
+            starts_at: startsAt,
+            format,
+            max_players: maxPlayers,
+            description,
+            status: "scheduled",
+          })
+          .select("id")
+          .single();
+
+        if (error) throw error;
+
+        await interaction.editReply({ content: `✅ Evento creado: **${name}** (${game}) — <t:${Math.floor(new Date(startsAt).getTime()/1000)}:F>\n${LEADERBOARD_URL}/tierly/events`, ephemeral: true });
+      } catch (err) {
+        console.error('Event create error:', err);
+        await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+      }
+      return;
+    }
+
+    if (eventSub === "list") {
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const { data: events, error } = await supabase
+          .from("gaming_events")
+          .select("id, name, game_id, starts_at, status, gaming_matches(status)")
+          .eq("community_id", (await supabase.from("communities").select("id").eq("guild_id", DISCORD_GUILD_ID).maybeSingle()).data?.id)
+          .eq("status", "scheduled")
+          .order("starts_at", { ascending: true })
+          .limit(10);
+
+        if (error) throw error;
+        if (!events?.length) {
+          return interaction.editReply({ content: "No hay eventos programados.", ephemeral: true });
+        }
+
+        const lines = events.map(e => {
+          const gameName = e.game_id; // TODO: join con games
+          const status = e.status;
+          const time = `<t:${Math.floor(new Date(e.starts_at).getTime()/1000)}:F>`;
+          return `• **${e.name}** (${gameName}) — ${time} — ${status}\n  id: \`${e.id}\``;
+        });
+        await interaction.editReply({ content: `**Eventos programados:**\n${lines.join("\n")}`, ephemeral: true });
+      } catch (err) {
+        console.error('Event list error:', err);
+        await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+      }
+      return;
+    }
+
+    if (eventSub === "join") {
+      await interaction.deferReply({ ephemeral: true });
+      try {
+        const eventId = interaction.options.getString("event_id");
+        const { data: membership } = await supabase
+          .from("gaming_players")
+          .select("id")
+          .eq("discord_id", interaction.user.id)
+          .maybeSingle();
+
+        if (!membership) {
+          return interaction.editReply({ content: "No estás sincronizado. Usa /tierly sync primero.", ephemeral: true });
+        }
+
+        const { error } = await supabase
+          .from("tierly_event_attendance")
+          .upsert({
+            event_id: eventId,
+            player_id: membership.id,
+          }, { onConflict: "event_id,player_id" });
+
+        if (error) throw error;
+        await interaction.editReply({ content: "✅ Inscrito al evento. ¡Nos vemos ahí!", ephemeral: true });
+      } catch (err) {
+        console.error('Event join error:', err);
+        await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+      }
+      return;
+    }
+
+    return interaction.reply({ content: `Subcomando de evento desconocido: ${eventSub}`, ephemeral: true });
+  }
+
+  if (sub === "set") {
+    if (!isAdminMember(member)) {
+      return interaction.reply({ content: "Solo administradores o usuarios con permiso 'Gestionar servidor'.", ephemeral: true });
+    }
+    const welcomeChannel = interaction.options.getChannel("welcome-channel");
+    const announceChannel = interaction.options.getChannel("announce-channel");
+
+    const { error } = await supabase.from("communities").upsert({
+      guild_id: DISCORD_GUILD_ID,
+      welcome_channel_id: welcomeChannel?.id || null,
+      announce_channel_id: announceChannel?.id || null,
+    }, { onConflict: "guild_id" });
+
+    if (error) {
+      console.error("Error guardando config:", error.message);
+      return interaction.reply({ content: "No se pudo guardar la configuración.", ephemeral: true });
+    }
+
+    const parts = [`✅ Configurado:`];
+    if (welcomeChannel) parts.push(`• Bienvenida: ${welcomeChannel}`);
+    if (announceChannel) parts.push(`• Anuncios: ${announceChannel}`);
+    if (!welcomeChannel && !announceChannel) parts.push("• (sin cambios)");
+
+    await interaction.reply({ content: parts.join("\n"), ephemeral: true });
+    return;
+  }
+
+  if (sub === "config") {
+    try {
+      const { data, error } = await supabase.from("communities")
+        .select("welcome_channel_id, announce_channel_id")
+        .eq("guild_id", DISCORD_GUILD_ID).maybeSingle();
+
+      if (error) {
+        return interaction.reply({ content: "No se pudo leer la configuración.", ephemeral: true });
+      }
+
+      const welcome = data?.welcome_channel_id ? `<#${data.welcome_channel_id}>` : "auto (bienvenida-tierly)";
+      const announce = data?.announce_channel_id ? `<#${data.announce_channel_id}>` : "auto (anuncios-tierly)";
+
+      await interaction.reply({ content: `**Config actual:**\n• Bienvenida: ${welcome}\n• Anuncios: ${announce}`, ephemeral: true });
+    } catch (err) {
+      console.error('Config error:', err);
+      await interaction.reply({ content: `Error: ${err.message}`, ephemeral: true });
+    }
+    return;
+  }
+
+  if (sub === "sync") {
+    if (!isAdminMember(member)) {
+      return interaction.reply({ content: "Solo administradores o usuarios con permiso 'Gestionar servidor'.", ephemeral: true });
+    }
+    // Respuesta inmediata
+    await interaction.reply({ content: "⏳ Sincronizando miembros en background...", ephemeral: true });
+    
+    // Trabajo en background (sin await en el reply)
+    (async () => {
+      try {
+        const guild = interaction.guild;
+        await guild.members.fetch();
+        
+        const rows = [];
+        for (const member of guild.members.cache.values()) {
+          if (member.user.bot) continue;
+          const avatarHash = member.user.avatar;
+          let avatarUrl = null;
+          if (avatarHash) {
+            const ext = avatarHash.startsWith('a_') ? 'gif' : 'png';
+            avatarUrl = `https://cdn.discordapp.com/avatars/${member.id}/${avatarHash}.${ext}`;
+          }
+          rows.push({
+            discord_id: member.id,
+            display_name: member.user.globalName || member.user.username,
+            avatar_url: avatarUrl,
+            discord_member: true,
+            discord_verified_at: new Date().toISOString(),
+          });
+        }
+        
+        let count = 0;
+        for (let i = 0; i < rows.length; i += 500) {
+          const chunk = rows.slice(i, i + 500);
+          const { error } = await supabase.from('gaming_players').upsert(chunk, { onConflict: 'discord_id' });
+          if (!error) count += chunk.length;
+          else console.error('Sync chunk error:', error.message);
+        }
+        
+        // Follow-up message
+        await interaction.followUp({ content: `✅ Sincronizados ${count} miembros en gaming_players.`, ephemeral: true });
+      } catch (err) {
+        console.error('Sync error:', err);
+        await interaction.followUp({ content: `❌ Error: ${err.message}`, ephemeral: true });
+      }
+    })();
+    return;
+  }
+  if (sub === "profile") {
+    await interaction.deferReply({ ephemeral: true });
+    try {
+      const targetUser = interaction.options.getUser("user") || interaction.user;
+      const { data: player } = await supabase
+        .from("gaming_players")
+        .select("id, display_name, total_points, username, avatar_url, banner, banner_fit, bio, twitter_handle, telegram_handle, discord_handle, instagram_handle, stellar_passport_name")
+        .eq("discord_id", targetUser.id)
+        .maybeSingle();
+
+      if (!player) {
+        return interaction.editReply({ content: "Usuario no encontrado. Usa /tierly sync primero.", ephemeral: true });
+      }
+
+      const { data: score } = await supabase
+        .from("gaming_scores")
+        .select("total_points")
+        .eq("player_id", player.id)
+        .maybeSingle();
+
+      const points = score?.total_points || 0;
+      const tier = rankForPoints(points);
+      const next = nextRankForPoints(points);
+      const progress = next
+        ? `${next.min - points} pts para ${next.tierId} ${next.division}`
+        : "Máximo rango alcanzado";
+
+      const { data: stamps } = await supabase
+        .from("tierly_xp_ledger")
+        .select("stamps, event_id, created_at")
+        .eq("player_id", player.id)
+        .eq("stamps", 1)
+        .order("created_at", { ascending: false });
+
+      const stampCount = stamps?.length || 0;
+
+      const embed = {
+        title: `${player.display_name || targetUser.username}#${targetUser.discriminator}`,
+        description: `**${tier.tierId} ${tier.division}** — ${points} pts\n${progress}`,
+        thumbnail: { url: player.avatar_url || targetUser.displayAvatarURL() },
+        fields: [
+          { name: "🏆 Estampas", value: stampCount.toString(), inline: true },
+          { name: "⭐ XP Total", value: points.toString(), inline: true },
+        ],
+        color: 0x159C83,
+      };
+
+      if (player.bio) embed.fields.push({ name: "Bio", value: player.bio.slice(0, 200) });
+      if (player.stellar_passport_name) embed.fields.push({ name: "Stellar Passport", value: player.stellar_passport_name, inline: true });
+
+      await interaction.editReply({ embeds: [embed], ephemeral: true });
+    } catch (err) {
+      console.error('Profile error:', err);
+      await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+    }
+    return;
+  }
+
+  if (sub === "leaderboard") {
+    await interaction.deferReply({ ephemeral: true });
+    try {
+      const { data: top } = await supabase
+        .from("leaderboard_public_view")
+        .select("player_id, display_name, avatar_url, total_points")
+        .order("total_points", { ascending: false })
+        .limit(10);
+
+      if (!top?.length) {
+        return interaction.editReply({ content: "No hay jugadores en el ranking.", ephemeral: true });
+      }
+
+      const lines = top.map((p, i) => {
+        const tier = rankForPoints(p.total_points || 0);
+        return `${i + 1}. **${p.display_name || "—"}** — ${p.total_points} pts (${tier.tierId} ${tier.division})`;
+      });
+
+      await interaction.editReply({ content: `**🏆 Top 10 — ${interaction.guild.name}**\n${lines.join("\n")}`, ephemeral: true });
+    } catch (err) {
+      console.error('Leaderboard error:', err);
+      await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+    }
+    return;
+  }
+
+  if (sub === "live") {
+    await interaction.deferReply({ ephemeral: true });
+    try {
+      const { data: live } = await supabase
+        .from("tierly_public_live_presence_view")
+        .select("player_name, game_name, community_name, minutes_playing")
+        .order("minutes_playing", { ascending: false })
+        .limit(15);
+
+      if (!live?.length) {
+        return interaction.editReply({ content: "Nadie está jugando ahora mismo.", ephemeral: true });
+      }
+
+      const lines = live.map((p, i) => {
+        const mins = Math.floor(p.minutes_playing);
+        const time = mins < 60 ? `${mins} min` : `${Math.floor(mins/60)}h ${mins%60}min`;
+        return `${i + 1}. **${p.player_name}** — ${p.game_name} (${p.community_name}) — ${time}`;
+      });
+
+      await interaction.editReply({ content: `**🔴 En vivo ahora (${live.length})**\n${lines.join("\n")}`, ephemeral: true });
+    } catch (err) {
+      console.error('Live error:', err);
+      await interaction.editReply({ content: `❌ Error: ${err.message}`, ephemeral: true });
+    }
+    return;
+  }
+
+  if (sub === "help") {
+    const help = `**Comandos de TIRLY**
+\`/tierly sync\` — Sincroniza miembros del server
+\`/tierly config\` — Ver configuración actual
+\`/tierly set welcome-channel #canal\` — Configurar canal de bienvenida
+\`/tierly set announce-channel #canal\` — Configurar canal de anuncios
+
+**Eventos**
+\`/tierly event create\` — Crear evento (admin)
+\`/tierly event list\` — Listar eventos abiertos
+\`/tierly event join <event_id>\` — Inscribirse a evento
+
+**Perfil y ranking**
+\`/tierly profile [user]\` — Ver tu perfil (XP, tier, stamps)
+\`/tierly leaderboard\` — Top 10 del server
+\`/tierly live\` — Quién está jugando ahora
+
+**Otros**
+\`/tierly help\` — Esta ayuda`;
+
+    await interaction.reply({ content: help, ephemeral: true });
+    return;
+  }
+
+  await interaction.reply({ content: `Subcomando desconocido: ${sub}`, ephemeral: true });
 });
 
 client.login(DISCORD_BOT_TOKEN);
