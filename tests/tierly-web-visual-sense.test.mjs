@@ -43,4 +43,11 @@ test("shell visual usa tipografía de display no Inter-only y atmósfera de fond
   assert.match(page, /Source Sans 3/);
   assert.match(page, /lb-atmosphere/);
   assert.match(page, /radial-gradient/);
+  assert.match(page, /--content-max/);
+});
+
+test("discover se auto-abre si Home ya está visible (evita race con app.js)", () => {
+  assert.match(discover, /section\.lb-view\[data-view='discover'\]/);
+  assert.match(discover, /!discoverView\.hidden\) open\(\)/);
+  assert.match(discover, /if \(!root\.innerHTML\.trim\(\)\) load\(\)/);
 });
