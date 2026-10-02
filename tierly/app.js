@@ -138,6 +138,8 @@ import { calculatePoints } from "./points.mjs";
       inviteBotHint: "Tierly reads which games your members play — only after each one opts in — and turns that into events worth showing up to.",
       liveTitle: "Live Now",
       liveSubtitle: "Who's playing right now",
+      liveTopGames: "Most played",
+      liveTopGamesHint: "Public presence from the last 30 days in listed communities — not skill or wins.",
       livePlayers: "Players online",
       liveGames: "Games being played",
       liveCommunities: "Active communities",
@@ -261,6 +263,8 @@ import { calculatePoints } from "./points.mjs";
       inviteBotHint: "Tierly ve qué juegan tus miembros — solo después de que cada uno acepta — y lo convierte en eventos a los que vale la pena ir.",
       liveTitle: "En vivo ahora",
       liveSubtitle: "Quién está jugando ahora",
+      liveTopGames: "Más jugados",
+      liveTopGamesHint: "Presencia pública de los últimos 30 días en comunidades listadas — no mide skill ni victorias.",
       livePlayers: "Jugadores en línea",
       liveGames: "Jugándose ahora",
       liveCommunities: "Comunidades activas",
@@ -623,7 +627,12 @@ import { calculatePoints } from "./points.mjs";
     const el = document.querySelector("#lb-bracket");
     if (!el) return;
     if (!events.length) {
-      el.innerHTML = `<p class="lb-empty">${t("empty")}</p>`;
+      el.innerHTML = `<div class="lb-empty-state">
+        <h3>${t("emptyEventTitle")}</h3>
+        <p class="lb-disc-note">${t("noUpcomingEvents")}</p>
+        <button type="button" class="lb-disc-btn lb-disc-btn-primary" data-view="discover">${t("navHome")}</button>
+      </div>`;
+      el.querySelector("[data-view]")?.addEventListener("click", () => switchView("discover"));
       return;
     }
     el.innerHTML = `<div class="lb-event-catalog-grid">${events.map((event) => {
@@ -632,25 +641,29 @@ import { calculatePoints } from "./points.mjs";
         ? t("eventLive")
         : status === "upcoming" ? t("eventUpcoming") : t("eventPast");
       const canRegister = event.status === "scheduled";
-      const meta = [
-        event.community_name,
-        fmtEventStart(event),
-        `${event.registration_count || 0} ${t("eventRegistered")}`,
-      ].filter(Boolean).map(esc).join(" · ");
       const action = canRegister
         ? (currentSession
-          ? `<button type="button" class="lb-promo-btn" data-event-register="${esc(event.event_id)}">${t("eventRegister")}</button>`
-          : `<button type="button" class="lb-discord-btn" data-event-login>${t("eventLogin")}</button>`)
+          ? `<button type="button" class="lb-disc-btn lb-disc-btn-primary" data-event-register="${esc(event.event_id)}">${t("eventRegister")}</button>`
+          : `<button type="button" class="lb-disc-btn lb-disc-btn-primary" data-event-login>${t("eventLogin")}</button>`)
         : "";
-      return `<article class="lb-event-catalog-card">
-        ${event.banner_url ? `<img src="${esc(event.banner_url)}" alt="" loading="lazy" />` : ""}
-        <h3>${esc(event.event_name)}</h3>
-        <p>${meta}</p>
-        ${event.description ? `<p>${esc(event.description)}</p>` : ""}
-        ${event.location ? `<p>${esc(event.location)}</p>` : ""}
-        ${event.luma_url ? `<p><a href="${esc(event.luma_url)}" target="_blank" rel="noopener">Luma ↗</a></p>` : ""}
-        <p><span class="lb-event-badge">${esc(badgeLabel)}</span></p>
-        ${action}
+      const joinServer = event.invite_url
+        ? `<a class="lb-disc-btn lb-disc-btn-ghost" href="${esc(event.invite_url)}" target="_blank" rel="noopener noreferrer">${t("joinServer")}</a>`
+        : "";
+      return `<article class="lb-event-card">
+        <div class="lb-event-card-media">
+          ${event.banner_url
+            ? `<img src="${esc(event.banner_url)}" alt="" loading="lazy" />`
+            : `<div class="lb-game-banner-fallback" aria-hidden="true">${esc((event.community_name || "?").slice(0, 2).toUpperCase())}</div>`}
+          <span class="lb-event-badge">${esc(badgeLabel)}</span>
+        </div>
+        <div class="lb-event-card-body">
+          <p class="lb-event-community">${esc(event.community_name || "")}</p>
+          <h3>${esc(event.event_name)}</h3>
+          <p class="lb-event-when">${esc(fmtEventStart(event))}</p>
+          ${event.description ? `<p class="lb-event-desc">${esc(event.description)}</p>` : ""}
+          <p class="lb-event-meta">${Number(event.registration_count || 0)} ${t("eventRegistered")}${event.location ? ` · ${esc(event.location)}` : ""}</p>
+          <div class="lb-server-cta">${action}${joinServer}</div>
+        </div>
       </article>`;
     }).join("")}</div>`;
     el.querySelectorAll("[data-event-register]").forEach((button) => button.addEventListener("click", () => {
@@ -665,7 +678,7 @@ import { calculatePoints } from "./points.mjs";
     const { data, error } = await supabase
       .from("tierly_community_events_public_view")
       .select("*")
-      .order("event_date", { ascending: false })
+      .order("starts_at", { ascending: true })
       .limit(30);
     bracketRows = error || !data ? [] : data;
     renderCommunityEvents(bracketRows);
@@ -1099,19 +1112,27 @@ import { calculatePoints } from "./points.mjs";
     return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M16 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 8a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 16a2 2 0 100-4 2 2 0 000 4z"/></svg>`;
   }
 
+  let liveTopGames = [];
+
   async function loadLivePresence() {
     livePresenceLoading = true;
     const el = document.querySelector("#lb-live");
-    if (el) el.innerHTML = `<div class="lb-live-skeleton"><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div><div class="lb-live-skeleton-card"><div class="lb-live-skeleton-row"></div><div class="lb-live-skeleton-row short"></div><div class="lb-live-skeleton-avatar"></div><div class="lb-live-skeleton-row medium"></div><div class="lb-live-skeleton-row short"></div></div></div>`;
+    if (el) el.innerHTML = `<div class="lb-live-skeleton" aria-busy="true"><span></span><span></span><span></span></div>`;
     try {
-      const { data, error } = await supabase
-        .from("tierly_public_live_presence_view")
-        .select("*");
-      if (error) throw error;
-      livePresenceRows = data || [];
+      const [live, top] = await Promise.all([
+        supabase.from("tierly_public_live_presence_view").select("*").order("player_count", { ascending: false }).limit(24),
+        supabase.from("tierly_public_top_games_view")
+          .select("game_name, game_icon_url, game_banner_url, total_minutes, session_count, community_count")
+          .order("total_minutes", { ascending: false })
+          .limit(12),
+      ]);
+      if (live.error) throw live.error;
+      livePresenceRows = live.data || [];
+      liveTopGames = top.error ? [] : (top.data || []);
     } catch (e) {
       console.error("[TIERLY] live presence load failed:", e);
       livePresenceRows = [];
+      liveTopGames = [];
     }
     livePresenceLoading = false;
     renderLivePresence();
@@ -1142,64 +1163,84 @@ import { calculatePoints } from "./points.mjs";
     if (!el) return;
     const titleEl = document.querySelector("#lb-live-title");
     if (titleEl) titleEl.textContent = t("liveTitle");
-
     if (livePresenceLoading) return;
 
     const rows = livePresenceRows || [];
-    if (!rows.length) {
-      el.innerHTML = `
-        <div class="lb-live-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M8 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M16 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 8a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 16a2 2 0 100-4 2 2 0 000 4z"/></svg>
-          <p>${t("liveEmptyTitle")}</p>
-          <p style="font-size:12.5px; margin-top:4px;">${t("liveEmptyBody")}</p>
-        </div>`;
-      return;
-    }
-
+    const topGamesFallback = liveTopGames || [];
     const totalPlayers = rows.reduce((sum, row) => sum + Number(row.player_count || 0), 0);
-    const totalGames = new Set(rows.map((row) => row.game_name)).size;
+    const totalGames = rows.length
+      ? new Set(rows.map((row) => row.game_name)).size
+      : topGamesFallback.length;
     const communities = new Set(rows.map((row) => row.community_name).filter(Boolean)).size;
+
+    const liveCards = rows.map((row) => {
+      const banner = row.game_banner_url || row.game_icon_url;
+      const bannerHtml = banner
+        ? `<div class="lb-game-banner"><img src="${esc(banner)}" alt="" loading="lazy"></div>`
+        : `<div class="lb-game-banner lb-game-banner-fallback" aria-hidden="true"><span>${gameIconSvg(row.game_name)}</span></div>`;
+      const join = row.invite_url
+        ? `<a class="lb-disc-btn lb-disc-btn-primary" href="${esc(row.invite_url)}" target="_blank" rel="noopener noreferrer"><i data-lucide="users"></i><span>${t("joinServer")}</span></a>`
+        : "";
+      return `<article class="lb-game-card">
+        ${bannerHtml}
+        <div class="lb-game-card-body">
+          <p class="lb-live-meta"><span class="lb-live-badge">${t("eventLive")}</span></p>
+          <strong class="lb-live-game-name">${esc(row.game_name)}</strong>
+          <span class="lb-live-community">${esc(row.community_name || "")}</span>
+          <p class="lb-disc-tile-meta">${Number(row.player_count || 0)} · ${formatMinutesPlaying(row.total_minutes)}</p>
+          ${join}
+        </div>
+      </article>`;
+    }).join("");
+
+    const topCards = topGamesFallback.map((game, index) => {
+      const banner = game.game_banner_url || game.game_icon_url;
+      const bannerHtml = banner
+        ? `<div class="lb-game-banner"><img src="${esc(banner)}" alt="" loading="lazy"></div>`
+        : `<div class="lb-game-banner lb-game-banner-fallback" aria-hidden="true"><span>${gameIconSvg(game.game_name)}</span></div>`;
+      return `<article class="lb-game-card">
+        ${bannerHtml}
+        <div class="lb-game-card-body">
+          <span class="lb-disc-pos lb-disc-pos-${Math.min(index + 1, 3)}">${index + 1}</span>
+          <strong class="lb-live-game-name">${esc(game.game_name)}</strong>
+          <p class="lb-disc-tile-meta">${formatMinutesPlaying(game.total_minutes)} · ${Number(game.session_count || 0)} ${t("liveGames").toLowerCase()}</p>
+          <p class="lb-disc-tile-meta lb-disc-muted">${Number(game.community_count || 0)} ${t("liveCommunities").toLowerCase()}</p>
+        </div>
+      </article>`;
+    }).join("");
 
     el.innerHTML = `
       <div class="lb-live-head">
-        <h2>${t("liveTitle")}</h2>
-        <span class="lb-live-badge" aria-live="polite">${t("liveSubtitle")}</span>
+        <div>
+          <h2>${t("liveTitle")}</h2>
+          <p class="lb-disc-sub">${t("liveSubtitle")}</p>
+        </div>
+        ${rows.length ? `<span class="lb-live-badge" aria-live="polite">${t("eventLive")}</span>` : ""}
       </div>
       <div class="lb-live-stats">
         <div class="lb-live-stat">
-          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="users"></i></span>
           <span class="lb-live-stat-value">${totalPlayers}</span>
           <span class="lb-live-stat-label">${t("livePlayers")}</span>
         </div>
         <div class="lb-live-stat">
-          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="gamepad-2"></i></span>
           <span class="lb-live-stat-value">${totalGames}</span>
           <span class="lb-live-stat-label">${t("liveGames")}</span>
         </div>
         <div class="lb-live-stat">
-          <span class="lb-live-stat-icon" aria-hidden="true"><i data-lucide="server"></i></span>
-          <span class="lb-live-stat-value">${communities}</span>
+          <span class="lb-live-stat-value">${communities || "—"}</span>
           <span class="lb-live-stat-label">${t("liveCommunities")}</span>
         </div>
       </div>
-      <div class="lb-live-grid lb-game-banner-grid">${rows.map((row) => {
-        const banner = row.game_banner_url || row.game_icon_url;
-        const bannerHtml = banner
-          ? `<div class="lb-game-banner"><img src="${esc(banner)}" alt="" loading="lazy"></div>`
-          : `<div class="lb-game-banner lb-game-banner-fallback" aria-hidden="true"><span>${gameIconSvg(row.game_name)}</span></div>`;
-        const join = row.invite_url
-          ? `<a class="lb-disc-btn lb-disc-btn-primary" href="${esc(row.invite_url)}" target="_blank" rel="noopener noreferrer"><i data-lucide="users"></i><span>${t("joinServer")}</span></a>`
-          : "";
-        return `<article class="lb-live-card lb-game-card">
-          ${bannerHtml}
-          <div class="lb-game-card-body">
-            <strong class="lb-live-game-name">${esc(row.game_name)}</strong>
-            <span class="lb-live-community">${esc(row.community_name || "")}</span>
-            <p class="lb-disc-tile-meta">${Number(row.player_count || 0)} · ${formatMinutesPlaying(row.total_minutes)}</p>
-            ${join}
-          </div>
-        </article>`;
-      }).join("")}</div>`;
+      ${rows.length
+        ? `<section class="lb-live-section"><h3 class="lb-disc-card-title">${t("liveTitle")}</h3><div class="lb-game-banner-grid">${liveCards}</div></section>`
+        : `<p class="lb-disc-note">${t("liveEmptyBody")}</p>`}
+      ${topCards
+        ? `<section class="lb-live-section lb-live-top-games">
+            <h3 class="lb-disc-card-title">${t("liveTopGames")}</h3>
+            <p class="lb-disc-note">${t("liveTopGamesHint")}</p>
+            <div class="lb-game-banner-grid">${topCards}</div>
+          </section>`
+        : ""}`;
     window.lucide?.createIcons();
   }
 

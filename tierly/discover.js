@@ -13,8 +13,8 @@
   const number = (value) => new Intl.NumberFormat("es-CL").format(Number(value || 0));
   const initials = (name) => esc(String(name || "?").trim().slice(0, 2).toUpperCase());
 
-  const LIMITS = { games: 12, players: 15, communities: 24, liveGames: 16 };
-  const state = { games: [], players: [], communities: [], liveGames: [], loading: true, error: "" };
+  const LIMITS = { games: 12, players: 15, communities: 24, liveGames: 16, events: 8 };
+  const state = { games: [], players: [], communities: [], liveGames: [], events: [], loading: true, error: "" };
   let opened = false;
 
   function duration(minutes) {
@@ -79,6 +79,39 @@
           <p class="lb-disc-tile-meta lb-disc-muted">${number(game.community_count)} comunidades · ${relativeDay(game.last_played_day)}</p>
         </div>
       </article>`).join("")}</div>`;
+  }
+
+  function eventsGrid() {
+    if (!state.events.length) {
+      return `<p class="lb-disc-empty">No hay eventos públicos próximos. Los eventos salen de lo que la comunidad ya juega.</p>`;
+    }
+    return `<div class="lb-event-catalog-grid">${state.events.map((event) => {
+      const when = event.starts_at
+        ? new Date(event.starts_at).toLocaleString("es-CL", { dateStyle: "medium", timeStyle: "short" })
+        : relativeDay(event.event_date);
+      const join = event.invite_url
+        ? `<a class="lb-disc-btn lb-disc-btn-ghost" href="${esc(event.invite_url)}" target="_blank" rel="noopener noreferrer">Unirse al server</a>`
+        : "";
+      return `<article class="lb-event-card">
+        <div class="lb-event-card-media">
+          ${event.banner_url
+            ? `<img src="${esc(event.banner_url)}" alt="" loading="lazy">`
+            : `<div class="lb-game-banner-fallback">${initials(event.community_name)}</div>`}
+          <span class="lb-event-badge">${esc(event.status === "live" ? "EN VIVO" : "PRÓXIMO")}</span>
+        </div>
+        <div class="lb-event-card-body">
+          <p class="lb-event-community">${esc(event.community_name || "")}</p>
+          <h4>${esc(event.event_name)}</h4>
+          <p class="lb-event-when">${esc(when)}</p>
+          ${event.description ? `<p class="lb-event-desc">${esc(event.description)}</p>` : ""}
+          <p class="lb-event-meta">${number(event.registration_count)} inscritos</p>
+          <div class="lb-server-cta">
+            <button type="button" class="lb-disc-btn lb-disc-btn-primary" data-view="bracket">Ver eventos</button>
+            ${join}
+          </div>
+        </div>
+      </article>`;
+    }).join("")}</div>`;
   }
 
   function playersTable() {
@@ -165,27 +198,39 @@
     root.innerHTML = `
       <header class="lb-disc-head lb-home-head">
         <p class="lb-disc-kicker">Tierly</p>
-        <h2>Servidores y partidas en vivo</h2>
-        <p class="lb-disc-sub">Entrá a una comunidad o mirá qué se está jugando ahora. La presencia de Discord no certifica victoria ni duración exacta.</p>
+        <h2>Jugá con tu comunidad</h2>
+        <p class="lb-disc-sub">Lo más jugado, eventos próximos y servers a un click. La presencia de Discord no certifica victoria ni duración exacta.</p>
       </header>
 
       ${state.error ? `<p class="lb-disc-alert">${esc(state.error)}</p>` : ""}
 
       <div class="lb-disc-stats">
-        ${statCard("server", number(state.communities.length), "Comunidades")}
-        ${statCard("radio", number(state.liveGames.length), "En vivo")}
-        ${statCard("timer", duration(totalMinutes), "Minutos (30d)")}
+        ${statCard("gamepad-2", number(state.games.length), "Juegos")}
+        ${statCard("calendar-days", number(state.events.length), "Eventos")}
+        ${statCard("server", number(state.communities.length), "Servers")}
       </div>
+
+      <section class="lb-disc-card">
+        <h3 class="lb-disc-card-title">Más jugados</h3>
+        <p class="lb-disc-note">Últimos 30 días en comunidades públicas — de acá salen las noches con sentido.</p>
+        ${gamesGrid()}
+      </section>
 
       <section class="lb-disc-card lb-home-live">
         <h3 class="lb-disc-card-title">Jugando ahora</h3>
-        <p class="lb-disc-note">Tocá Unirse para entrar al Discord de esa comunidad.</p>
+        <p class="lb-disc-note">${state.liveGames.length ? "Tocá Unirse para entrar al Discord de esa comunidad." : "Nadie en vivo con presencia pública; mirá lo más jugado arriba."}</p>
         ${liveGamesGrid()}
       </section>
 
+      <section class="lb-disc-card">
+        <h3 class="lb-disc-card-title">Próximos eventos</h3>
+        <p class="lb-disc-note">Eventos de comunidades listadas, anclados a lo que ya se juega.</p>
+        ${eventsGrid()}
+      </section>
+
       <section class="lb-disc-card lb-home-servers">
-        <h3 class="lb-disc-card-title">Servidores con Tierly</h3>
-        <p class="lb-disc-note">Primario: unirte al server. Secundario: agregar el bot al tuyo.</p>
+        <h3 class="lb-disc-card-title">Servidores</h3>
+        <p class="lb-disc-note">Unirse al Discord · o agregar el bot al tuyo.</p>
         ${communitiesGrid()}
       </section>
 
@@ -200,17 +245,15 @@
       </div>` : ""}
 
       <section class="lb-disc-card">
-        <h3 class="lb-disc-card-title">Juegos más jugados</h3>
-        ${gamesGrid()}
-      </section>
-
-      <section class="lb-disc-card">
         <h3 class="lb-disc-card-title">Quién juega más</h3>
         <p class="lb-disc-note">Solo quienes aceptaron mostrarse, por comunidad.</p>
         ${playersTable()}
       </section>
     `;
 
+    root.querySelectorAll("[data-view]").forEach((btn) => {
+      btn.addEventListener("click", () => bridge.switchView?.(btn.dataset.view));
+    });
     if (window.lucide?.createIcons) window.lucide.createIcons({ root });
   }
 
@@ -219,7 +262,7 @@
     state.error = "";
     render();
 
-    const [games, players, communities, liveGames] = await Promise.all([
+    const [games, players, communities, liveGames, events] = await Promise.all([
       supabase.from("tierly_public_top_games_view")
         .select("game_name, game_icon_url, game_banner_url, total_minutes, session_count, community_count, last_played_day")
         .order("total_minutes", { ascending: false })
@@ -236,13 +279,18 @@
         .select("game_name, game_icon_url, game_banner_url, community_name, community_icon_url, player_count, total_minutes, invite_url")
         .order("player_count", { ascending: false })
         .limit(LIMITS.liveGames),
+      supabase.from("tierly_community_events_public_view")
+        .select("event_id, event_name, event_date, starts_at, status, description, banner_url, community_name, invite_url, registration_count")
+        .order("starts_at", { ascending: true })
+        .limit(LIMITS.events),
     ]);
 
     state.games = games.data || [];
     state.players = players.data || [];
     state.communities = communities.data || [];
     state.liveGames = liveGames.data || [];
-    const failure = [games.error, players.error, communities.error, liveGames.error].find(Boolean);
+    state.events = events.data || [];
+    const failure = [games.error, players.error, communities.error, liveGames.error, events.error].find(Boolean);
     if (failure) state.error = "No pudimos cargar el descubrimiento. Reintentá en un momento.";
     state.loading = false;
     render();

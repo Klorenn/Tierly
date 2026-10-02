@@ -27,18 +27,19 @@
   <link rel="icon" type="image/png" href="/tierly/tierly-logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-07" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/tierly/admin-app/admin.css?v=20261002-08" />
   <style>
     :root {
-      --sand: #ECE0CC; --sand-soft: #F8F1E4; --teal: #3F8487; --teal-bright: #159C83; --teal-deep: #1C746B; --teal-ink: #1F3536; --clay: #C75A2A;
-      --glow: #C75A2A;
-      --ink: #1F3536; --ink-dim: #6B8280;
-      --card: #FFFFFF; --card-border: #E9E5DD;
+      --sand: #E7DCC8; --sand-soft: #F3EDE2; --teal: #3F8487; --teal-bright: #0F8F78; --teal-deep: #17665F; --teal-ink: #1A2E2F; --clay: #B84F24;
+      --glow: #B84F24;
+      --ink: #1A2E2F; --ink-dim: #5E7471;
+      --card: rgba(255,255,255,0.86); --card-border: rgba(26,46,47,0.1);
       --hover-bg: rgba(31,53,54,0.05); --chip-bg: rgba(31,53,54,0.07); --toggle-shadow: rgba(15,35,30,0.08);
-      --card-shadow: 0 4px 20px rgba(15,35,30,0.04);
-      --page-bg: #FAF8F3;
-      --serif: 'Fraunces', Georgia, serif; --sans: 'Inter', -apple-system, sans-serif;
+      --card-shadow: 0 1px 0 rgba(26,46,47,0.04), 0 12px 28px rgba(15,35,30,0.06);
+      --page-bg: #F4F0E8;
+      --serif: 'Fraunces', Georgia, serif; --sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+      --radius-sm: 10px; --radius-md: 14px; --radius-lg: 20px;
     }
     :root[data-theme="dark"] {
       --sand: #2E3734; --sand-soft: #24302C; --teal-deep: #17615A; --teal-ink: #EDF3F1;
@@ -49,12 +50,23 @@
       --page-bg: #101816;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { color: var(--ink); font-family: var(--sans); background: var(--page-bg); min-height: 100vh; }
-    body { line-height: 1.55; min-height: 100vh; }
+    html { color: var(--ink); font-family: var(--sans); background: var(--page-bg); min-height: 100%; }
+    body {
+      line-height: 1.55; min-height: 100dvh;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(15,143,120,0.14), transparent 55%),
+        radial-gradient(900px 500px at 95% 5%, rgba(184,79,36,0.1), transparent 50%),
+        linear-gradient(180deg, #F7F3EB 0%, var(--page-bg) 40%, #EFE9DE 100%);
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .lb-atmosphere { position: relative; z-index: 1; }
 
     main { display: block; width: 100%; max-width: none; margin: 0; padding: 0; }
 
-    .lb-shell { display: flex; width: 100%; min-height: 100vh; background: var(--page-bg); }
+    .lb-shell { display: flex; width: 100%; min-height: 100dvh; background: transparent; }
 
     .lb-sidebar {
       width: 232px; flex-shrink: 0; background: var(--sand-soft); border-right: 1px solid var(--card-border);
@@ -86,11 +98,17 @@
     }
 
     .lb-main {
-      flex: 1; min-width: 0; padding: 32px 40px 40px; overflow-x: hidden;
-      background: linear-gradient(180deg, #FFFFFF 0%, #F7FBFA 100%);
-      display: flex; flex-direction: column; min-height: 100vh;
+      flex: 1; min-width: 0; padding: 28px 36px 48px; overflow-x: hidden;
+      background: transparent;
+      display: flex; flex-direction: column; min-height: 100dvh;
     }
-    :root[data-theme="dark"] .lb-main { background: var(--card); }
+    :root[data-theme="dark"] .lb-main { background: transparent; }
+    :root[data-theme="dark"] body {
+      background:
+        radial-gradient(1000px 500px at 8% -8%, rgba(15,143,120,0.18), transparent 55%),
+        radial-gradient(800px 420px at 100% 0%, rgba(184,79,36,0.12), transparent 45%),
+        linear-gradient(180deg, #121a18 0%, #101816 100%);
+    }
 
     .lb-view-head[hidden] { display: none; }
 
@@ -763,14 +781,33 @@
     #lb-events-notice[data-kind="success"] { border-color: rgba(21,156,131,.45); background: rgba(21,156,131,.1); color: var(--teal-deep); }
     #lb-events-notice[data-kind="error"] { border-color: rgba(199,90,42,.5); background: rgba(199,90,42,.1); color: var(--clay); }
 
-    .lb-event-catalog-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 20px; }
-    .lb-event-catalog-card { display: grid; gap: 10px; align-content: start; padding: 18px; border: 1px solid var(--card-border); border-radius: 16px; background: var(--card); box-shadow: var(--card-shadow); }
-    .lb-event-catalog-card > img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; }
-    .lb-event-catalog-card h3 { margin: 0; font-size: 17px; }
-    .lb-event-catalog-card p { margin: 0; color: var(--ink-dim); font-size: 13.5px; line-height: 1.55; }
-    .lb-event-catalog-card p:empty { display: none; }
-    .lb-event-catalog-card .lb-event-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; background: var(--chip-bg); color: var(--ink-dim); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-    .lb-event-catalog-card .lb-promo-btn, .lb-event-catalog-card .lb-discord-btn { justify-self: start; }
+    .lb-event-catalog-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 8px; }
+    .lb-event-card {
+      display: flex; flex-direction: column; overflow: hidden;
+      border: 1px solid var(--card-border); border-radius: var(--radius-lg);
+      background: var(--card); box-shadow: var(--card-shadow);
+      backdrop-filter: blur(8px); transition: transform 180ms ease, border-color 180ms ease;
+    }
+    .lb-event-card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--teal-bright) 35%, var(--card-border)); }
+    .lb-event-card-media { position: relative; aspect-ratio: 16 / 9; background: var(--chip-bg); overflow: hidden; }
+    .lb-event-card-media img, .lb-event-card-media .lb-game-banner-fallback { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lb-event-card-media .lb-game-banner-fallback { display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 28px; color: #fff; background: linear-gradient(135deg, var(--teal-bright), var(--teal-deep)); }
+    .lb-event-card-media .lb-event-badge {
+      position: absolute; top: 12px; left: 12px; padding: 5px 10px; border-radius: 999px;
+      background: rgba(26,46,47,0.78); color: #fff; font-size: 11px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase; backdrop-filter: blur(6px);
+    }
+    .lb-event-card-body { display: flex; flex-direction: column; gap: 6px; padding: 16px 18px 18px; flex: 1; }
+    .lb-event-community { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--teal-bright); }
+    .lb-event-card-body h3, .lb-event-card-body h4 { font-family: var(--serif); font-size: 1.2rem; font-weight: 600; color: var(--ink); line-height: 1.25; text-wrap: balance; }
+    .lb-event-when { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+    .lb-event-desc { font-size: 13.5px; color: var(--ink-dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .lb-event-meta { font-size: 12.5px; color: var(--ink-dim); margin-top: auto; }
+    .lb-empty-state { text-align: center; padding: 48px 20px; background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); }
+    .lb-empty-state h3 { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 8px; }
+    .lb-live-section { margin-top: 22px; }
+    .lb-live-skeleton { display: grid; gap: 10px; }
+    .lb-live-skeleton span { height: 64px; border-radius: var(--radius-md); background: linear-gradient(90deg, var(--chip-bg), var(--hover-bg), var(--chip-bg)); background-size: 200% 100%; animation: lb-disc-shimmer 1.4s ease-in-out infinite; }
 
     @media (max-width: 960px) {
       .lb-content-grid { flex-direction: column; }
@@ -823,8 +860,9 @@
     .lb-disc-stat-value { font-family: var(--serif); font-size: 26px; font-weight: 600; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
     .lb-disc-stat-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
 
-    .lb-disc-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 18px; box-shadow: var(--card-shadow); padding: 22px; margin-bottom: 20px; }
-    .lb-disc-card-title { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 14px; }
+    .lb-disc-card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius-lg); box-shadow: var(--card-shadow); padding: 22px; margin-bottom: 18px; backdrop-filter: blur(10px); }
+    .lb-disc-card-title { font-family: var(--serif); font-size: 1.25rem; font-weight: 600; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.02em; }
+    .lb-home-head h2 { font-size: clamp(1.8rem, 3vw, 2.4rem); letter-spacing: -0.03em; text-wrap: balance; }
 
     .lb-disc-crest { border-radius: 12px; object-fit: cover; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-weight: 600; background: var(--teal-bright); color: #fff; }
     .lb-disc-crest-sm { width: 30px; height: 30px; border-radius: 9px; font-size: 12px; }
@@ -961,7 +999,7 @@
 </head>
 <body>
   <main>
-    <div class="lb-shell">
+    <div class="lb-shell lb-atmosphere">
       <aside class="lb-sidebar">
         <div class="lb-brand">
           <img src="/tierly/tierly-logo.png" alt="TIRLY" width="256" height="256" decoding="async" />
@@ -1120,8 +1158,8 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.7/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lucide@0.468.0/dist/umd/lucide.js"></script>
-<script type="module" src="/tierly/app.js?v=20261002-07"></script>
-          <script type="module" src="/tierly/discover.js?v=20261002-07"></script>
-          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-07"></script>
+<script type="module" src="/tierly/app.js?v=20261002-08"></script>
+          <script type="module" src="/tierly/discover.js?v=20261002-08"></script>
+          <script type="module" src="/tierly/admin-app/admin.js?v=20261002-08"></script>
 </body>
 </html>
